@@ -3,178 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Jewelry Try-On | Probador Virtual</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Probador de Joyas IA</title>
     <style>
-        .loader {
-            border-top-color: #ffffff;
-            animation: spinner 1s linear infinite;
-        }
-        @keyframes spinner {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
+        h1 { color: #333; text-align: center; font-size: 24px; }
+        .upload-section { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        input[type="file"], input[type="text"] { width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #6e8efb; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #5a7be9; }
+        #resultado { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; line-height: 1.6; }
+        .loading { display: none; color: #666; text-align: center; margin-top: 10px; }
+        .preview { width: 100%; max-height: 200px; object-fit: contain; margin-bottom: 10px; display: none; border-radius: 8px; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+<body>
 
-    <nav class="gradient-bg py-6 shadow-lg mb-8">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-3xl font-extrabold text-white tracking-tight">VIRTUAL JEWELRY AI</h1>
-            <p class="text-blue-100 text-sm mt-1 uppercase tracking-widest">Probador Inteligente de Joyería</p>
-        </div>
-    </nav>
+<div class="container">
+    <h1>✨ Probador de Joyas IA</h1>
+    
+    <div class="upload-section">
+        <label>1. Foto de la Persona / Mano / Cuello</label>
+        <input type="file" id="fotoPersona" accept="image/*" onchange="previewImg(this, 'p1')">
+        <img id="p1" class="preview">
 
-    <div class="max-w-4xl mx-auto px-4 pb-20">
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center mb-4">
-                    <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3">1</span>
-                    <h2 class="font-bold text-slate-700">Foto del Cliente</h2>
-                </div>
-                <input type="file" id="imgPersona" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                <div id="previewPersona" class="mt-4 aspect-square bg-slate-100 rounded-xl flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-200">
-                    <span class="text-slate-400 text-xs text-center px-4">Sube una foto de frente</span>
-                </div>
-            </div>
+        <label>2. Foto de la Joya</label>
+        <input type="file" id="fotoJoya" accept="image/*" onchange="previewImg(this, 'p2')">
+        <img id="p2" class="preview">
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center mb-4">
-                    <span class="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3">2</span>
-                    <h2 class="font-bold text-slate-700">Foto de la Joya</h2>
-                </div>
-                <input type="file" id="imgJoya" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer">
-                <div id="previewJoya" class="mt-4 aspect-square bg-slate-100 rounded-xl flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-200">
-                    <span class="text-slate-400 text-xs text-center px-4">Sube la pieza (fondo blanco sugerido)</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
-            <label class="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Instrucciones Especiales</label>
-            <textarea id="promptUser" rows="2" placeholder="Ej: Haz que el dije quede justo a la altura de la clavícula..." class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-slate-600"></textarea>
-        </div>
-
-        <button onclick="enviarAKoyeb()" id="btnGenerar" class="w-full gradient-bg hover:opacity-90 text-white font-black py-5 rounded-2xl transition duration-300 shadow-xl flex items-center justify-center space-x-3 text-lg uppercase tracking-widest">
-            <span id="textBtn">Generar Vista Previa</span>
-            <div id="loaderBtn" class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-6 w-6 hidden"></div>
-        </button>
-
-        <div id="resultadoSeccion" class="mt-10 hidden transform transition-all duration-500 scale-95 opacity-0">
-            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-blue-100">
-                <div class="bg-blue-600 py-3 px-6">
-                    <h3 class="text-white font-bold flex items-center italic">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        RECOMENDACIÓN DE LA IA
-                    </h3>
-                </div>
-                <div id="resultadoTexto" class="p-8 text-slate-700 leading-relaxed text-lg italic bg-blue-50/50">
-                    </div>
-            </div>
-        </div>
+        <label>Instrucciones extra (opcional)</label>
+        <input type="text" id="promptUser" placeholder="Ej: Pon el anillo en el dedo índice...">
     </div>
 
-    <script>
-        /**
-         * CONFIGURACIÓN DE KOYEB:
-         * Reemplaza 'tu-app-koyeb.koyeb.app' con la URL real que te dé Koyeb.
-         */
-       
-const URL_API = "https://interim-norean-joyeriag-18a1b350.koyeb.app/procesar";
+    <button onclick="procesarImagen()" id="btnGo">Generar Vista Previa</button>
+    <div id="loading" class="loading">Procesando con Gemini IA... ⏳</div>
+    <div id="resultado"></div>
+</div>
 
-        // Previsualización de imágenes
-        function handlePreview(inputId, previewId) {
-            document.getElementById(inputId).addEventListener('change', function(e) {
-                const reader = new FileReader();
-                reader.onload = function() {
-                    const preview = document.getElementById(previewId);
-                    preview.innerHTML = `<img src="${reader.result}" class="w-full h-full object-cover">`;
-                }
-                reader.readAsDataURL(e.target.files[0]);
-            });
+<script>
+    // CAMBIA ESTA URL POR LA TUYA DE KOYEB
+    const URL_API = "https://TU-APP.koyeb.app/procesar";
+
+    function previewImg(input, id) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const el = document.getElementById(id);
+                el.src = e.target.result;
+                el.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
         }
+    }
 
-        handlePreview('imgPersona', 'previewPersona');
-        handlePreview('imgJoya', 'previewJoya');
-
-        // Conversión a Base64
-        const fileToBase64 = file => new Promise((resolve, reject) => {
+    async function toBase64(file) {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => resolve(reader.result.split(',')[1]);
             reader.onerror = error => reject(error);
         });
+    }
 
-        // Envío de datos
-        async function enviarAKoyeb() {
-            const fPersona = document.getElementById('imgPersona').files[0];
-            const fJoya = document.getElementById('imgJoya').files[0];
-            const promptExtra = document.getElementById('promptUser').value;
+    async function procesarImagen() {
+        const f1 = document.getElementById('fotoPersona').files[0];
+        const f2 = document.getElementById('fotoJoya').files[0];
+        const pUser = document.getElementById('promptUser').value;
+        const resDiv = document.getElementById('resultado');
+        const btn = document.getElementById('btnGo');
+        const load = document.getElementById('loading');
 
-            if (!fPersona || !fJoya) {
-                alert("⚠ Por favor sube ambas fotografías.");
-                return;
+        if (!f1 || !f2) return alert("Por favor sube ambas fotos");
+
+        btn.disabled = true;
+        load.style.display = 'block';
+        resDiv.style.display = 'none';
+
+        try {
+            const b64_1 = await toBase64(f1);
+            const b64_2 = await toBase64(f2);
+
+            const response = await fetch(URL_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image1: b64_1, image2: b64_2, promptUser: pUser })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                resDiv.style.background = "#e7f3ff";
+                resDiv.style.color = "#2c5282";
+                resDiv.innerHTML = `<strong>Resultado de la IA:</strong><br>${data.result}`;
+            } else {
+                throw new Error(data.error);
             }
-
-            // UI State: Cargando
-            const btn = document.getElementById('btnGenerar');
-            const loader = document.getElementById('loaderBtn');
-            const textBtn = document.getElementById('textBtn');
-            const resultDiv = document.getElementById('resultadoSeccion');
-
-            btn.disabled = true;
-            loader.classList.remove('hidden');
-            textBtn.innerText = "LA IA ESTÁ TRABAJANDO...";
-            resultDiv.classList.add('hidden');
-
-            try {
-                const b64Persona = await fileToBase64(fPersona);
-                const b64Joya = await fileToBase64(fJoya);
-
-                const response = await fetch(URL_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        image1: b64Persona,
-                        image2: b64Joya,
-                        promptUser: promptExtra
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    resultDiv.classList.remove('hidden');
-                    // Pequeño delay para el efecto de entrada
-                    setTimeout(() => {
-                        resultDiv.classList.remove('scale-95', 'opacity-0');
-                        resultDiv.classList.add('scale-100', 'opacity-100');
-                    }, 100);
-                    document.getElementById('resultadoTexto').innerText = data.result;
-                    resultDiv.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    alert("Error: " + data.error);
-                }
-
-            } catch (err) {
-                console.error(err);
-                alert("No se pudo conectar con el servidor de Koyeb. Asegúrate de que el servicio esté Healthy.");
-            } finally {
-                btn.disabled = false;
-                loader.classList.add('hidden');
-                textBtn.innerText = "Generar Vista Previa";
-            }
+        } catch (err) {
+            resDiv.style.background = "#fff5f5";
+            resDiv.style.color = "#c53030";
+            resDiv.innerHTML = "<strong>Error:</strong> " + err.message;
+        } finally {
+            btn.disabled = false;
+            load.style.display = 'none';
+            resDiv.style.display = 'block';
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
-
-
-
-
-
