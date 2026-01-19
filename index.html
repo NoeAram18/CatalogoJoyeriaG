@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA Probador de Joyas</title>
+    <style>
+        :root { --primary: #6200ee; --bg: #f5f5f7; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { color: #333; text-align: center; margin-bottom: 25px; }
+        
+        .upload-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #555; }
+        input[type="file"], input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        .preview-box { display: flex; gap: 10px; margin-top: 10px; justify-content: center; }
+        .preview-box img { width: 80px; height: 80px; object-fit: cover; border-radius: 5px; border: 1px solid #eee; display: none; }
+
+        button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #4b00b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        #status { text-align: center; margin-top: 15px; font-weight: bold; color: var(--primary); }
+        #resultado { margin-top: 25px; padding: 15px; border-top: 2px solid #f0f0f0; line-height: 1.6; color: #444; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>✨ Probador Virtual</h2>
+    
+    <div class="upload-group">
+        <label>1. Foto de la Persona</label>
+        <input type="file" id="fotoPersona" accept="image/*" onchange="preview(this, 'p1')">
+        <div class="preview-box"><img id="p1"></div>
+    </div>
+
+    <div class="upload-group">
+        <label>2. Foto de la Joya</label>
+        <input type="file" id="fotoJoya" accept="image/*" onchange="preview(this, 'p2')">
+        <div class="preview-box"><img id="p2"></div>
+    </div>
+
+    <div class="upload-group">
+        <label>Instrucciones (opcional)</label>
+        <input type="text" id="instruccion" placeholder="Ej: Que el collar esté más arriba">
+    </div>
+
+    <button id="btnGenerar">GENERAR COMBINACIÓN</button>
+    
+    <div class="loader" id="loader"></div>
+    <p id="status"></p>
+    <div id="resultado"></div>
+</div>
+
+<script>
+    // Función para mostrar miniatura de la imagen seleccionada
+    function preview(input, id) {
+        const img = document.getElementById(id);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { img.src = e.target.result; img.style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Función para convertir imagen a Base64 (limpio, sin cabeceras)
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = error => reject(error);
+    });
+
+    document.getElementById('btnGenerar').onclick = async () => {
+        const persona = document.getElementById('fotoPersona').files[0];
+        const joya = document.getElementById('fotoJoya').files[0];
+        const btn = document.getElementById('btnGenerar');
+        const loader = document.getElementById('loader');
+        const status = document.getElementById('status');
+        const resultado = document.getElementById('resultado');
+
+        if (!persona || !joya) return alert("Por favor, selecciona ambas imágenes.");
+
+        // Bloquear interfaz mientras procesa
+        btn.disabled = true;
+        loader.style.display = 'block';
+        status.innerText = "La IA está analizando y creando...";
+        resultado.innerText = "";
+
+        try {
+            const b1 = await toBase64(persona);
+            const b2 = await toBase64(joya);
+
+            const res = await fetch('http://127.0.0.1:3000/procesar', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({
+                    image1: b1,
+                    image2: b2,
+                    promptUser: document.getElementById('instruccion').value
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                status.innerText = "✅ ¡Proceso completado!";
+                resultado.innerHTML = `<strong>Resultado de la IA:</strong><br>${data.result}`;
+            } else {
+                throw new Error(data.error);
+            }
+
+        } catch (error) {
+            status.innerText = "❌ Error";
+            resultado.innerText = "No se pudo conectar con el servidor. Asegúrate de que server.js esté corriendo.";
+        } finally {
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
+    };
+</script>
+
+</body>
+</html>
