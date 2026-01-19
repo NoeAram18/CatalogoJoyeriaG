@@ -30,7 +30,7 @@ app.post('/procesar', async (req, res) => {
         }
 
         // CAMBIO REALIZADO: Usamos 'gemini-1.5-flash-latest' para evitar el error 404 de versión
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
         const promptSistema = `
             Eres un experto en estilismo y joyería de alta gama.
@@ -73,4 +73,5 @@ const PORT = process.env.PORT || 8000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor listo en el puerto ${PORT}`);
 });
+
 
