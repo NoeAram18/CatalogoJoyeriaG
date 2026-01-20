@@ -3,116 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Probador de Joyas IA</title>
+    <title>Joyas Deluxe - Probador Virtual</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
-        h1 { color: #333; text-align: center; font-size: 24px; }
-        .upload-section { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        input[type="file"], input[type="text"] { width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #6e8efb; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        button:hover { background: #5a7be9; }
-        #resultado { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; line-height: 1.6; }
-        .loading { display: none; color: #666; text-align: center; margin-top: 10px; }
-        .preview { width: 100%; max-height: 200px; object-fit: contain; margin-bottom: 10px; display: none; border-radius: 8px; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
+        .catalogo { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; }
+        .joya { border: 2px solid transparent; padding: 10px; cursor: pointer; background: white; border-radius: 8px; }
+        .joya.selected { border-color: gold; box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .joya img { width: 100px; height: 100px; object-fit: contain; }
+        #preview-container { margin: 20px auto; max-width: 400px; display: none; }
+        #preview-container img { width: 100%; border-radius: 10px; }
+        .status { margin-top: 20px; font-weight: bold; color: #555; }
+        button { padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:disabled { background: #ccc; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>✨ Probador de Joyas IA</h1>
-    
-    <div class="upload-section">
-        <label>1. Foto de la Persona / Mano / Cuello</label>
-        <input type="file" id="fotoPersona" accept="image/*" onchange="previewImg(this, 'p1')">
-        <img id="p1" class="preview">
-
-        <label>2. Foto de la Joya</label>
-        <input type="file" id="fotoJoya" accept="image/*" onchange="previewImg(this, 'p2')">
-        <img id="p2" class="preview">
-
-        <label>Instrucciones extra (opcional)</label>
-        <input type="text" id="promptUser" placeholder="Ej: Pon el anillo en el dedo índice...">
+    <h1>Catálogo de Joyería</h1>
+    <p>1. Selecciona una pieza:</p>
+    <div class="catalogo" id="catalogo">
+        <div class="joya" onclick="selectJoya('anillo_oro', this)">
+            <img src="https://cdn-icons-png.flaticon.com/512/2913/2913404.png" alt="Anillo">
+            <p>Anillo Oro</p>
+        </div>
+        <div class="joya" onclick="selectJoya('collar_diamante', this)">
+            <img src="https://cdn-icons-png.flaticon.com/512/2913/2913506.png" alt="Collar">
+            <p>Collar Diamante</p>
+        </div>
     </div>
 
-    <button onclick="procesarImagen()" id="btnGo">Generar Vista Previa</button>
-    <div id="loading" class="loading">Procesando con Gemini IA... ⏳</div>
-    <div id="resultado"></div>
-</div>
+    <p>2. Tómate una foto o sube una imagen:</p>
+    <input type="file" id="fileInput" accept="image/*" capture="user" style="display: none;" onchange="handleFile(event)">
+    <button onclick="document.getElementById('fileInput').click()">📸 Capturar / Subir Foto</button>
 
-<script>
-    // CAMBIA ESTA URL POR LA TUYA DE KOYEB
-    const URL_API = "https://interim-norean-joyeriag-18a1b350.koyeb.app/procesar";
+    <div id="preview-container">
+        <h3>Tu selección:</h3>
+        <img id="userPreview" src="" alt="Vista previa">
+        <br><br>
+        <button id="sendBtn" onclick="sendToEditor()">Enviar a Diseño Remoto</button>
+    </div>
 
-    function previewImg(input, id) {
-        const file = input.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const el = document.getElementById(id);
-                el.src = e.target.result;
-                el.style.display = 'block';
-            }
-            reader.readAsDataURL(file);
+    <div id="statusMessage" class="status"></div>
+
+    <script>
+        let selectedJoyaId = null;
+        let selectedFile = null;
+
+        function selectJoya(id, element) {
+            selectedJoyaId = id;
+            document.querySelectorAll('.joya').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
         }
-    }
 
-    async function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    async function procesarImagen() {
-        const f1 = document.getElementById('fotoPersona').files[0];
-        const f2 = document.getElementById('fotoJoya').files[0];
-        const pUser = document.getElementById('promptUser').value;
-        const resDiv = document.getElementById('resultado');
-        const btn = document.getElementById('btnGo');
-        const load = document.getElementById('loading');
-
-        if (!f1 || !f2) return alert("Por favor sube ambas fotos");
-
-        btn.disabled = true;
-        load.style.display = 'block';
-        resDiv.style.display = 'none';
-
-        try {
-            const b64_1 = await toBase64(f1);
-            const b64_2 = await toBase64(f2);
-
-            const response = await fetch(URL_API, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image1: b64_1, image2: b64_2, promptUser: pUser })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                resDiv.style.background = "#e7f3ff";
-                resDiv.style.color = "#2c5282";
-                resDiv.innerHTML = `<strong>Resultado de la IA:</strong><br>${data.result}`;
-            } else {
-                throw new Error(data.error);
+        function handleFile(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('userPreview').src = e.target.result;
+                    document.getElementById('preview-container').style.display = 'block';
+                }
+                reader.readAsDataURL(selectedFile);
             }
-        } catch (err) {
-            resDiv.style.background = "#fff5f5";
-            resDiv.style.color = "#c53030";
-            resDiv.innerHTML = "<strong>Error:</strong> " + err.message;
-        } finally {
-            btn.disabled = false;
-            load.style.display = 'none';
-            resDiv.style.display = 'block';
         }
-    }
-</script>
 
+        async function sendToEditor() {
+            if (!selectedJoyaId || !selectedFile) {
+                alert("Por favor selecciona una joya y una foto.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            formData.append('jewelryId', selectedJoyaId);
+
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('statusMessage').innerText = "Subiendo imagen...";
+
+            try {
+                const response = await fetch('/upload-to-drive', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('statusMessage').innerText = "Enviado. Un diseñador está editando tu foto... (Espera aquí)";
+                    startPolling(data.fileName);
+                }
+            } catch (err) {
+                alert("Error al enviar.");
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        function startPolling(fileName) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/check-status/${fileName}`);
+                    const data = await response.json();
+
+                    if (data.status === 'ready') {
+                        clearInterval(interval);
+                        document.getElementById('statusMessage').innerHTML = `
+                            <p style="color: green;">¡Tu foto está lista!</p>
+                            <img src="${data.file.thumbnailLink.replace('=s220', '=s800')}" style="width:100%; border-radius:10px;">
+                            <br><br>
+                            <a href="${data.file.webContentLink}" target="_blank"><button>Descargar Alta Calidad</button></a>
+                        `;
+                    }
+                } catch (err) {
+                    console.error("Error consultando estado");
+                }
+            }, 5000); // Revisa cada 5 segundos
+        }
+    </script>
 </body>
 </html>
+
 
 
