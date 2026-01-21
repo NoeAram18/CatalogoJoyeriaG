@@ -26,7 +26,9 @@ app.use(express.static('public'));
 app.use(express.json());
 
 // 2. CONFIGURACIÓN DE GOOGLE DRIVE
-const SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly'];
+// Usamos el scope completo para tener permisos de escritura y lectura total
+const SCOPES = ['https://www.googleapis.com/auth/drive'];
+
 async function uploadToDrive(file) {
     try {
         const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
@@ -36,12 +38,11 @@ async function uploadToDrive(file) {
             credentials.client_email,
             null,
             formattedKey,
-            ['https://www.googleapis.com/auth/drive']
+            SCOPES
         );
 
         const drive = google.drive({ version: 'v3', auth });
 
-        // Metadata del archivo
         const fileMetadata = {
             name: file.filename,
             parents: ['1rUKa-4_Js4usSDo_6DQmvl8LjfRflrnt']
@@ -52,20 +53,19 @@ async function uploadToDrive(file) {
             body: fs.createReadStream(file.path)
         };
 
-        // 1. CREAR EL ARCHIVO
+        // 1. CREAR EL ARCHIVO (Con parámetros para saltar error de cuota)
         const response = await drive.files.create({
             requestBody: fileMetadata,
             media: media,
             fields: 'id',
             supportsAllDrives: true,
-            // IMPORTANTE: Esto le quita la carga de cuota a la cuenta de servicio
             keepRevisionForever: false,
         });
 
         const fileId = response.data.id;
 
-        // 2. TRANSFERIR PERMISOS (Para que no use la cuota de la cuenta de servicio)
-        // Esto hace que el archivo "pertenezca" a la carpeta compartida
+        // 2. HACER EL ARCHIVO PÚBLICO/ACCESIBLE
+        // Esto ayuda a que no se bloquee por falta de cuota de la cuenta de servicio
         await drive.permissions.create({
             fileId: fileId,
             supportsAllDrives: true,
@@ -82,11 +82,12 @@ async function uploadToDrive(file) {
 
     } catch (error) {
         const detail = error.response ? JSON.stringify(error.response.data) : error.message;
-        console.error("❌ Error Crítico:", detail);
+        console.error("❌ Error Crítico en Drive:", detail);
         throw error;
     }
 }
-// 3. RUTA PARA RECIBIR LA IMAGEN (Coincide con tu index.html)
+
+// 3. RUTA PARA RECIBIR LA IMAGEN DESDE LA WEB
 app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ success: false, error: 'No hay archivo' });
@@ -104,29 +105,37 @@ app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
     }
 });
 
-// 4. RUTA PARA REVISAR ESTADO (Polling)
+// 4. RUTA PARA REVISAR SI EL DISEÑADOR YA SUBIÓ EL RESULTADO
 app.get('/check-status/:fileName', async (req, res) => {
     try {
-         // Busca esta parte dentro de la función uploadToDrive
-const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-const auth = new google.auth.JWT(
-    credentials.client_email,
-    null,
-    credentials.private_key.split(String.raw`\n`).join('\n'), // <-- Esto arregla el error 500
-    SCOPES
-);
+        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        const formattedKey = credentials.private_key.split(String.raw`\n`).join('\n');
+
+        const auth = new google.auth.JWT(
+            credentials.client_email,
+            null,
+            formattedKey,
+            SCOPES
+        );
         const drive = google.drive({ version: 'v3', auth });
 
-        // Buscamos si existe un archivo con nombre similar (el editado)
+        // Buscamos archivos con nombre similar, el más reciente primero
         const response = await drive.files.list({
-            q: `name contains '${req.params.fileName}' and mimeType contains 'image/'`,
+            q: `name contains '${req.params.fileName}' and mimeType contains 'image/' and trashed = false`,
             fields: 'files(id, name, thumbnailLink, webContentLink)',
+            orderBy: 'createdTime desc',
             spaces: 'drive',
         });
 
-        // Si hay más de un archivo, significa que ya está el original + el editado
-        if (response.data.files && response.data.files.length > 1) {
-            res.json({ status: 'ready', file: response.data.files[0] });
+        const files = response.data.files;
+
+        // Si hay más de un archivo (el original + el editado), entregamos el más nuevo
+        if (files && files.length > 1) {
+            console.log("✨ Resultado listo para:", req.params.fileName);
+            res.json({ 
+                status: 'ready', 
+                file: files[0] 
+            });
         } else {
             res.json({ status: 'pending' });
         }
@@ -136,22 +145,7 @@ const auth = new google.auth.JWT(
     }
 });
 
+// INICIO DEL SERVIDOR
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor joyeria en puerto ${PORT}`);
+    console.log(`🚀 Servidor joyeria corriendo en puerto ${PORT}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
