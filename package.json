@@ -1,9 +1,11 @@
 {
-  "name": "joyeria-app",
+  "name": "joyeria-catalogo-remoto",
   "version": "1.0.0",
+  "description": "Sistema de catálogo de joyería con edición de fotos vía Google Drive",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -12,5 +14,7 @@
   },
   "engines": {
     "node": "22.x"
-  }
+  },
+  "author": "",
+  "license": "ISC"
 }
