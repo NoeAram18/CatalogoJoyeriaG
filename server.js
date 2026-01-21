@@ -36,7 +36,7 @@ async function uploadToDrive(file) {
             credentials.client_email,
             null,
             formattedKey,
-            ['https://www.googleapis.com/auth/drive.file']
+            ['https://www.googleapis.com/auth/drive'] // Scope total para evitar restricciones
         );
 
         const drive = google.drive({ version: 'v3', auth });
@@ -51,21 +51,28 @@ async function uploadToDrive(file) {
             body: fs.createReadStream(file.path)
         };
 
-        // USAMOS UNA CONFIGURACIÓN QUE NO RECLAMA ESPACIO
+        // Cambiamos la estructura de la llamada
         const response = await drive.files.create({
             requestBody: fileMetadata,
             media: media,
             fields: 'id',
             supportsAllDrives: true,
-            // Esto evita que la cuenta de servicio intente indexar o ser dueña total
-            useContentAsIndexableText: false 
+            uploadType: 'multipart', // <--- ESTO ES CLAVE
+        }, {
+            // Este segundo objeto fuerza las opciones de red
+            params: {
+                supportsAllDrives: true
+            }
         });
 
-        console.log("✅ ¡SUBIDA EXITOSA! ID:", response.data.id);
-        fs.unlinkSync(file.path);
+        console.log("✅ ¡POR FIN! Archivo en Drive con ID:", response.data.id);
+        
+        try { fs.unlinkSync(file.path); } catch (e) {}
+        
         return response.data.id;
     } catch (error) {
-        console.error("❌ Error real:", error.response ? error.response.data : error.message);
+        const detail = error.response ? JSON.stringify(error.response.data) : error.message;
+        console.error("❌ Error detectado:", detail);
         throw error;
     }
 }
@@ -123,6 +130,7 @@ const auth = new google.auth.JWT(
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor joyeria en puerto ${PORT}`);
 });
+
 
 
 
