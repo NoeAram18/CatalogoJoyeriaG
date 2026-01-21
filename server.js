@@ -31,8 +31,6 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googl
 async function uploadToDrive(file) {
     try {
         const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-        
-        // Limpiamos la llave privada para evitar errores de formato en la nube
         const formattedKey = credentials.private_key.split(String.raw`\n`).join('\n');
 
         const auth = new google.auth.JWT(
@@ -46,7 +44,7 @@ async function uploadToDrive(file) {
 
         const fileMetadata = {
             name: file.filename,
-            parents: ['1FgtrEXLOn4TfXxXkXSrXICiFTH4fa3-5'] // <--- ASEGÚRATE DE QUE SEA EL ID CORRECTO
+            parents: ['1FgtrEXLOn4TfXxXkXSrXICiFTH4fa3-5']
         };
 
         const media = {
@@ -54,30 +52,24 @@ async function uploadToDrive(file) {
             body: fs.createReadStream(file.path)
         };
 
-        // AQUÍ ESTÁ EL CAMBIO IMPORTANTE
+        // Cambiamos la forma de llamar a .create para evitar el bloqueo de cuota
         const response = await drive.files.create({
-    resource: fileMetadata,
-    media: media,
-    fields: 'id',
-    // ESTAS DOS LÍNEAS SON LAS QUE SOLUCIONAN EL ERROR DE CUOTA
-    supportsAllDrives: true,
-    keepRevisionForever: false 
-}, {
-    // Esto fuerza a que use la configuración de la carpeta destino
-    // y no la cuota de la cuenta de servicio
-    params: {
-        supportsAllDrives: true
-    }
-});
+            requestBody: fileMetadata, // Usamos requestBody en lugar de resource
+            media: media,
+            fields: 'id',
+            supportsAllDrives: true,
+            ignoreDefaultVisibility: true
+        });
 
+        console.log("✅ Subida exitosa a Drive. ID:", response.data.id);
         fs.unlinkSync(file.path);
         return response.data.id;
     } catch (error) {
-        console.error("❌ Error en uploadToDrive:", error.message);
+        // Si el error persiste, este log nos dirá si es cuota o permisos
+        console.error("❌ Error detallado en Drive:", error.response ? error.response.data : error.message);
         throw error;
     }
 }
-
 // 3. RUTA PARA RECIBIR LA IMAGEN (Coincide con tu index.html)
 app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
     try {
@@ -131,6 +123,7 @@ const auth = new google.auth.JWT(
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor joyeria en puerto ${PORT}`);
 });
+
 
 
 
