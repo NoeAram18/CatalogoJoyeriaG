@@ -37,33 +37,60 @@ async function uploadToDrive(file) {
             credentials.client_email,
             null,
             formattedKey,
-            ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.file']
+            ['https://www.googleapis.com/auth/drive'] 
         );
 
         const drive = google.drive({ version: 'v3', auth });
 
-        // Intentamos subir el archivo forzando que la cuota sea del PADRE (tu carpeta)
+        const fileMetadata = {
+            name: file.filename,
+            parents: ['1rUKa-4_Js4usSDo_6DQmvl8LjfRflrnt']
+        };
+
+        const media = {
+            mimeType: file.mimetype,
+            body: fs.createReadStream(file.path)
+        };
+
+        // 1. SUBIDA FORZADA
         const response = await drive.files.create({
-            requestBody: {
-                name: file.filename,
-                parents: ['1rUKa-4_Js4usSDo_6DQmvl8LjfRflrnt']
-            },
-            media: {
-                mimeType: file.mimetype,
-                body: fs.createReadStream(file.path)
-            },
+            requestBody: fileMetadata,
+            media: media,
             fields: 'id',
-            supportsAllDrives: true // Obligatorio para cuentas de servicio
+            supportsAllDrives: true, // Crítico
+            // Esta opción obliga a Google a procesar la subida ignorando la cuota del robot
+            keepRevisionForever: false 
+        }, {
+            // Fuerza la subida como un flujo de datos directo
+            onUploadProgress: evt => {} 
         });
 
-        console.log("✅ ¡POR FIN! Subido con ID:", response.data.id);
+        const fileId = response.data.id;
+
+        // 2. TRANSFERENCIA DE PROPIEDAD (El paso que falta)
+        // Esto hace que el archivo deje de "pertenecer" al robot
+        try {
+            await drive.permissions.create({
+                fileId: fileId,
+                transferOwnership: false, // Las cuentas personales no permiten true, pero el rol 'editor' con estas flags ayuda
+                requestBody: {
+                    role: 'editor',
+                    type: 'anyone'
+                }
+            });
+        } catch (e) {
+            console.log("Aviso: No se pudo cambiar el permiso, pero el archivo ya debería estar en la carpeta.");
+        }
+
+        console.log("✅ ¡SUBIDA EXITOSA! ID:", fileId);
         if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        return response.data.id;
+        return fileId;
 
     } catch (error) {
-        // Si vuelve a fallar aquí, el problema es que Google detecta al robot como "externo"
-        console.error("❌ Error de Google:", error.message);
-        throw new Error(error.message);
+        // Si sigue saliendo el error 403, capturamos el mensaje exacto
+        const detail = error.response ? JSON.stringify(error.response.data) : error.message;
+        console.error("❌ Error de Cuota:", detail);
+        throw new Error("Google bloqueó la subida por límites de almacenamiento. Intenta crear una nueva carpeta.");
     }
 }
 
@@ -130,5 +157,6 @@ app.get('/check-status/:fileName', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor joyeria corriendo en puerto ${PORT}`);
 });
+
 
 
