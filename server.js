@@ -36,7 +36,7 @@ async function uploadToDrive(file) {
             credentials.client_email,
             null,
             formattedKey,
-            ['https://www.googleapis.com/auth/drive'] // Usamos el scope amplio
+            ['https://www.googleapis.com/auth/drive.file']
         );
 
         const drive = google.drive({ version: 'v3', auth });
@@ -51,25 +51,21 @@ async function uploadToDrive(file) {
             body: fs.createReadStream(file.path)
         };
 
-        // LA CLAVE: Usamos requestBody y forzamos el uso de la cuota del destino
+        // USAMOS UNA CONFIGURACIÓN QUE NO RECLAMA ESPACIO
         const response = await drive.files.create({
             requestBody: fileMetadata,
             media: media,
             fields: 'id',
-            supportsAllDrives: true, // Crucial para saltar la cuota propia
-            keepRevisionForever: false
+            supportsAllDrives: true,
+            // Esto evita que la cuenta de servicio intente indexar o ser dueña total
+            useContentAsIndexableText: false 
         });
 
-        console.log("✅ ¡POR FIN! Archivo en Drive con ID:", response.data.id);
-        
-        // Intentar borrar el archivo local para no llenar el servidor
-        try { fs.unlinkSync(file.path); } catch (e) {}
-        
+        console.log("✅ ¡SUBIDA EXITOSA! ID:", response.data.id);
+        fs.unlinkSync(file.path);
         return response.data.id;
     } catch (error) {
-        // Log más detallado para ver si el problema es ahora la llave o el ID
-        const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;
-        console.error("❌ Error detallado en Drive:", errorMsg);
+        console.error("❌ Error real:", error.response ? error.response.data : error.message);
         throw error;
     }
 }
@@ -127,6 +123,7 @@ const auth = new google.auth.JWT(
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor joyeria en puerto ${PORT}`);
 });
+
 
 
 
