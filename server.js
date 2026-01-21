@@ -1,82 +1,71 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Joyería</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
-        .catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
-        .item { background: white; padding: 10px; border: 2px solid transparent; border-radius: 10px; cursor: pointer; }
-        .item.selected { border-color: #d4af37; background: #fffdf0; }
-        .item img { width: 100%; border-radius: 5px; }
-        #upload-section { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        button { background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; }
-    </style>
-</head>
-<body>
+const express = require('express');
+const multer = require('multer');
+const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
 
-    <h1>Elige tu Joya y Sube tu Foto</h1>
+const app = express();
+const PORT = process.env.PORT || 8080;
 
-    <div id="upload-section">
-        <h3>1. Selecciona del Catálogo:</h3>
-        <div class="catalog" id="catalog">
-            <div class="item" onclick="selectItem(this, 'images/anillo1.jpg')">
-                <img src="images/anillo1.jpg" alt="Anillo Oro">
-                <p>Anillo de Oro</p>
-            </div>
-            <div class="item" onclick="selectItem(this, 'images/collar2.jpg')">
-                <img src="images/collar2.jpg" alt="Collar Plata">
-                <p>Collar de Plata</p>
-            </div>
-        </div>
+// Configuración de subida para dos campos de archivo
+const upload = multer({ dest: 'uploads/' });
+const uploadFields = upload.fields([
+    { name: 'userImage', maxCount: 1 },
+    { name: 'catalogImage', maxCount: 1 }
+]);
 
-        <h3>2. Sube tu foto (rostro/mano):</h3>
-        <input type="file" id="userPhoto" accept="image/*"><br><br>
+app.use(express.static('public'));
+app.use(express.json());
 
-        <button onclick="enviarPedido()">Enviar a Diseñador</button>
-        <p id="status"></p>
-    </div>
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
 
-    <script>
-        let selectedCatalogImg = null;
+app.post('/send-to-telegram', uploadFields, async (req, res) => {
+    try {
+        const userFile = req.files['userImage'] ? req.files['userImage'][0] : null;
+        const catalogFile = req.files['catalogImage'] ? req.files['catalogImage'][0] : null;
 
-        function selectItem(element, imgPath) {
-            document.querySelectorAll('.item').forEach(i => i.classList.remove('selected'));
-            element.classList.add('selected');
-            selectedCatalogImg = imgPath;
+        if (!userFile || !catalogFile) {
+            return res.status(400).json({ success: false, error: 'Faltan imágenes' });
         }
 
-        async function enviarPedido() {
-            const userPhoto = document.getElementById('userPhoto').files[0];
-            const status = document.getElementById('status');
-
-            if (!selectedCatalogImg || !userPhoto) {
-                alert("Por favor, selecciona una joya y sube tu foto.");
-                return;
+        // Enviamos las fotos como un Grupo de Medios (Media Group) para que lleguen juntas
+        const form = new FormData();
+        form.append('chat_id', CHAT_ID);
+        
+        // Creamos el array de medios para Telegram
+        const media = [
+            {
+                type: 'photo',
+                media: 'attach://userPhoto',
+                caption: `💎 **NUEVA SOLICITUD COMBINADA**\n👤 Foto del Cliente y Joya seleccionada.`
+            },
+            {
+                type: 'photo',
+                media: 'attach://catalogPhoto'
             }
+        ];
 
-            status.innerText = "Enviando...";
-            const formData = new FormData();
-            formData.append('userImage', userPhoto);
-            
-            // Convertimos la imagen del catálogo (URL) en un archivo para el servidor
-            const responseImg = await fetch(selectedCatalogImg);
-            const blob = await responseImg.blob();
-            formData.append('catalogImage', blob, 'catalog.jpg');
+        form.append('media', JSON.stringify(media));
+        form.append('userPhoto', fs.createReadStream(userFile.path));
+        form.append('catalogPhoto', fs.createReadStream(catalogFile.path));
 
-            try {
-                const res = await fetch('/send-to-telegram', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.success) {
-                    status.innerHTML = "✅ ¡Enviado! El diseñador recibió ambas fotos.";
-                } else {
-                    status.innerText = "❌ Error al enviar.";
-                }
-            } catch (e) {
-                status.innerText = "❌ Error de conexión.";
-            }
-        }
-    </script>
-</body>
-</html>
+        await axios.post(
+            `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMediaGroup`,
+            form,
+            { headers: form.getHeaders() }
+        );
+
+        // Limpieza de archivos temporales
+        fs.unlinkSync(userFile.path);
+        fs.unlinkSync(catalogFile.path);
+
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error('❌ Error Telegram:', error.response?.data || error.message);
+        res.status(500).json({ success: false });
+    }
+});
+
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor en puerto ${PORT}`));
