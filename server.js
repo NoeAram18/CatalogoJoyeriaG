@@ -23,7 +23,7 @@ try {
     console.error("ERROR: No se pudo procesar el JSON de Google. Verifica las Variables de Entorno en Koyeb.");
 }
 
-const FOLDER_PENDIENTES_ID = '1m4Zkt9BPI0nOu1KTGx8xeReRj8Ex4g2B'; 
+const folderId = '1EYcfC0mvvB8YcqOvRbcayEzeXrNohv7D';
 const FOLDER_FINALIZADOS_ID = '1m4Zkt9BPI0nOu1KTGx8xeReRj8Ex4g2B'; 
 
 // Corrección de la llave privada (reemplaza los saltos de línea literales \n)
@@ -99,3 +99,4 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 8080;
 // Escuchar en 0.0.0.0 es necesario para Koyeb
 app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Servidor joyeria corriendo en puerto ${PORT}`));
+
