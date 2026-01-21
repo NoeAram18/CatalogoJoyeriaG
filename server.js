@@ -31,10 +31,14 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.file', 'https://www.googl
 async function uploadToDrive(file) {
     try {
         const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        
+        // Limpiamos la llave privada para evitar errores de formato en la nube
+        const formattedKey = credentials.private_key.split(String.raw`\n`).join('\n');
+
         const auth = new google.auth.JWT(
             credentials.client_email,
             null,
-            credentials.private_key,
+            formattedKey,
             SCOPES
         );
 
@@ -42,7 +46,7 @@ async function uploadToDrive(file) {
 
         const fileMetadata = {
             name: file.filename,
-            parents: ['1FgtrEXLOn4TfXxXkXSrXICiFTH4fa3-5'] // <--- ¡ASEGÚRATE DE CAMBIAR ESTO!
+            parents: ['1FgtrEXLOn4TfXxXkXSrXICiFTH4fa3-5'] // <--- ASEGÚRATE DE QUE SEA EL ID CORRECTO
         };
 
         const media = {
@@ -50,14 +54,14 @@ async function uploadToDrive(file) {
             body: fs.createReadStream(file.path)
         };
 
+        // AQUÍ ESTÁ EL CAMBIO IMPORTANTE
         const response = await drive.files.create({
             resource: fileMetadata,
             media: media,
-            fields: 'id'
-            
+            fields: 'id',
+            supportsAllDrives: true // Permite usar el espacio de tu cuenta personal
         });
 
-        // Borrar archivo local después de subir
         fs.unlinkSync(file.path);
         return response.data.id;
     } catch (error) {
@@ -119,6 +123,7 @@ const auth = new google.auth.JWT(
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor joyeria en puerto ${PORT}`);
 });
+
 
 
 
