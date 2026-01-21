@@ -5,35 +5,53 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const upload = multer({ dest: 'uploads/' }); // Carpeta temporal
 
-// --- CONFIGURACIÓN DE GOOGLE DRIVE ---
-// Cargamos las credenciales desde la Variable de Entorno de Koyeb
-const GOOGLE_CREDENTIALS = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-const FOLDER_PENDIENTES_ID = '1m4Zkt9BPI0nOu1KTGx8xeReRj8Ex4g2B'; // Reemplaza esto
-const FOLDER_FINALIZADOS_ID ='1m4Zkt9BPI0nOu1KTGx8xeReRj8Ex4g2B'; // Reemplaza esto
+// --- ASEGURAR QUE EXISTE LA CARPETA UPLOADS ---
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
 
+const upload = multer({ dest: 'uploads/' });
+
+// --- MANEJO SEGURO DE CREDENCIALES ---
+let GOOGLE_CREDENTIALS;
+try {
+    // Trim para evitar errores de espacios y parseo del JSON
+    GOOGLE_CREDENTIALS = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON.trim());
+} catch (e) {
+    console.error("ERROR: No se pudo procesar el JSON de Google. Verifica las Variables de Entorno en Koyeb.");
+}
+
+const FOLDER_PENDIENTES_ID = '1m4Zkt9BPI0nOu1KTGx8xeReRj8Ex4g2B'; 
+const FOLDER_FINALIZADOS_ID = '1m4Zkt9BPI0nOu1KTGx8xeReRj8Ex4g2B'; 
+
+// Corrección de la llave privada (reemplaza los saltos de línea literales \n)
 const auth = new google.auth.JWT(
     GOOGLE_CREDENTIALS.client_email,
     null,
-    GOOGLE_CREDENTIALS.private_key,
+    GOOGLE_CREDENTIALS.private_key.replace(/\\n/g, '\n'),
     ['https://www.googleapis.com/auth/drive']
 );
 
 const drive = google.drive({ version: 'v3', auth });
 
-app.use(express.static('public')); // Para servir tu index.html
+app.use(express.static(path.join(__dirname, 'public'))); 
 app.use(express.json());
 
 // 1. ENDPOINT PARA SUBIR LA FOTO DEL CLIENTE
 app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
     try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No se subió ninguna imagen' });
+        }
+
         const fileMetadata = {
             name: `CLIENTE_${Date.now()}_${req.body.jewelryId}.jpg`,
             parents: [FOLDER_PENDIENTES_ID]
         };
         const media = {
-            mimeType: 'image/jpeg',
+            mimeType: req.file.mimetype,
             body: fs.createReadStream(req.file.path)
         };
 
@@ -57,26 +75,27 @@ app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
 app.get('/check-status/:fileName', async (req, res) => {
     try {
         const fileName = req.params.fileName;
-        // Buscamos un archivo con el mismo nombre en la carpeta de FINALIZADOS
         const response = await drive.files.list({
             q: `'${FOLDER_FINALIZADOS_ID}' in parents and name = '${fileName}' and trashed = false`,
             fields: 'files(id, name, webContentLink, thumbnailLink)'
         });
 
-        if (response.data.files.length > 0) {
-            // Si el archivo existe, devolvemos el link de la imagen
+        if (response.data.files && response.data.files.length > 0) {
             res.json({ status: 'ready', file: response.data.files[0] });
         } else {
             res.json({ status: 'pending' });
         }
     } catch (error) {
+        console.error('Error al buscar:', error);
         res.status(500).json({ error: 'Error al buscar archivo' });
     }
 });
 
+// Ruta para servir el index.html explícitamente si no carga solo
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Servidor joyeria corriendo en puerto ${PORT}`));
-
-
-
-
+// Escuchar en 0.0.0.0 es necesario para Koyeb
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Servidor joyeria corriendo en puerto ${PORT}`));
