@@ -7,8 +7,12 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Configuración de subida temporal
+// Configuración de subida para dos campos de archivo
 const upload = multer({ dest: 'uploads/' });
+const uploadFields = upload.fields([
+    { name: 'userImage', maxCount: 1 },
+    { name: 'catalogImage', maxCount: 1 }
+]);
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -16,40 +20,52 @@ app.use(express.json());
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
+app.post('/send-to-telegram', uploadFields, async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ success: false, error: 'No hay foto' });
+        const userFile = req.files['userImage'] ? req.files['userImage'][0] : null;
+        const catalogFile = req.files['catalogImage'] ? req.files['catalogImage'][0] : null;
 
-        const jewelryId = req.body.jewelryId || 'No especificada';
-        
-        // Preparamos el formulario para Telegram
+        if (!userFile || !catalogFile) {
+            return res.status(400).json({ success: false, error: 'Faltan imágenes' });
+        }
+
+        // Enviamos las fotos como un Grupo de Medios (Media Group) para que lleguen juntas
         const form = new FormData();
         form.append('chat_id', CHAT_ID);
-        form.append('photo', fs.createReadStream(req.file.path));
-        form.append('caption', `💎 **NUEVO PEDIDO DE DISEÑO**\n\n💍 Joya elegida: ${jewelryId}\n📂 Archivo: ${req.file.originalname}`);
+        
+        // Creamos el array de medios para Telegram
+        const media = [
+            {
+                type: 'photo',
+                media: 'attach://userPhoto',
+                caption: `💎 **NUEVA SOLICITUD COMBINADA**\n👤 Foto del Cliente y Joya seleccionada.`
+            },
+            {
+                type: 'photo',
+                media: 'attach://catalogPhoto'
+            }
+        ];
 
-        // Enviamos a la API de Telegram
-        const telegramRes = await axios.post(
-            `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`,
+        form.append('media', JSON.stringify(media));
+        form.append('userPhoto', fs.createReadStream(userFile.path));
+        form.append('catalogPhoto', fs.createReadStream(catalogFile.path));
+
+        await axios.post(
+            `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMediaGroup`,
             form,
             { headers: form.getHeaders() }
         );
 
-        // Borramos el archivo del servidor de Koyeb para no llenar espacio
-        fs.unlinkSync(req.file.path);
+        // Limpieza de archivos temporales
+        fs.unlinkSync(userFile.path);
+        fs.unlinkSync(catalogFile.path);
 
-        console.log("✅ Foto enviada a Telegram");
-        res.json({ 
-            success: true, 
-            fileName: req.file.filename 
-        });
+        res.json({ success: true });
 
     } catch (error) {
-        console.error('❌ Error:', error.message);
-        res.status(500).json({ success: false, error: 'Error al enviar a Telegram' });
+        console.error('❌ Error Telegram:', error.response?.data || error.message);
+        res.status(500).json({ success: false });
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor listo en puerto ${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor en puerto ${PORT}`));
