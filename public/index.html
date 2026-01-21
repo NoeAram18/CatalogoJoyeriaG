@@ -48,35 +48,40 @@
         }
 
         async function enviarPedido() {
-            const userPhoto = document.getElementById('userPhoto').files[0];
-            const status = document.getElementById('status');
+    const userPhotoInput = document.getElementById('userPhoto');
+    const status = document.getElementById('status');
 
-            if (!selectedCatalogImg || !userPhoto) {
-                alert("Por favor, selecciona una joya y sube tu foto.");
-                return;
-            }
+    if (!selectedCatalogImg || !userPhotoInput.files[0]) {
+        alert("Por favor, selecciona una joya y sube tu foto.");
+        return;
+    }
 
-            status.innerText = "Enviando...";
-            const formData = new FormData();
-            formData.append('userImage', userPhoto);
-            
-            // Convertimos la imagen del catálogo (URL) en un archivo para el servidor
-            const responseImg = await fetch(selectedCatalogImg);
-            const blob = await responseImg.blob();
-            formData.append('catalogImage', blob, 'catalog.jpg');
+    status.innerText = "Enviando pedido...";
+    const formData = new FormData();
+    
+    // 1. Añadimos la foto del usuario
+    formData.append('userImage', userPhotoInput.files[0]);
+    
+    // 2. Añadimos la ruta de la imagen del catálogo como texto 
+    // (Es más seguro que intentar convertirla a Blob en el cliente)
+    formData.append('catalogPath', selectedCatalogImg);
 
-            try {
-                const res = await fetch('/send-to-telegram', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.success) {
-                    status.innerHTML = "✅ ¡Enviado! El diseñador recibió ambas fotos.";
-                } else {
-                    status.innerText = "❌ Error al enviar.";
-                }
-            } catch (e) {
-                status.innerText = "❌ Error de conexión.";
-            }
+    try {
+        const res = await fetch('/send-to-telegram', { 
+            method: 'POST', 
+            body: formData 
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            status.innerHTML = "✅ ¡Enviado! El diseñador recibió todo.";
+        } else {
+            status.innerText = "❌ Error en el servidor: " + (data.error || 'Desconocido');
         }
+    } catch (e) {
+        status.innerText = "❌ Error de conexión con el servidor.";
+    }
+}
     </script>
 </body>
 </html>
