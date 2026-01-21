@@ -86,7 +86,7 @@ app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
 // 4. RUTA PARA REVISAR ESTADO (Polling)
 app.get('/check-status/:fileName', async (req, res) => {
     try {
-       // Busca esta parte dentro de la función uploadToDrive
+         // Busca esta parte dentro de la función uploadToDrive
 const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
 const auth = new google.auth.JWT(
     credentials.client_email,
@@ -118,5 +118,6 @@ const auth = new google.auth.JWT(
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor joyeria en puerto ${PORT}`);
 });
+
 
 
