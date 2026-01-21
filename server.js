@@ -3,11 +3,12 @@ const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
-const path = require('path'); // Para manejar rutas de archivos de forma segura
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Configuración de multer para guardar fotos temporales
 const upload = multer({ dest: 'uploads/' });
 
 app.use(express.static('public'));
@@ -15,60 +16,71 @@ app.use(express.json());
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
-// Nueva variable para obtener la URL de tu app en Koyeb
-const KOYEB_APP_URL = process.env.KOYEB_APP_URL || `http://localhost:${PORT}`; 
 
 app.post('/send-to-telegram', upload.single('userImage'), async (req, res) => {
     try {
         const userFile = req.file;
-        const catalogPath = req.body.catalogPath; // Ej: 'images/anillo1.jpg'
+        const catalogPath = req.body.catalogPath; // Ej: "images/anillo1.jpg"
 
         if (!userFile || !catalogPath) {
-            return res.status(400).json({ success: false, error: 'Faltan imágenes o datos' });
+            return res.status(400).json({ success: false, error: 'Faltan datos.' });
         }
 
-        // 1. Descargamos la imagen del catálogo desde la URL pública de Koyeb
-        const catalogImageUrl = `${KOYEB_APP_URL}/${catalogPath}`;
-        const catalogImageResponse = await axios.get(catalogImageUrl, { responseType: 'stream' });
+        // 1. Construimos la ruta absoluta a la imagen del catálogo
+        // Importante: Asegúrate que tus fotos estén en public/images/
+        const fullCatalogPath = path.join(__dirname, 'public', catalogPath);
 
-        // 2. Preparamos el FormData con ambas imágenes
+        // Verificamos si la imagen del catálogo existe antes de enviarla
+        if (!fs.existsSync(fullCatalogPath)) {
+            console.error(`❌ No existe el archivo: ${fullCatalogPath}`);
+            return res.status(404).json({ success: false, error: 'Joya no encontrada en catálogo.' });
+        }
+
         const form = new FormData();
         form.append('chat_id', CHAT_ID);
         
-        // Creamos el array de medios para el grupo
+        // Estructura para enviar álbum (MediaGroup)
         const media = [
             {
                 type: 'photo',
                 media: 'attach://userPhoto',
-                caption: `👤 Foto del Cliente`
+                caption: `👤 **FOTO DEL CLIENTE**`
             },
             {
                 type: 'photo',
                 media: 'attach://catalogPhoto',
-                caption: `💎 Joya del Catálogo: ${catalogPath.split('/').pop().split('.')[0]}` // Nombre del archivo sin extensión
+                caption: `💍 **JOYA SELECCIONADA**: ${path.basename(catalogPath)}`
             }
         ];
 
         form.append('media', JSON.stringify(media));
+        
+        // Adjuntamos ambos archivos físicos
         form.append('userPhoto', fs.createReadStream(userFile.path));
-        form.append('catalogPhoto', catalogImageResponse.data); // Usamos el stream descargado
+        form.append('catalogPhoto', fs.createReadStream(fullCatalogPath));
 
         await axios.post(
             `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMediaGroup`,
             form,
-            { headers: form.getHeaders() }
+            { 
+                headers: { ...form.getHeaders() },
+                timeout: 30000 // 30 segundos de margen
+            }
         );
 
-        // Limpieza de archivos temporales
-        if (fs.existsSync(userFile.path)) fs.unlinkSync(userFile.path);
+        // Borramos la foto temporal que subió el usuario
+        fs.unlinkSync(userFile.path);
 
         res.json({ success: true });
 
     } catch (error) {
-        console.error('❌ Error enviando grupo de fotos a Telegram:', error.response?.data || error.message);
-        res.status(500).json({ success: false, error: error.message || 'Error al enviar a Telegram' });
+        if (error.response) {
+            console.error('❌ Error de Telegram:', error.response.data);
+        } else {
+            console.error('❌ Error general:', error.message);
+        }
+        res.status(500).json({ success: false, error: 'Error al enviar a Telegram' });
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor en puerto ${PORT}`));
-
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor listo en puerto ${PORT}`));
