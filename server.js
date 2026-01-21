@@ -42,7 +42,7 @@ async function uploadToDrive(file) {
 
         const fileMetadata = {
             name: file.filename,
-            parents: ['TU_ID_DE_CARPETA_AQUI'] // <--- ¡ASEGÚRATE DE CAMBIAR ESTO!
+            parents: ['1EYcfC0mvvB8YcqOvRbcayEzeXrNohv7D'] // <--- ¡ASEGÚRATE DE CAMBIAR ESTO!
         };
 
         const media = {
@@ -117,3 +117,4 @@ app.get('/check-status/:fileName', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor joyeria en puerto ${PORT}`);
 });
+
