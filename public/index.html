@@ -3,66 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diseño de Joyería Personalizada</title>
+    <title>Joyería - Personalización</title>
     <style>
         :root { --oro: #d4af37; --oscuro: #1a1a1a; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; background: #f8f9fa; color: var(--oscuro); }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
-        /* Catálogo */
-        .catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin: 20px 0; }
-        .item { background: white; padding: 10px; border: 2px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; color: var(--oscuro); }
+        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .catalog { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .item { border: 2px solid #ddd; border-radius: 10px; padding: 5px; cursor: pointer; transition: 0.2s; }
         .item img { width: 100%; border-radius: 8px; }
-        .item.selected { border-color: var(--oro); background: #fffdf0; transform: scale(1.05); }
-
-        /* Formulario */
-        input[type="file"], input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { background: var(--oro); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 18px; cursor: pointer; width: 100%; font-weight: bold; }
-        button:disabled { background: #ccc; }
-
-        /* Sección de Resultado */
-        #result-section { display: none; margin-top: 30px; padding: 20px; border: 2px dashed var(--oro); border-radius: 15px; background: #fffdf5; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--oro); border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 10px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #edited-img { width: 100%; border-radius: 10px; margin-top: 15px; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        .item.selected { border-color: var(--oro); background: #fffdf0; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: var(--oro); color: white; border: none; font-weight: bold; cursor: pointer; }
+        #result-section { display: none; margin-top: 20px; border: 2px dashed var(--oro); padding: 15px; border-radius: 10px; }
+        #edited-img { width: 100%; border-radius: 10px; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Taller de Joyería</h1>
-    <p>Selecciona una pieza y sube tu foto para personalizarla.</p>
-
-    <div class="catalog" id="catalog">
+    <h2>Catálogo Joyería</h2>
+    <div class="catalog">
         <div class="item" onclick="selectItem(this, 'images/anillo1.jpg')">
-            <img src="images/anillo1.jpg" alt="Anillo 1">
-            <p>Anillo Ref. A1</p>
+            <img src="images/anillo1.jpg">
+            <p>Anillo Ref. 1</p>
         </div>
         <div class="item" onclick="selectItem(this, 'images/anillo2.jpg')">
-            <img src="images/anillo2.jpg" alt="Anillo 2">
-            <p>Anillo Ref. A2</p>
+            <img src="images/anillo2.jpg">
+            <p>Anillo Ref. 2</p>
         </div>
     </div>
 
     <input type="text" id="clientName" placeholder="Tu Nombre o WhatsApp">
-    <p>Sube la foto donde quieres probar la joya:</p>
     <input type="file" id="userPhoto" accept="image/*">
-
     <button id="btnEnviar" onclick="enviarPedido()">ENVIAR A DISEÑO</button>
 
     <div id="result-section">
-        <div id="waiting">
-            <div class="loader"></div>
-            <p><strong>Enviado con éxito.</strong></p>
-            <p>El diseñador está editando tu pieza... <br><small>No cierres esta ventana para ver el resultado.</small></p>
-        </div>
-        
-        <div id="finished" style="display:none;">
-            <h3>✨ ¡Tu diseño está listo!</h3>
-            <img id="edited-img" src="" alt="Diseño final">
-            <br><br>
-            <button style="background:#25d366;" onclick="descargarDiseño()">DESCARGAR IMAGEN</button>
-        </div>
+        <p id="wait-status">⏳ Enviando pedido...</p>
+        <img id="edited-img">
     </div>
 </div>
 
@@ -79,69 +56,43 @@
     async function enviarPedido() {
         const userPhoto = document.getElementById('userPhoto').files[0];
         const clientName = document.getElementById('clientName').value;
-        const btn = document.getElementById('btnEnviar');
+        const status = document.getElementById('wait-status');
 
         if (!selectedCatalogImg || !userPhoto || !clientName) {
-            alert("Por favor completa: Nombre, Joya del catálogo y tu Foto.");
-            return;
+            alert("Completa todos los datos."); return;
         }
 
-        btn.disabled = true;
-        btn.innerText = "Subiendo archivo...";
+        document.getElementById('result-section').style.display = 'block';
+        document.getElementById('btnEnviar').disabled = true;
 
         const formData = new FormData();
         formData.append('userImage', userPhoto);
         formData.append('catalogPath', selectedCatalogImg);
-        formData.append('clientName', clientName); // Enviamos el nombre al server
+        formData.append('clientName', clientName);
 
         try {
             const res = await fetch('/send-to-telegram', { method: 'POST', body: formData });
             const data = await res.json();
-
             if (data.success) {
-                document.getElementById('result-section').style.display = 'block';
-                document.getElementById('btnEnviar').style.display = 'none';
-                // Comenzar a preguntar por la respuesta cada 5 segundos
+                status.innerHTML = "✅ **Enviado.**<br>El diseñador está trabajando en tu joya. No cierres esta ventana.";
                 iniciarEspera(data.clientId);
-            } else {
-                alert("Error al enviar. Intenta de nuevo.");
-                btn.disabled = false;
             }
-        } catch (e) {
-            alert("Error de conexión.");
-            btn.disabled = false;
-        }
+        } catch (e) { alert("Error al enviar."); }
     }
 
     function iniciarEspera(clientId) {
         intervalId = setInterval(async () => {
-            try {
-                const res = await fetch(`/check-edition/${clientId}`);
-                const data = await res.json();
-
-                if (data.ready) {
-                    clearInterval(intervalId);
-                    mostrarResultado(data.url);
-                }
-            } catch (e) {
-                console.log("Esperando respuesta...");
+            const res = await fetch(`/check-edition/${clientId}`);
+            const data = await res.json();
+            if (data.ready) {
+                clearInterval(intervalId);
+                const img = document.getElementById('edited-img');
+                img.src = data.url;
+                img.style.display = 'block';
+                document.getElementById('wait-status').innerHTML = "✨ **¡Tu diseño está listo!**";
             }
-        }, 5000); // Consulta cada 5 segundos
-    }
-
-    function mostrarResultado(url) {
-        document.getElementById('waiting').style.display = 'none';
-        document.getElementById('finished').style.display = 'block';
-        const img = document.getElementById('edited-img');
-        img.src = url;
-        img.style.display = 'block';
-    }
-
-    function descargarDiseño() {
-        const url = document.getElementById('edited-img').src;
-        window.open(url, '_blank');
+        }, 5000);
     }
 </script>
-
 </body>
 </html>
