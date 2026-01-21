@@ -69,7 +69,7 @@ async function uploadToDrive(file) {
 }
 
 // 4. RUTA PARA RECIBIR LA IMAGEN
-app.post('/upload', upload.single('image'), async (req, res) => {
+app.post('/upload-to-drive', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).send('No se subió ninguna imagen.');
@@ -88,5 +88,6 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor listo en puerto ${PORT}`);
 });
+
 
 
