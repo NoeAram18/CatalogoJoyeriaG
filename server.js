@@ -12,7 +12,8 @@ const upload = multer({ dest: 'uploads/' });
 app.use(express.static('public'));
 app.use(express.json());
 
-let buzónEdiciones = {}; // Memoria temporal para las respuestas
+// Memoria temporal para respuestas del diseñador
+let buzónEdiciones = {}; 
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
@@ -20,11 +21,9 @@ const CHAT_ID = process.env.CHAT_ID;
 app.post('/send-to-telegram', upload.single('userImage'), async (req, res) => {
     try {
         const userFile = req.file;
-        const catalogPath = req.body.catalogPath;
+        const catalogPath = req.body.catalogPath; // URL de ImgBB
         const clientName = req.body.clientName;
         const clientId = Date.now();
-
-        const fullCatalogPath = path.join(__dirname, 'public', catalogPath);
 
         // --- PASO 1: ENVIAR FOTO DEL CLIENTE ---
         const form1 = new FormData();
@@ -36,32 +35,32 @@ app.post('/send-to-telegram', upload.single('userImage'), async (req, res) => {
             headers: form1.getHeaders()
         });
 
-        const messageId = res1.data.result.message_id;
+        // --- PASO 2: ENVIAR FOTO DEL CATÁLOGO (Desde URL) ---
+        // Descargamos la imagen de ImgBB como un stream para Telegram
+        const response = await axios.get(catalogPath, { responseType: 'stream' });
+        
+        const form2 = new FormData();
+        form2.append('chat_id', CHAT_ID);
+        form2.append('photo', response.data);
+        form2.append('caption', `💍 **JOYA SELECCIONADA**\nEnlace: ${catalogPath}`);
+        form2.append('reply_to_message_id', res1.data.result.message_id);
 
-        // --- PASO 2: ENVIAR FOTO DEL CATÁLOGO (Como respuesta a la primera) ---
-        if (fs.existsSync(fullCatalogPath)) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // Pausa de seguridad
-            const form2 = new FormData();
-            form2.append('chat_id', CHAT_ID);
-            form2.append('photo', fs.createReadStream(fullCatalogPath));
-            form2.append('caption', `💍 **REFERENCIA SELECCIONADA**\nJoya: ${path.basename(catalogPath)}`);
-            form2.append('reply_to_message_id', messageId);
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, form2, {
+            headers: form2.getHeaders()
+        });
 
-            await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, form2, {
-                headers: form2.getHeaders()
-            });
-        }
-
+        // Limpieza de la foto del cliente
         if (fs.existsSync(userFile.path)) fs.unlinkSync(userFile.path);
+        
         res.json({ success: true, clientId: clientId });
 
     } catch (error) {
-        console.error('❌ Error:', error.response?.data || error.message);
-        res.status(500).json({ success: false });
+        console.error('❌ Error en el proceso:', error.message);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// WEBHOOK para recibir tu edición desde Telegram
+// Webhook para recibir la edición desde Telegram
 app.post('/telegram-webhook', async (req, res) => {
     const msg = req.body.message;
     if (msg && msg.reply_to_message && msg.photo) {
@@ -73,6 +72,7 @@ app.post('/telegram-webhook', async (req, res) => {
             const fileId = msg.photo[msg.photo.length - 1].file_id;
             const fileRes = await axios.get(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
             const finalUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileRes.data.result.file_path}`;
+            
             buzónEdiciones[clientId] = finalUrl;
         }
     }
@@ -88,4 +88,5 @@ app.get('/check-edition/:clientId', (req, res) => {
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor en puerto ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor Joyería corriendo en puerto ${PORT}`));
+
