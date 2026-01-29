@@ -90,5 +90,8 @@ app.get('/check-edition/:clientId', (req, res) => {
     res.json({ ready: !!buzónEdiciones[id], url: buzónEdiciones[id] || null });
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor listo`));
+const PORT = process.env.PORT || 10000; // Render usa el 10000 por defecto
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor listo en puerto ${PORT}`);
+});
 
