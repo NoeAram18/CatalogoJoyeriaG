@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
 const upload = multer({ dest: 'uploads/' });
 
 app.use(express.static('.'));
@@ -94,4 +93,5 @@ const PORT = process.env.PORT || 10000; // Render usa el 10000 por defecto
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor listo en puerto ${PORT}`);
 });
+
 
