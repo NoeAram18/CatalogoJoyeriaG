@@ -8,7 +8,26 @@ const path = require('path');
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
-app.use(express.static('.'));
+// 1. Servir archivos estáticos desde la carpeta 'public' (si existe)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 2. Servir archivos estáticos desde la raíz (por si acaso)
+app.use(express.static(__dirname));
+
+// 3. RUTA MAESTRA: Si alguien entra a la raíz "/", envíale el index.html explícitamente
+app.get('/', (req, res) => {
+    // Intentamos buscarlo en public, si no, en la raíz
+    const publicPath = path.join(__dirname, 'public', 'index.html');
+    const rootPath = path.join(__dirname, 'index.html');
+
+    if (fs.existsSync(publicPath)) {
+        res.sendFile(publicPath);
+    } else if (fs.existsSync(rootPath)) {
+        res.sendFile(rootPath);
+    } else {
+        res.status(404).send('❌ Error: No encontré el archivo index.html en ninguna carpeta.');
+    }
+});
 app.use(express.json());
 
 let buzónEdiciones = {}; 
@@ -93,5 +112,6 @@ const PORT = process.env.PORT || 10000; // Render usa el 10000 por defecto
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor listo en puerto ${PORT}`);
 });
+
 
 
