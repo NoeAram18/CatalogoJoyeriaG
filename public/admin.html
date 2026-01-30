@@ -1,32 +1,86 @@
-<div class="form-grid">
-    <input type="text" id="prodNombre" placeholder="Nombre de la joya">
-    <select id="prodCat">
-        <option value="Anillos">Anillos</option>
-        <option value="Collares">Collares</option>
-    </select>
-    <input type="number" id="prodPrecio" placeholder="Precio Base USD">
-    <input type="text" id="url1" placeholder="Imagen Principal (URL)">
-    <input type="text" id="url2" placeholder="Imagen 2 (Opcional)">
-    <input type="text" id="url3" placeholder="Imagen 3 (Opcional)">
-</div>
-<button class="btn-add" onclick="agregarProducto()">PUBLICAR CON GALERÍA</button>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Luxury Gallery</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .box { background: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: auto; }
+        input, select, button { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+        button { background: #1a1a1a; color: white; border: none; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Panel Administrador</h2>
+        <input type="text" id="nombre" placeholder="Nombre de la pieza">
+        <select id="categoria">
+            <option value="Anillos">Anillos</option>
+            <option value="Collares">Collares</option>
+            <option value="Pulseras">Pulseras</option>
+        </select>
+        <input type="number" id="precio" placeholder="Precio Base USD">
+        <input type="text" id="img1" placeholder="URL Imagen Principal (Obligatoria)">
+        <input type="text" id="img2" placeholder="URL Imagen 2 (Opcional)">
+        <input type="text" id="img3" placeholder="URL Imagen 3 (Opcional)">
+        <button onclick="guardar()">PUBLICAR PIEZA</button>
 
-<script>
-async function agregarProducto() {
-    const imagenes = [
-        document.getElementById('url1').value,
-        document.getElementById('url2').value,
-        document.getElementById('url3').value
-    ].filter(url => url !== ""); // Solo enviamos las que no estén vacías
+        <table id="tabla">
+            <thead><tr><th>Pieza</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
-    const data = {
-        nombre: document.getElementById('prodNombre').value,
-        categoria: document.getElementById('prodCat').value,
-        precioBase: document.getElementById('prodPrecio').value,
-        imagenes: imagenes
-    };
+    <script>
+        let pass = "";
+        window.onload = () => {
+            pass = prompt("Clave Admin:");
+            cargar();
+        }
 
-    const res = await apiRequest('/api/admin/productos', 'POST', data);
-    if (res) location.reload();
-}
-</script>
+        async function cargar() {
+            const res = await fetch('/api/productos');
+            const prods = await res.json();
+            const tbody = document.querySelector("#tabla tbody");
+            tbody.innerHTML = prods.map(p => `
+                <tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.stock ? 'En línea' : 'Agotado'}</td>
+                    <td><button onclick="toggle('${p._id}', ${p.stock})">Cambiar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function guardar() {
+            const imagenes = [
+                document.getElementById('img1').value,
+                document.getElementById('img2').value,
+                document.getElementById('img3').value
+            ].filter(v => v);
+
+            await fetch('/api/admin/productos', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'x-admin-password': pass},
+                body: JSON.stringify({
+                    nombre: document.getElementById('nombre').value,
+                    categoria: document.getElementById('categoria').value,
+                    precioBase: document.getElementById('precio').value,
+                    imagenes: imagenes
+                })
+            });
+            location.reload();
+        }
+
+        async function toggle(id, stock) {
+            await fetch(`/api/admin/productos/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json', 'x-admin-password': pass},
+                body: JSON.stringify({ stock: !stock })
+            });
+            cargar();
+        }
+    </script>
+</body>
+</html>
