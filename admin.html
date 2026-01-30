@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Luxury</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #eee; }
+        .card { background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: 20px auto; }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
+        button { background: #1a1a1a; color: white; border: none; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .online { color: green; font-weight: bold; }
+        .offline { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Gestión de Inventario</h2>
+        <input type="text" id="n" placeholder="Nombre">
+        <select id="c"><option value="Anillos">Anillos</option><option value="Collares">Collares</option></select>
+        <input type="number" id="p" placeholder="Precio Base">
+        <input type="text" id="i1" placeholder="URL Foto 1 (Principal)">
+        <input type="text" id="i2" placeholder="URL Foto 2">
+        <input type="text" id="i3" placeholder="URL Foto 3">
+        <button onclick="subir()">GUARDAR PIEZA</button>
+        
+        <table id="lista">
+            <thead><tr><th>Pieza</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let pass = "";
+        window.onload = () => { 
+            pass = prompt("Clave:"); 
+            cargar(); 
+        };
+
+        async function cargar() {
+            const res = await fetch('/api/productos');
+            const data = await res.json();
+            document.querySelector("#lista tbody").innerHTML = data.map(p => `
+                <tr>
+                    <td>${p.nombre}</td>
+                    <td class="${p.stock?'online':'offline'}">${p.stock?'Activo':'Agotado'}</td>
+                    <td><button onclick="toggle('${p._id}', ${p.stock})">Cambiar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function subir() {
+            const imagenes = [document.getElementById('i1').value, document.getElementById('i2').value, document.getElementById('i3').value].filter(v => v);
+            const res = await fetch('/api/admin/productos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-password': pass },
+                body: JSON.stringify({ nombre: document.getElementById('n').value, categoria: document.getElementById('c').value, precioBase: document.getElementById('p').value, imagenes })
+            });
+            if(res.ok) { alert("¡Éxito!"); cargar(); }
+        }
+
+        async function toggle(id, s) {
+            await fetch(`/api/admin/productos/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'x-admin-password': pass },
+                body: JSON.stringify({ stock: !s })
+            });
+            cargar();
+        }
+    </script>
+</body>
+</html>
