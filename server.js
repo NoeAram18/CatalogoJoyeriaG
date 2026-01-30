@@ -41,14 +41,17 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 let buzónEdiciones = {};
 
-// Reemplaza la ruta del '/' por esta que es más robusta:
+// 1. Permitir que Express lea archivos en la carpeta raíz
+app.use(express.static(__dirname));
+
+// 2. Ruta para la página principal
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.status(404).send("Error: El archivo index.html no existe en el servidor. Verifica el nombre en GitHub.");
-    }
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// 3. Ruta específica para el admin (Añade esto para asegurar el acceso)
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // --- RUTAS PÚBLICAS CATÁLOGO ---
@@ -176,4 +179,5 @@ app.get('/check-edition/:clientId', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor Luxury corriendo en puerto ${PORT}`);
 });
+
 
