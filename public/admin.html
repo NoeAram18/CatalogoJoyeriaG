@@ -3,95 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin - Joyería</title>
+    <title>Panel de Control - Atelier Luxury</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h2 { border-bottom: 2px solid #c5a059; padding-bottom: 10px; color: #1a1a1a; }
-        .form-group { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; }
-        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        button { background: #1a1a1a; color: white; cursor: pointer; border: none; }
-        button:hover { background: #c5a059; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
-        th { background: #f9f9f9; }
-        .status-btn { padding: 5px 10px; font-size: 12px; }
-        .stock-true { color: green; }
-        .stock-false { color: red; }
+        :root { --oro: #c5a059; --dark: #1a1a1a; --gris: #f4f4f4; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gris); margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        h2, h3 { border-bottom: 2px solid var(--oro); padding-bottom: 10px; color: var(--dark); text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Formulario */
+        .admin-section { background: #fafafa; padding: 20px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        input, select { padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        
+        .btn-add { background: var(--dark); color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        .btn-add:hover { background: var(--oro); }
+
+        /* Tablas */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: var(--dark); color: white; font-weight: 500; }
+        
+        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd; }
+        .stock-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .available { background: #e8f5e9; color: #2e7d32; }
+        .out-of-stock { background: #ffebee; color: #c62828; }
+        
+        .action-btn { padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: white; transition: 0.2s; }
+        .action-btn:hover { background: var(--gris); }
+
+        .ventas-card { background: #fff; border-left: 5px solid var(--oro); padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>💎 Panel de Administración</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>💎 Administración de Inventario</h2>
+        <button onclick="location.reload()" class="action-btn">🔄 Sincronizar</button>
+    </div>
     
-    <h3>Añadir Nueva Pieza</h3>
-    <div class="form-group">
-        <input type="text" id="prodNombre" placeholder="Nombre de la joya">
-        <select id="prodCat">
-            <option value="Anillos">Anillos</option>
-            <option value="Collares">Collares</option>
-            <option value="Pulseras">Pulseras</option>
-            <option value="Relojes">Relojes</option>
-        </select>
-        <input type="number" id="prodPrecio" placeholder="Precio Base ($)">
-        <input type="text" id="prodUrl" placeholder="Link de Foto (ImgBB)">
-        <button onclick="agregarProducto()">AÑADIR</button>
+    <div class="admin-section">
+        <h3>Nueva Pieza al Catálogo</h3>
+        <div class="form-grid">
+            <input type="text" id="prodNombre" placeholder="Nombre (ej. Anillo Diamante)">
+            <select id="prodCat">
+                <option value="Anillos">Anillos</option>
+                <option value="Collares">Collares</option>
+                <option value="Pulseras">Pulseras</option>
+                <option value="Relojes">Relojes</option>
+            </select>
+            <input type="number" id="prodPrecio" placeholder="Precio Base USD">
+            <input type="text" id="prodUrl" placeholder="URL Imagen (ImgBB)">
+        </div>
+        <button class="btn-add" onclick="agregarProducto()">PUBLICAR EN LA WEB</button>
     </div>
 
-    <hr>
+    <div class="table-container">
+        <h3>Productos en línea</h3>
+        <table id="tablaProductos">
+            <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio Base</th>
+                    <th>Estado</th>
+                    <th>Gestión</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
 
-    <h3>Inventario Actual</h3>
-    <table id="tablaProductos">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Estado</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <br><br>
 
-    <hr>
-
-    <h3>Registro de Ventas (Pedidos)</h3>
-    <table id="tablaVentas">
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Joya</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="table-container">
+        <h3>Registro de Pedidos Recientes</h3>
+        <div id="listaVentas">
+            <p style="color: #888;">No hay pedidos registrados aún.</p>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Cargar datos al iniciar
+    let adminPass = "";
+
+    // Seguridad al entrar
     window.onload = () => {
-        cargarProductos();
-        cargarVentas();
+        adminPass = prompt("🔑 Ingrese Clave de Administrador:");
+        if (adminPass) {
+            cargarProductos();
+            cargarVentas();
+        } else {
+            document.body.innerHTML = "<div style='text-align:center; margin-top:100px;'><h1>🚫 Acceso Denegado</h1><button onclick='location.reload()'>Reintentar</button></div>";
+        }
     };
 
+    // Función universal para peticiones con contraseña
+    async function apiRequest(url, method = 'GET', body = null) {
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'x-admin-password': adminPass
+            }
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        const res = await fetch(url, options);
+        if (res.status === 401) {
+            alert("⚠️ Contraseña Incorrecta");
+            location.reload();
+            return null;
+        }
+        return res.json();
+    }
+
     async function cargarProductos() {
-        const res = await fetch('/api/productos'); // El cliente ve los activos, pero aquí cargaremos todos si fuera necesario
-        const productos = await res.json();
+        const productos = await apiRequest('/api/productos'); 
         const tbody = document.querySelector('#tablaProductos tbody');
         tbody.innerHTML = '';
+        
         productos.forEach(p => {
             tbody.innerHTML += `
                 <tr>
-                    <td>${p.nombre}</td>
+                    <td><img src="${p.urlImagen}" class="img-preview"></td>
+                    <td><strong>${p.nombre}</strong></td>
                     <td>${p.categoria}</td>
-                    <td>$${p.precioBase}</td>
-                    <td class="${p.stock ? 'stock-true' : 'stock-false'}">${p.stock ? 'Disponible' : 'Agotado'}</td>
+                    <td>$${p.precioBase} USD</td>
                     <td>
-                        <button class="status-btn" onclick="toggleStock('${p._id}', ${p.stock})">
-                            ${p.stock ? 'Agotar' : 'Reactivar'}
+                        <span class="stock-badge ${p.stock ? 'available' : 'out-of-stock'}">
+                            ${p.stock ? 'EN LÍNEA' : 'AGOTADO'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="action-btn" onclick="toggleStock('${p._id}', ${p.stock})">
+                            ${p.stock ? 'Marcar Agotado' : 'Reactivar'}
                         </button>
                     </td>
                 </tr>
@@ -100,42 +150,50 @@
     }
 
     async function agregarProducto() {
-        const data = {
-            nombre: document.getElementById('prodNombre').value,
-            categoria: document.getElementById('prodCat').value,
-            precioBase: document.getElementById('prodPrecio').value,
-            urlImagen: document.getElementById('prodUrl').value
-        };
+        const nombre = document.getElementById('prodNombre').value;
+        const categoria = document.getElementById('prodCat').value;
+        const precioBase = document.getElementById('prodPrecio').value;
+        const urlImagen = document.getElementById('prodUrl').value;
 
-        const res = await fetch('/api/admin/productos', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
+        if (!nombre || !precioBase || !urlImagen) return alert("Completa todos los campos");
+
+        const res = await apiRequest('/api/admin/productos', 'POST', {
+            nombre, categoria, precioBase, urlImagen
         });
 
-        if (res.ok) {
-            alert("¡Producto añadido!");
+        if (res) {
+            alert("✅ Joya añadida al catálogo");
             location.reload();
         }
     }
 
     async function toggleStock(id, currentStock) {
-        await fetch(`/api/admin/productos/${id}`, {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ stock: !currentStock })
+        const res = await apiRequest(`/api/admin/productos/${id}`, 'PATCH', {
+            stock: !currentStock
         });
-        cargarProductos();
+        if (res) cargarProductos();
     }
 
     async function cargarVentas() {
-        const res = await fetch('/api/admin/ventas');
-        const ventas = await res.json();
-        const tbody = document.querySelector('#tablaVentas tbody');
-        tbody.innerHTML = '';
+        const ventas = await apiRequest('/api/admin/ventas');
+        const lista = document.getElementById('listaVentas');
+        if (ventas.length === 0) return;
+
+        lista.innerHTML = '';
         ventas.forEach(v => {
-            const fecha = new Date(v.fecha).toLocaleString();
-            tbody.innerHTML += `<tr><td>${fecha}</td><td>${v.cliente}</td><td>${v.joya}</td></tr>`;
+            const fecha = new Date(v.fecha).toLocaleString('es-ES', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+            lista.innerHTML += `
+                <div class="ventas-card">
+                    <div>
+                        <small style="color: #888;">${fecha}</small><br>
+                        <strong>Cliente: ${v.cliente}</strong>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="color: var(--oro)">💍 ${v.joya}</span><br>
+                        <small>Estado: ${v.status}</small>
+                    </div>
+                </div>
+            `;
         });
     }
 </script>
