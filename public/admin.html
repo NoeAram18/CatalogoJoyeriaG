@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Joyería</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #c5a059; padding-bottom: 10px; color: #1a1a1a; }
+        .form-group { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; }
+        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: #1a1a1a; color: white; cursor: pointer; border: none; }
+        button:hover { background: #c5a059; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
+        th { background: #f9f9f9; }
+        .status-btn { padding: 5px 10px; font-size: 12px; }
+        .stock-true { color: green; }
+        .stock-false { color: red; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>💎 Panel de Administración</h2>
+    
+    <h3>Añadir Nueva Pieza</h3>
+    <div class="form-group">
+        <input type="text" id="prodNombre" placeholder="Nombre de la joya">
+        <select id="prodCat">
+            <option value="Anillos">Anillos</option>
+            <option value="Collares">Collares</option>
+            <option value="Pulseras">Pulseras</option>
+            <option value="Relojes">Relojes</option>
+        </select>
+        <input type="number" id="prodPrecio" placeholder="Precio Base ($)">
+        <input type="text" id="prodUrl" placeholder="Link de Foto (ImgBB)">
+        <button onclick="agregarProducto()">AÑADIR</button>
+    </div>
+
+    <hr>
+
+    <h3>Inventario Actual</h3>
+    <table id="tablaProductos">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <hr>
+
+    <h3>Registro de Ventas (Pedidos)</h3>
+    <table id="tablaVentas">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Joya</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    // Cargar datos al iniciar
+    window.onload = () => {
+        cargarProductos();
+        cargarVentas();
+    };
+
+    async function cargarProductos() {
+        const res = await fetch('/api/productos'); // El cliente ve los activos, pero aquí cargaremos todos si fuera necesario
+        const productos = await res.json();
+        const tbody = document.querySelector('#tablaProductos tbody');
+        tbody.innerHTML = '';
+        productos.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.categoria}</td>
+                    <td>$${p.precioBase}</td>
+                    <td class="${p.stock ? 'stock-true' : 'stock-false'}">${p.stock ? 'Disponible' : 'Agotado'}</td>
+                    <td>
+                        <button class="status-btn" onclick="toggleStock('${p._id}', ${p.stock})">
+                            ${p.stock ? 'Agotar' : 'Reactivar'}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    async function agregarProducto() {
+        const data = {
+            nombre: document.getElementById('prodNombre').value,
+            categoria: document.getElementById('prodCat').value,
+            precioBase: document.getElementById('prodPrecio').value,
+            urlImagen: document.getElementById('prodUrl').value
+        };
+
+        const res = await fetch('/api/admin/productos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            alert("¡Producto añadido!");
+            location.reload();
+        }
+    }
+
+    async function toggleStock(id, currentStock) {
+        await fetch(`/api/admin/productos/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ stock: !currentStock })
+        });
+        cargarProductos();
+    }
+
+    async function cargarVentas() {
+        const res = await fetch('/api/admin/ventas');
+        const ventas = await res.json();
+        const tbody = document.querySelector('#tablaVentas tbody');
+        tbody.innerHTML = '';
+        ventas.forEach(v => {
+            const fecha = new Date(v.fecha).toLocaleString();
+            tbody.innerHTML += `<tr><td>${fecha}</td><td>${v.cliente}</td><td>${v.joya}</td></tr>`;
+        });
+    }
+</script>
+</body>
+</html>
