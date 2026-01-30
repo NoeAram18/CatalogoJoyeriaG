@@ -6,81 +6,78 @@
     <title>Atelier Luxury</title>
     <style>
         :root { --oro: #c5a059; }
-        body { font-family: serif; margin: 0; padding: 20px; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .card { border: 1px solid #eee; padding: 10px; cursor: pointer; }
-        .card.selected { border: 2px solid var(--oro); }
-        .card img { width: 100%; height: 200px; object-fit: cover; }
-        .thumbs { display: flex; gap: 5px; justify-content: center; margin-top: 5px; }
-        .thumb { width: 40px; height: 40px; object-fit: cover; border: 1px solid #ccc; }
-        .config { background: #f9f9f9; padding: 20px; margin-top: 30px; }
+        body { font-family: serif; margin: 0; padding: 20px; background: #fff; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .card { border: 1px solid #eee; padding: 10px; cursor: pointer; text-align: center; }
+        .card.selected { border: 2px solid var(--oro); background: #fdfaf4; }
+        .card img { width: 100%; height: 220px; object-fit: cover; }
+        .thumbs { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
+        .thumb { width: 45px; height: 45px; object-fit: cover; border: 1px solid #ccc; cursor: pointer; }
+        .form { background: #f9f9f9; padding: 30px; margin-top: 40px; border: 1px solid #eee; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; }
+        button { background: #000; color: #fff; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: var(--oro); }
     </style>
 </head>
 <body>
-    <h1>ATELIER LUXURY</h1>
+    <h1 style="text-align: center; letter-spacing: 3px;">ATELIER LUXURY</h1>
     <div class="grid" id="catalogo"></div>
 
-    <div class="config">
-        <h3 id="joya-selección">Selecciona una joya</h3>
-        <input type="text" id="nombre-cliente" placeholder="Tu nombre">
-        <input type="file" id="foto-cliente" accept="image/*">
-        <button id="btnEnviar" onclick="enviar()">SOLICITAR DISEÑO</button>
-        <div id="status"></div>
+    <div class="form">
+        <h3 id="sel-info">Seleccione una joya arriba</h3>
+        <input type="text" id="cliente" placeholder="Nombre completo">
+        <input type="file" id="foto" accept="image/*">
+        <button id="btn" onclick="enviar()">SOLICITAR DISEÑO PERSONALIZADO</button>
+        <p id="msg"></p>
     </div>
 
     <script>
-        let productos = [];
-        let seleccionada = null;
+        let prods = [];
+        let sel = null;
 
         async function cargar() {
             const res = await fetch('/api/productos');
-            productos = await res.json();
+            prods = await res.json();
             render();
         }
 
         function render() {
             const div = document.getElementById('catalogo');
-            div.innerHTML = productos.map(p => `
-                <div class="card ${seleccionada?.id === p._id ? 'selected' : ''}" onclick="seleccionar('${p._id}')">
-                    <img src="${p.imagenes[0]}" id="img-${p._id}">
-                    <div class="thumbs">
-                        ${p.imagenes.map(img => `<img src="${img}" class="thumb" onmouseover="document.getElementById('img-${p._id}').src='${img}'">`).join('')}
+            div.innerHTML = prods.map(p => {
+                const imgPri = p.imagenes[0] || '';
+                const thumbs = p.imagenes.map(i => `<img src="${i}" class="thumb" onmouseover="document.getElementById('main-${p._id}').src='${i}'">`).join('');
+                return `
+                    <div class="card ${sel?.id === p._id ? 'selected' : ''}" onclick="seleccionar('${p._id}')">
+                        <img src="${imgPri}" id="main-${p._id}">
+                        <div class="thumbs">${thumbs}</div>
+                        <p><strong>${p.nombre}</strong><br>$${p.precioBase} USD</p>
                     </div>
-                    <p>${p.nombre}<br><b>$${p.precioBase}</b></p>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function seleccionar(id) {
-            const p = productos.find(x => x._id === id);
-            seleccionada = {
-                id: p._id,
-                nombre: p.nombre,
-                url: document.getElementById(`img-${p._id}`).src
-            };
-            document.getElementById('joya-selección').innerText = "Seleccionado: " + p.nombre;
+            const p = prods.find(x => x._id === id);
+            sel = { id: p._id, nombre: p.nombre, url: document.getElementById(`main-${p._id}`).src };
+            document.getElementById('sel-info').innerText = "Pieza: " + p.nombre;
             render();
         }
 
         async function enviar() {
-            const file = document.getElementById('foto-cliente').files[0];
-            const nombre = document.getElementById('nombre-cliente').value;
-            if(!seleccionada || !file || !nombre) return alert("Completa los datos");
+            const f = document.getElementById('foto').files[0];
+            const n = document.getElementById('cliente').value;
+            if(!sel || !f || !n) return alert("Completa los datos");
 
             const fd = new FormData();
-            fd.append('userImage', file);
-            fd.append('catalogPath', seleccionada.url);
-            fd.append('clientName', nombre);
-            fd.append('joyaNombre', seleccionada.nombre);
+            fd.append('userImage', f);
+            fd.append('catalogPath', sel.url);
+            fd.append('clientName', n);
+            fd.append('joyaNombre', sel.nombre);
 
-            document.getElementById('status').innerText = "Enviando...";
+            document.getElementById('msg').innerText = "Enviando solicitud...";
             const res = await fetch('/send-to-telegram', { method: 'POST', body: fd });
-            const data = await res.json();
-            if(data.success) {
-                document.getElementById('status').innerText = "¡Enviado! Espera tu diseño...";
-            }
+            if(res.ok) document.getElementById('msg').innerText = "¡Enviado! Tu diseño llegará pronto.";
         }
-
         cargar();
     </script>
 </body>
