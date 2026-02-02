@@ -2,78 +2,108 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Admin GEDALIA</title>
+    <title>Gedalia Intelligence - Admin</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; padding: 30px; }
-        .box { max-width: 800px; margin: auto; background: #111; padding: 30px; border: 1px solid #c5a059; border-radius: 8px; }
-        h2 { color: #c5a059; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #333; color: #fff; }
-        button { background: #c5a059; color: #000; font-weight: bold; border: none; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-        th, td { padding: 12px; border-bottom: 1px solid #222; text-align: left; }
+        body { font-family: 'Inter', sans-serif; background: #f0f0f0; margin: 0; display: flex; }
+        .sidebar { width: 250px; background: #000; height: 100vh; color: white; padding: 30px; position: fixed; }
+        .main { margin-left: 250px; padding: 40px; width: 100%; }
+        .card-stat { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .gold-btn { background: #c5a059; border: none; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>GEDALIA - Panel de Control</h2>
-        <input type="text" id="n" placeholder="Nombre de la pieza">
-        <select id="c">
-            <option value="Anillos">Anillos</option>
-            <option value="Dije">Dije</option>
-            <option value="Collares">Collares</option>
-            <option value="Aretes">Aretes</option>
-            <option value="Pulseras">Pulseras</option>
-        </select>
-        <input type="number" id="p" placeholder="Precio Base USD">
-        <input type="text" id="i1" placeholder="URL Foto 1">
-        <input type="text" id="i2" placeholder="URL Foto 2">
-        <input type="text" id="i3" placeholder="URL Foto 3">
-        <button onclick="subir()">Publicar Pieza</button>
 
-        <table id="lista">
-            <thead><tr><th>Pieza</th><th>Categoría</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody></tbody>
-        </table>
+<div class="sidebar">
+    <h2 style="color:#c5a059">GEDALIA</h2>
+    <p>Admin Dashboard</p>
+    <hr style="border:0.5px solid #222; margin: 30px 0;">
+    <button class="gold-btn" onclick="showSec('new')">Añadir Joya</button>
+    <button class="gold-btn" style="background:#222; margin-top:10px" onclick="showSec('stats')">Estadísticas</button>
+</div>
+
+<div class="main">
+    <div id="sec-stats">
+        <h2>Inteligencia de Negocio</h2>
+        <div class="grid-3">
+            <div class="card-stat">
+                <h3>Más Visto 🔥</h3>
+                <ul id="top-views"></ul>
+            </div>
+            <div class="card-stat">
+                <h3>Ventas Recientes 🛍️</h3>
+                <ul id="last-sales"></ul>
+            </div>
+        </div>
     </div>
 
-    <script>
-        async function cargar() {
-            const res = await fetch('/api/admin/productos-todos');
-            const data = await res.json();
-            document.querySelector("#lista tbody").innerHTML = data.map(p => `
-                <tr>
-                    <td>${p.nombre}</td>
-                    <td>${p.categoria}</td>
-                    <td>${p.stock ? 'En Línea' : 'Agotado'}</td>
-                    <td>
-                        <button onclick="toggle('${p._id}', ${p.stock})" style="padding:4px; width:auto;">Stock</button>
-                        <button onclick="eliminar('${p._id}')" style="background:red; padding:4px; width:auto;">X</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-        async function subir() {
-            const imagenes = [document.getElementById('i1').value, document.getElementById('i2').value, document.getElementById('i3').value].filter(v => v);
-            await fetch('/api/admin/productos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre: document.getElementById('n').value,
-                    categoria: document.getElementById('c').value,
-                    precioBase: document.getElementById('p').value,
-                    imagenes: imagenes
-                })
-            });
-            location.reload();
-        }
-        async function toggle(id, s) {
-            await fetch(`/api/admin/productos/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stock: !s }) });
-            cargar();
-        }
-        async function eliminar(id) {
-            if(confirm("¿Borrar?")) { await fetch(`/api/admin/productos/${id}`, { method: 'DELETE' }); cargar(); }
-        }
-        cargar();
-    </script>
+    <div id="sec-new" class="card-stat">
+        <h2>Publicar Nueva Pieza</h2>
+        <div class="grid-3">
+            <input type="text" id="n" placeholder="Nombre">
+            <select id="c">
+                <option value="Anillos">Anillo</option>
+                <option value="Dije">Dije</option>
+                <option value="Collares">Collar</option>
+                <option value="Aretes">Aretes</option>
+                <option value="Pulseras">Pulsera</option>
+            </select>
+            <input type="number" id="p" placeholder="Precio Base">
+        </div>
+        <div class="grid-3">
+            <input type="number" id="desc" placeholder="% Descuento">
+            <select id="env">
+                <option value="false">Envío Pagado</option>
+                <option value="true">Envío Gratis</option>
+            </select>
+        </div>
+        <input type="text" id="i1" placeholder="URL Imagen 1">
+        <input type="text" id="i2" placeholder="URL Imagen 2">
+        <input type="text" id="i3" placeholder="URL Imagen 3">
+        <button class="gold-btn" onclick="subir()">Lanzar Colección</button>
+    </div>
+</div>
+
+<script>
+    async function loadStats() {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        
+        document.getElementById('top-views').innerHTML = data.masVistos.map(p => `
+            <li style="margin-bottom:10px">${p.nombre} - <b>${p.vistas} vistas</b></li>
+        `).join('');
+
+        document.getElementById('last-sales').innerHTML = data.ventasRecientes.map(v => `
+            <li style="margin-bottom:10px">${v.joya} - <span class="badge" style="background:#eee">$${v.monto}</span></li>
+        `).join('');
+    }
+
+    async function subir() {
+        const body = {
+            nombre: document.getElementById('n').value,
+            categoria: document.getElementById('c').value,
+            precioBase: document.getElementById('p').value,
+            descuento: document.getElementById('desc').value,
+            envioGratis: document.getElementById('env').value === "true",
+            imagenes: [document.getElementById('i1').value, document.getElementById('i2').value, document.getElementById('i3').value].filter(i => i)
+        };
+        await fetch('/api/admin/productos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        alert("¡Pieza publicada!");
+        loadStats();
+    }
+
+    function showSec(id) {
+        document.getElementById('sec-stats').style.display = id === 'stats' ? 'block' : 'none';
+        document.getElementById('sec-new').style.display = id === 'new' ? 'block' : 'none';
+    }
+
+    loadStats();
+</script>
 </body>
 </html>
