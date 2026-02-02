@@ -3,98 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atelier Luxury</title>
+    <title>Atelier Luxury | Joyería de Autor</title>
     <style>
-        :root { --oro: #c5a059; }
-        body { font-family: serif; margin: 0; padding: 20px; color: #1a1a1a; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 25px; max-width: 1200px; margin: auto; }
-        .card { border: 1px solid #f0f0f0; padding: 15px; cursor: pointer; text-align: center; transition: 0.3s; }
-        .card.selected { border-color: var(--oro); background: #fffcf5; box-shadow: 0 5px 15px rgba(197,160,89,0.1); }
-        .card img { width: 100%; height: 250px; object-fit: cover; }
-        .thumbs { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
-        .thumb { width: 45px; height: 45px; object-fit: cover; border: 1px solid #eee; }
-        .thumb:hover { border-color: var(--oro); }
-        .form-area { max-width: 500px; margin: 40px auto; background: #fafafa; padding: 30px; border-radius: 8px; }
-        input, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; }
-        button { background: #000; color: #fff; border: none; cursor: pointer; font-weight: bold; letter-spacing: 2px; }
-        button:hover { background: var(--oro); }
+        :root { --oro: #c5a059; --oro-soft: #e2c28d; --dark: #0a0a0a; --white: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Playfair Display', serif; background: var(--white); color: var(--dark); overflow-x: hidden; }
+        
+        /* Header & Nav */
+        header { padding: 40px 20px; text-align: center; background: var(--dark); color: white; border-bottom: 3px solid var(--oro); }
+        header h1 { font-size: 2.5rem; letter-spacing: 8px; font-weight: 300; text-transform: uppercase; }
+        header p { font-size: 0.9rem; letter-spacing: 3px; color: var(--oro); margin-top: 10px; }
+
+        /* Catálogo Grid */
+        .container { max-width: 1400px; margin: 60px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px; }
+        
+        .product-card { position: relative; cursor: pointer; transition: 0.5s; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .product-card:hover { transform: translateY(-10px); }
+        .img-wrapper { width: 100%; height: 400px; overflow: hidden; background: #f9f9f9; }
+        .product-card img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s; }
+        .product-card:hover img { scale: 1.1; }
+        
+        .info { margin-top: 20px; text-align: center; }
+        .info h3 { font-size: 1.2rem; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; }
+        .info .price { color: var(--oro); font-weight: bold; margin-top: 5px; font-size: 1.1rem; }
+
+        /* MODAL DE DETALLE (EL SUBMENÚ) */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; z-index: 1000; overflow-y: auto; color: white; }
+        .modal-content { max-width: 1200px; margin: 50px auto; padding: 20px; display: flex; flex-wrap: wrap; gap: 50px; }
+        .close-modal { position: absolute; top: 30px; right: 40px; font-size: 40px; cursor: pointer; color: var(--oro); }
+
+        .gallery-main { flex: 1; min-width: 300px; }
+        .main-view { width: 100%; height: 500px; border: 1px solid var(--oro); }
+        .main-view img { width: 100%; height: 100%; object-fit: contain; }
+        .thumbs-row { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
+        .thumbs-row img { width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 1px solid #444; opacity: 0.6; }
+        .thumbs-row img:hover { opacity: 1; border-color: var(--oro); }
+
+        .details-side { flex: 1; min-width: 300px; display: flex; flex-direction: column; justify-content: center; }
+        .details-side h2 { font-size: 2.5rem; margin-bottom: 10px; border-bottom: 1px solid var(--oro); padding-bottom: 10px; }
+        .details-side .modal-price { font-size: 1.8rem; color: var(--oro); margin-bottom: 30px; }
+        
+        .action-box { background: #111; padding: 30px; border-radius: 4px; border: 1px solid #222; }
+        .btn-premium { background: var(--oro); color: black; border: none; padding: 18px; font-weight: bold; width: 100%; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; }
+        .btn-premium:hover { background: var(--white); }
+        .input-premium { background: transparent; border: 1px solid #444; padding: 12px; color: white; width: 100%; margin-bottom: 15px; }
+
+        /* Animaciones */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-content { animation: fadeIn 0.6s ease-out; }
     </style>
 </head>
 <body>
-    <h1 style="text-align:center; font-weight:300; letter-spacing:5px;">ATELIER LUXURY</h1>
-    
-    <div class="grid" id="catalogo"></div>
 
-    <div class="form-area">
-        <h3 id="joya-info" style="text-align:center; font-weight:300;">Selecciona una joya</h3>
-        <input type="text" id="cliente" placeholder="Tu Nombre Completo">
-        <input type="file" id="foto" accept="image/*">
-        <button id="btn" onclick="enviar()">SOLICITAR MONTAJE PERSONALIZADO</button>
-        <p id="msg" style="text-align:center; font-size:14px; color:var(--oro);"></p>
-    </div>
+<header>
+    <h1>ATELIER LUXURY</h1>
+    <p>HANDMADE FINE JEWELRY</p>
+</header>
 
-    <script>
-        let prods = [];
-        let sel = null;
+<div class="container">
+    <div class="grid" id="catalogo">
+        </div>
+</div>
 
-        async function cargar() {
-            try {
-                const res = await fetch('/api/productos');
-                prods = await res.json();
-                render();
-            } catch (e) { console.error("Error al cargar piezas"); }
+<div id="productModal" class="modal">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+    <div class="modal-content" id="modalBody">
+        </div>
+</div>
+
+<script>
+    let prods = [];
+    let currentSel = null;
+
+    async function cargar() {
+        const res = await fetch('/api/productos');
+        prods = await res.json();
+        const div = document.getElementById('catalogo');
+        div.innerHTML = prods.map(p => `
+            <div class="product-card" onclick="openModal('${p._id}')">
+                <div class="img-wrapper">
+                    <img src="${p.imagenes[0]}" alt="${p.nombre}">
+                </div>
+                <div class="info">
+                    <h3>${p.nombre}</h3>
+                    <div class="price">$${p.precioBase} USD</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openModal(id) {
+        currentSel = prods.find(p => p._id === id);
+        const modal = document.getElementById('productModal');
+        const body = document.getElementById('modalBody');
+        
+        body.innerHTML = `
+            <div class="gallery-main">
+                <div class="main-view">
+                    <img src="${currentSel.imagenes[0]}" id="expandedImg">
+                </div>
+                <div class="thumbs-row">
+                    ${currentSel.imagenes.map(img => `<img src="${img}" onclick="document.getElementById('expandedImg').src='${img}'">`).join('')}
+                </div>
+            </div>
+            <div class="details-side">
+                <h2>${currentSel.nombre}</h2>
+                <div class="modal-price">$${currentSel.precioBase} USD</div>
+                <p style="color: #888; margin-bottom: 20px;">Pieza exclusiva de alta joyería. Seleccione su talla y suba su referencia para el montaje personalizado.</p>
+                
+                <div class="action-box">
+                    <input type="text" id="cNombre" class="input-premium" placeholder="Nombre completo">
+                    <p style="font-size: 11px; color: var(--oro); margin-bottom: 5px;">SUBIR FOTO DE REFERENCIA (MANO/CUELLO):</p>
+                    <input type="file" id="cFoto" class="input-premium">
+                    <button class="btn-premium" onclick="enviarPedido()">SOLICITAR MONTAJE</button>
+                    <button class="btn-premium" style="background:transparent; color:white; border:1px solid #444;" onclick="window.open('https://wa.me/TUNUMERO')">CONSULTA RÁPIDA</button>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        document.getElementById('productModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    async function enviarPedido() {
+        const f = document.getElementById('cFoto').files[0];
+        const n = document.getElementById('cNombre').value;
+        if(!f || !n) return alert("Complete los datos de lujo solicitados.");
+
+        const fd = new FormData();
+        fd.append('userImage', f);
+        fd.append('catalogPath', document.getElementById('expandedImg').src);
+        fd.append('clientName', n);
+        fd.append('joyaNombre', currentSel.nombre);
+
+        document.getElementById('modalBody').innerHTML = "<h2 style='text-align:center; width:100%; margin-top:100px;'>PROCESANDO SU SOLICITUD...</h2>";
+        
+        const res = await fetch('/send-to-telegram', { method: 'POST', body: fd });
+        if(res.ok) {
+            alert("Su solicitud ha sido enviada con éxito.");
+            location.reload();
         }
+    }
 
-        function render() {
-            const div = document.getElementById('catalogo');
-            div.innerHTML = prods.map(p => {
-                const imgPrincipal = p.imagenes[0];
-                const thumbsHtml = p.imagenes.map(img => `
-                    <img src="${img}" class="thumb" onmouseover="document.getElementById('main-${p._id}').src='${img}'">
-                `).join('');
-
-                return `
-                    <div class="card ${sel?.id === p._id ? 'selected' : ''}" onclick="seleccionar('${p._id}')">
-                        <img src="${imgPrincipal}" id="main-${p._id}">
-                        <div class="thumbs">${thumbsHtml}</div>
-                        <p style="margin-top:15px;"><strong>${p.nombre}</strong><br><span style="color:var(--oro)">$${p.precioBase} USD</span></p>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function seleccionar(id) {
-            const p = prods.find(x => x._id === id);
-            sel = { 
-                id: p._id, 
-                nombre: p.nombre, 
-                url: document.getElementById(`main-${p._id}`).src 
-            };
-            document.getElementById('joya-info').innerText = "Has elegido: " + p.nombre;
-            render();
-        }
-
-        async function enviar() {
-            const f = document.getElementById('foto').files[0];
-            const n = document.getElementById('cliente').value;
-            if(!sel || !f || !n) return alert("Por favor selecciona una joya, escribe tu nombre y sube tu foto.");
-
-            const fd = new FormData();
-            fd.append('userImage', f);
-            fd.append('catalogPath', sel.url);
-            fd.append('clientName', n);
-            fd.append('joyaNombre', sel.nombre);
-
-            document.getElementById('msg').innerText = "Enviando solicitud a nuestros diseñadores...";
-            document.getElementById('btn').disabled = true;
-
-            const res = await fetch('/send-to-telegram', { method: 'POST', body: fd });
-            if(res.ok) {
-                document.getElementById('msg').innerHTML = "✅ ¡Solicitud enviada!<br>Mantente atento, procesaremos tu montaje pronto.";
-            }
-        }
-
-        cargar();
-    </script>
+    cargar();
+</script>
 </body>
 </html>
