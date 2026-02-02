@@ -2,108 +2,216 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Gedalia Intelligence - Admin</title>
+    <title>Gedalia Master Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f0f0; margin: 0; display: flex; }
-        .sidebar { width: 250px; background: #000; height: 100vh; color: white; padding: 30px; position: fixed; }
-        .main { margin-left: 250px; padding: 40px; width: 100%; }
-        .card-stat { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .gold-btn { background: #c5a059; border: none; color: white; font-weight: bold; cursor: pointer; }
+        :root { --gold: #c5a059; --black: #0a0a0a; --gray: #f4f7f6; --white: #ffffff; --red: #e74c3c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray); display: flex; }
+
+        /* SIDEBAR */
+        .sidebar { width: 260px; background: var(--black); height: 100vh; color: white; padding: 40px 20px; position: fixed; }
+        .sidebar h2 { color: var(--gold); letter-spacing: 4px; margin-bottom: 40px; text-align: center; }
+        .nav-btn { width: 100%; padding: 15px; margin-bottom: 10px; background: transparent; border: 1px solid #333; color: white; cursor: pointer; text-align: left; transition: 0.3s; border-radius: 8px; }
+        .nav-btn:hover, .nav-btn.active { background: var(--gold); color: black; border-color: var(--gold); }
+
+        /* MAIN CONTENT */
+        .main { margin-left: 260px; padding: 50px; width: 100%; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        /* CARDS & TABLES */
+        .card { background: var(--white); padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        h3 { margin-bottom: 20px; font-weight: 600; color: var(--black); }
+
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-add { background: var(--black); color: white; font-weight: bold; cursor: pointer; border: none; padding: 15px; margin-top: 20px; }
+        .btn-add:hover { background: var(--gold); color: black; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 15px; background: #fafafa; color: #888; font-size: 12px; text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        /* BOTONES DE ACCIÓN */
+        .action-btns { display: flex; gap: 8px; }
+        .btn-stock { background: #eee; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+        .btn-stock.on { background: #d4edda; color: #155724; }
+        .btn-delete { background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+
+        .stat-badge { background: var(--gray); padding: 5px 10px; border-radius: 20px; font-weight: bold; color: var(--gold); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2 style="color:#c5a059">GEDALIA</h2>
-    <p>Admin Dashboard</p>
-    <hr style="border:0.5px solid #222; margin: 30px 0;">
-    <button class="gold-btn" onclick="showSec('new')">Añadir Joya</button>
-    <button class="gold-btn" style="background:#222; margin-top:10px" onclick="showSec('stats')">Estadísticas</button>
+    <h2>GEDALIA</h2>
+    <button class="nav-btn active" onclick="showSec('stats', this)">📊 Estadísticas</button>
+    <button class="nav-btn" onclick="showSec('inventory', this)">💎 Inventario</button>
+    <button class="nav-btn" onclick="showSec('new', this)">✨ Nueva Pieza</button>
 </div>
 
 <div class="main">
-    <div id="sec-stats">
-        <h2>Inteligencia de Negocio</h2>
-        <div class="grid-3">
-            <div class="card-stat">
-                <h3>Más Visto 🔥</h3>
-                <ul id="top-views"></ul>
+    
+    <div id="stats" class="section active">
+        <h3>Rendimiento del Negocio</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div class="card">
+                <h4>Diseños más vistos 🔥</h4>
+                <ul id="top-views" style="list-style:none; margin-top:15px;"></ul>
             </div>
-            <div class="card-stat">
-                <h3>Ventas Recientes 🛍️</h3>
-                <ul id="last-sales"></ul>
+            <div class="card">
+                <h4>Ventas / Interés Reciente 🛍️</h4>
+                <ul id="last-sales" style="list-style:none; margin-top:15px;"></ul>
             </div>
         </div>
     </div>
 
-    <div id="sec-new" class="card-stat">
-        <h2>Publicar Nueva Pieza</h2>
-        <div class="grid-3">
-            <input type="text" id="n" placeholder="Nombre">
-            <select id="c">
-                <option value="Anillos">Anillo</option>
-                <option value="Dije">Dije</option>
-                <option value="Collares">Collar</option>
-                <option value="Aretes">Aretes</option>
-                <option value="Pulseras">Pulsera</option>
-            </select>
-            <input type="number" id="p" placeholder="Precio Base">
+    <div id="inventory" class="section">
+        <div class="card">
+            <h3>Gestión de Catálogo</h3>
+            <table id="tabla-inventario">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
         </div>
-        <div class="grid-3">
-            <input type="number" id="desc" placeholder="% Descuento">
+    </div>
+
+    <div id="new" class="section">
+        <div class="card" style="max-width: 700px; margin: auto;">
+            <h3>Subir Nueva Joya a Gedalia</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="text" id="n" placeholder="Nombre de la pieza">
+                <select id="c">
+                    <option value="Anillos">Anillo</option>
+                    <option value="Dije">Dije</option>
+                    <option value="Collares">Collar</option>
+                    <option value="Aretes">Aretes</option>
+                    <option value="Pulseras">Pulsera</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="number" id="p" placeholder="Precio Base USD">
+                <input type="number" id="desc" placeholder="% Descuento (Ejem: 10)">
+            </div>
             <select id="env">
                 <option value="false">Envío Pagado</option>
                 <option value="true">Envío Gratis</option>
             </select>
+            <input type="text" id="i1" placeholder="URL Imagen Principal">
+            <input type="text" id="i2" placeholder="URL Imagen Galería 2">
+            <input type="text" id="i3" placeholder="URL Imagen Galería 3">
+            <button class="btn-add" onclick="subir()">PUBLICAR EN TIENDA</button>
         </div>
-        <input type="text" id="i1" placeholder="URL Imagen 1">
-        <input type="text" id="i2" placeholder="URL Imagen 2">
-        <input type="text" id="i3" placeholder="URL Imagen 3">
-        <button class="gold-btn" onclick="subir()">Lanzar Colección</button>
     </div>
+
 </div>
 
 <script>
+    // Navegación entre pestañas
+    function showSec(id, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+        if(id === 'inventory') cargarInventario();
+        if(id === 'stats') loadStats();
+    }
+
+    // CARGAR ESTADÍSTICAS
     async function loadStats() {
         const res = await fetch('/api/admin/stats');
         const data = await res.json();
         
         document.getElementById('top-views').innerHTML = data.masVistos.map(p => `
-            <li style="margin-bottom:10px">${p.nombre} - <b>${p.vistas} vistas</b></li>
+            <li style="padding:10px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                ${p.nombre} <span class="stat-badge">${p.vistas} vistas</span>
+            </li>
         `).join('');
 
         document.getElementById('last-sales').innerHTML = data.ventasRecientes.map(v => `
-            <li style="margin-bottom:10px">${v.joya} - <span class="badge" style="background:#eee">$${v.monto}</span></li>
+            <li style="padding:10px 0; border-bottom:1px solid #eee;">
+                <b>${v.joya}</b> - <small>$${v.monto} USD</small>
+            </li>
         `).join('');
     }
 
+    // CARGAR INVENTARIO (Con botones de borrar y editar)
+    async function cargarInventario() {
+        const res = await fetch('/api/admin/productos-todos');
+        const prods = await res.json();
+        const tbody = document.querySelector("#tabla-inventario tbody");
+        
+        tbody.innerHTML = prods.map(p => `
+            <tr>
+                <td><img src="${p.imagenes[0]}" style="width:40px; height:40px; object-fit:cover; border-radius:5px;"></td>
+                <td><b>${p.nombre}</b></td>
+                <td>${p.categoria}</td>
+                <td>$${p.precioBase}</td>
+                <td>
+                    <button class="btn-stock ${p.stock ? 'on' : ''}" onclick="toggleStock('${p._id}', ${p.stock})">
+                        ${p.stock ? 'Disponible' : 'Agotado'}
+                    </button>
+                </td>
+                <td class="action-btns">
+                    <button class="btn-delete" onclick="eliminar('${p._id}')">Borrar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // SUBIR PRODUCTO
     async function subir() {
         const body = {
             nombre: document.getElementById('n').value,
             categoria: document.getElementById('c').value,
             precioBase: document.getElementById('p').value,
-            descuento: document.getElementById('desc').value,
+            descuento: document.getElementById('desc').value || 0,
             envioGratis: document.getElementById('env').value === "true",
             imagenes: [document.getElementById('i1').value, document.getElementById('i2').value, document.getElementById('i3').value].filter(i => i)
         };
+
+        if(!body.nombre || !body.precioBase || body.imagenes.length === 0) return alert("Faltan datos.");
+
         await fetch('/api/admin/productos', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(body)
         });
-        alert("¡Pieza publicada!");
-        loadStats();
+        alert("Pieza añadida.");
+        showSec('inventory', document.querySelectorAll('.nav-btn')[1]);
     }
 
-    function showSec(id) {
-        document.getElementById('sec-stats').style.display = id === 'stats' ? 'block' : 'none';
-        document.getElementById('sec-new').style.display = id === 'new' ? 'block' : 'none';
+    // CAMBIAR STOCK
+    async function toggleStock(id, currentStock) {
+        await fetch(`/api/admin/productos/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ stock: !currentStock })
+        });
+        cargarInventario();
     }
 
-    loadStats();
+    // ELIMINAR
+    async function eliminar(id) {
+        if(confirm("¿Estás seguro de que quieres eliminar esta pieza de GEDALIA?")) {
+            await fetch(`/api/admin/productos/${id}`, { method: 'DELETE' });
+            cargarInventario();
+        }
+    }
+
+    loadStats(); // Carga inicial
 </script>
 </body>
 </html>
