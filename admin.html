@@ -2,38 +2,37 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Admin - Luxury</title>
+    <title>Master Admin - Luxury</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { border-bottom: 2px solid #c5a059; padding-bottom: 10px; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: #1a1a1a; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #c5a059; }
-        .btn-del { background: #dc3545; width: auto; padding: 5px 10px; font-size: 12px; }
-        .btn-toggle { background: #007bff; width: auto; padding: 5px 10px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; }
-        .img-mini { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; padding: 40px; }
+        .admin-box { max-width: 900px; margin: auto; background: #111; padding: 40px; border-radius: 8px; border: 1px solid var(--oro); }
+        h1 { color: #c5a059; letter-spacing: 5px; text-transform: uppercase; font-weight: 300; border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px; }
+        input, select, button { width: 100%; padding: 15px; margin: 10px 0; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 4px; }
+        button { background: #c5a059; color: black; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; }
+        button:hover { background: #fff; }
+        .grid-previa { display: flex; gap: 10px; margin: 20px 0; }
+        .grid-previa img { width: 60px; height: 60px; object-fit: cover; border: 1px solid #c5a059; }
+        table { width: 100%; margin-top: 40px; border-collapse: collapse; }
+        th { text-align: left; color: #c5a059; border-bottom: 2px solid #222; padding: 10px; }
+        td { padding: 15px; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>💎 Administración de Catálogo</h2>
-        <input type="text" id="n" placeholder="Nombre de la joya">
-        <select id="c">
-            <option value="Anillos">Anillos</option>
-            <option value="Collares">Collares</option>
-            <option value="Pulseras">Pulseras</option>
-        </select>
-        <input type="number" id="p" placeholder="Precio Base USD">
-        <input type="text" id="i1" placeholder="URL Foto Principal (Obligatoria)">
-        <input type="text" id="i2" placeholder="URL Foto 2 (Opcional)">
-        <input type="text" id="i3" placeholder="URL Foto 3 (Opcional)">
-        <button onclick="subir()">PUBLICAR EN LA WEB</button>
+    <div class="admin-box">
+        <h1>Inventario Premium</h1>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <input type="text" id="n" placeholder="Nombre de la Joya">
+            <input type="number" id="p" placeholder="Precio USD">
+        </div>
+        <input type="text" id="i1" placeholder="URL Foto 1 (Principal)">
+        <input type="text" id="i2" placeholder="URL Foto 2 (Detalle)">
+        <input type="text" id="i3" placeholder="URL Foto 3 (Caja/Mano)">
+        <button onclick="subir()">AÑADIR AL CATÁLOGO EXCLUSIVO</button>
 
         <table id="lista">
-            <thead><tr><th>Imagen</th><th>Pieza</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <thead>
+                <tr><th>Joyas Actuales</th><th>Estado</th><th>Gestión</th></tr>
+            </thead>
             <tbody></tbody>
         </table>
     </div>
@@ -42,15 +41,18 @@
         async function cargar() {
             const res = await fetch('/api/admin/productos-todos');
             const data = await res.json();
-            const tbody = document.querySelector("#lista tbody");
-            tbody.innerHTML = data.map(p => `
+            document.querySelector("#lista tbody").innerHTML = data.map(p => `
                 <tr>
-                    <td><img src="${p.imagenes[0]}" class="img-mini"></td>
-                    <td>${p.nombre}</td>
-                    <td><small>${p.stock ? '🟢 En Línea' : '🔴 Agotado'}</small></td>
                     <td>
-                        <button class="btn-toggle" onclick="toggle('${p._id}', ${p.stock})">Cambiar</button>
-                        <button class="btn-del" onclick="eliminar('${p._id}')">Eliminar</button>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <img src="${p.imagenes[0]}" style="width:50px; height:50px; object-fit:cover;">
+                            <span>${p.nombre}</span>
+                        </div>
+                    </td>
+                    <td><small style="color:${p.stock?'#c5a059':'#555'}">${p.stock?'DISPONIBLE':'SIN STOCK'}</small></td>
+                    <td>
+                        <button onclick="toggle('${p._id}', ${p.stock})" style="padding:5px; font-size:10px; width:auto;">Switch</button>
+                        <button onclick="eliminar('${p._id}')" style="background:#400; color:white; padding:5px; font-size:10px; width:auto;">Borrar</button>
                     </td>
                 </tr>
             `).join('');
@@ -58,14 +60,11 @@
 
         async function subir() {
             const imagenes = [document.getElementById('i1').value, document.getElementById('i2').value, document.getElementById('i3').value].filter(v => v);
-            if(!imagenes[0] || !document.getElementById('n').value) return alert("Faltan datos críticos.");
-
             await fetch('/api/admin/productos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     nombre: document.getElementById('n').value,
-                    categoria: document.getElementById('c').value,
                     precioBase: document.getElementById('p').value,
                     imagenes: imagenes
                 })
@@ -83,12 +82,11 @@
         }
 
         async function eliminar(id) {
-            if(confirm("¿Eliminar definitivamente esta joya del catálogo?")) {
+            if(confirm("¿Eliminar del Atelier?")) {
                 await fetch(`/api/admin/productos/${id}`, { method: 'DELETE' });
                 cargar();
             }
         }
-
         cargar();
     </script>
 </body>
