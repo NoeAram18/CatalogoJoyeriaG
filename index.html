@@ -3,37 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GEDALIA | High Jewelry</title>
+    <title>GEDALIA | Alta Joyería</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --black: #0a0a0a; --gray: #f8f8f8; --white: #ffffff; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--white); }
+        :root { --gold: #c5a059; --black: #0a0a0a; --white: #ffffff; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--white); overflow-x: hidden; }
         header { padding: 40px; text-align: center; background: var(--black); color: white; border-bottom: 4px solid var(--gold); }
-        header h1 { font-family: 'Playfair Display'; letter-spacing: 12px; margin: 0; }
+        header h1 { font-family: 'Playfair Display'; letter-spacing: 12px; margin: 0; font-size: 2.5rem; }
         
-        .nav-filters { display: flex; justify-content: center; gap: 20px; padding: 20px; background: white; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #eee; overflow-x: auto; }
-        .nav-item { background: none; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; color: #888; font-size: 11px; white-space: nowrap; }
-        .nav-item.active { color: var(--gold); border-bottom: 1px solid var(--gold); }
+        .nav-filters { display: flex; justify-content: center; gap: 20px; padding: 20px; background: white; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee; overflow-x: auto; scrollbar-width: none; }
+        .nav-item { background: none; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; color: #888; font-size: 11px; white-space: nowrap; transition: 0.3s; }
+        .nav-item.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
 
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
-        .card { cursor: pointer; text-align: center; position: relative; }
-        .card img { width: 100%; height: 400px; object-fit: cover; transition: 0.6s; background: #f0f0f0; }
-        .card:hover img { transform: scale(1.02); }
-        .promo-badge { position: absolute; top: 15px; left: 15px; background: var(--gold); color: white; padding: 6px 12px; font-size: 10px; font-weight: bold; }
+        .container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px; }
+        
+        .card { cursor: pointer; text-align: center; position: relative; opacity: 0; transform: translateY(20px); transition: 0.6s all ease-out; }
+        .card.visible { opacity: 1; transform: translateY(0); }
+        .img-box { width: 100%; height: 420px; background: #f9f9f9; overflow: hidden; margin-bottom: 15px; }
+        .card img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s; opacity: 0; }
+        .card img.loaded { opacity: 1; }
+        .card:hover img { transform: scale(1.05); }
 
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; z-index: 1000; overflow-y: auto; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; z-index: 2000; overflow-y: auto; }
         .modal-grid { display: grid; grid-template-columns: 1.2fr 1fr; min-height: 100vh; }
-        .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; background: var(--gray); }
-        .slider::-webkit-scrollbar { display: none; }
+        .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; background: #f4f4f4; -webkit-overflow-scrolling: touch; }
         .slider img { min-width: 100%; height: 100vh; object-fit: contain; scroll-snap-align: center; }
         
-        .modal-info { padding: 60px; display: flex; flex-direction: column; justify-content: center; }
-        .btn-back { background: none; border: 1px solid #ccc; padding: 12px 25px; cursor: pointer; margin-bottom: 30px; align-self: flex-start; transition: 0.3s; }
+        .modal-info { padding: 80px; display: flex; flex-direction: column; justify-content: center; position: relative; }
+        .btn-back { position: absolute; top: 40px; left: 80px; background: none; border: 1px solid #ddd; padding: 10px 20px; cursor: pointer; font-size: 12px; letter-spacing: 1px; }
         .btn-back:hover { background: var(--black); color: white; }
-        .btn-buy { background: var(--gold); color: white; border: none; padding: 22px; font-weight: bold; letter-spacing: 3px; cursor: pointer; }
+        .btn-buy { background: var(--gold); color: white; border: none; padding: 25px; font-weight: bold; letter-spacing: 3px; cursor: pointer; margin-top: 30px; font-size: 14px; }
 
-        @media (max-width: 900px) { .modal-grid { grid-template-columns: 1fr; } .slider img { height: 65vh; } .modal-info { padding: 40px; } }
+        @media (max-width: 950px) { 
+            .modal-grid { grid-template-columns: 1fr; } 
+            .slider img { height: 60vh; } 
+            .modal-info { padding: 40px; } 
+            .btn-back { position: relative; top: 0; left: 0; margin-bottom: 30px; }
+        }
     </style>
 </head>
 <body>
@@ -61,14 +68,24 @@
     }
 
     function render(lista) {
-        document.getElementById('catalogo').innerHTML = lista.map(p => `
-            <div class="card" onclick="abrirModal('${p._id}')">
-                ${p.descuento > 0 ? `<div class="promo-badge">SALE ${p.descuento}%</div>` : ''}
-                <img src="${p.imagenes[0]}">
+        const catalogo = document.getElementById('catalogo');
+        catalogo.innerHTML = lista.map((p, index) => `
+            <div class="card" onclick="abrirModal('${p._id}')" id="p-${p._id}">
+                ${p.descuento > 0 ? `<div style="position:absolute; top:15px; left:15px; background:var(--gold); color:white; padding:5px 10px; font-size:10px; font-weight:bold; z-index:1;">SALE ${p.descuento}%</div>` : ''}
+                <div class="img-box">
+                    <img src="${p.imagenes[0]}" loading="lazy" onload="this.classList.add('loaded')">
+                </div>
                 <h3>${p.nombre}</h3>
-                <p style="color:var(--gold)">$${p.precioBase} USD</p>
+                <p style="color:var(--gold); font-weight:600;">$${p.precioBase} USD</p>
             </div>
         `).join('');
+
+        // Animación de entrada escalonada
+        setTimeout(() => {
+            document.querySelectorAll('.card').forEach((c, i) => {
+                setTimeout(() => c.classList.add('visible'), i * 50);
+            });
+        }, 100);
     }
 
     function abrirModal(id) {
@@ -78,30 +95,34 @@
         document.getElementById('modal-content').innerHTML = `
             <div class="slider">${p.imagenes.map(img => `<img src="${img}">`).join('')}</div>
             <div class="modal-info">
-                <button class="btn-back" onclick="cerrarModal()">← REGRESAR AL MENÚ</button>
-                <p style="color:var(--gold); letter-spacing:2px; font-size:12px;">${p.categoria.toUpperCase()}</p>
-                <h2 style="font-family:'Playfair Display'; font-size:2.8rem; margin:15px 0;">${p.nombre}</h2>
-                <p style="font-size:1.6rem; margin-bottom:10px;">$${p.precioBase} USD</p>
-                ${p.envioGratis ? `<p style="color:var(--gold); font-size:12px; margin-bottom:25px;">✦ ENVÍO GRATIS INCLUIDO</p>` : ''}
-                <button class="btn-buy" onclick="interactuar('${p._id}')">CONSULTAR PIEZA</button>
-                <small style="color:#888; margin-top:20px; text-align:center;">⟵ Desliza para ver más fotos ⟶</small>
+                <button class="btn-back" onclick="cerrarModal()">✕ CERRAR Y VOLVER AL MENÚ</button>
+                <p style="color:var(--gold); letter-spacing:2px; font-size:12px; margin-bottom:10px;">${p.categoria.toUpperCase()}</p>
+                <h2 style="font-family:'Playfair Display'; font-size:3rem; margin:0;">${p.nombre}</h2>
+                <div style="height:2px; width:50px; background:var(--gold); margin:20px 0;"></div>
+                <p style="font-size:1.8rem; margin:0;">$${p.precioBase} USD</p>
+                ${p.envioGratis ? `<p style="color:var(--gold); font-size:12px; margin-top:10px;">✦ ENVÍO EXPRÉS GRATUITO</p>` : ''}
+                <button class="btn-buy" onclick="interactuar('${p._id}')">INICIAR CONSULTA</button>
+                <p style="margin-top:30px; font-size:11px; color:#888; text-align:center; border-top:1px solid #eee; padding-top:20px;">Desliza horizontalmente para ver más vistas de la pieza</p>
             </div>
         `;
         document.getElementById('modal').style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
 
-    function cerrarModal() { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
-    
-    function interactuar(id) {
-        fetch(`/api/productos/interact/${id}`, { method: 'POST' });
-        alert("Solicitud recibida. Un asesor le contactará.");
+    function cerrarModal() {
+        document.getElementById('modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
     }
 
     function filtrar(cat, btn) {
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         btn.classList.add('active');
         render(cat === 'Todos' ? productos : productos.filter(p => p.categoria === cat));
+    }
+
+    function interactuar(id) {
+        fetch(`/api/productos/interact/${id}`, { method: 'POST' });
+        alert("¡Solicitud recibida! Nos contactaremos con usted a la brevedad.");
     }
 
     cargar();
