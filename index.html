@@ -13,19 +13,22 @@
         header p { text-transform: uppercase; letter-spacing: 5px; font-size: 10px; margin-top: 10px; color: var(--gold); }
         
         .search-container { max-width: 600px; margin: 20px auto; padding: 0 20px; }
-        #buscador { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 30px; text-align: center; font-family: 'Inter'; outline: none; transition: 0.3s; }
-        #buscador:focus { border-color: var(--gold); box-shadow: 0 0 10px rgba(197, 160, 89, 0.2); }
+        #buscador { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 30px; text-align: center; outline: none; transition: 0.3s; }
+        #buscador:focus { border-color: var(--gold); }
 
-        .nav-filters { display: flex; justify-content: center; gap: 20px; padding: 20px; background: white; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee; overflow-x: auto; scrollbar-width: none; }
+        .nav-filters { display: flex; justify-content: center; gap: 20px; padding: 20px; background: white; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee; overflow-x: auto; }
         .nav-item { background: none; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; color: #888; font-size: 11px; white-space: nowrap; }
         .nav-item.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
 
         .container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px; }
-        .card { cursor: pointer; text-align: center; opacity: 0; transform: translateY(20px); transition: 0.6s all; }
+        
+        /* Animación recuperada */
+        .card { cursor: pointer; text-align: center; opacity: 0; transform: translateY(20px); transition: 0.6s all ease-out; }
         .card.visible { opacity: 1; transform: translateY(0); }
+        
         .img-box { width: 100%; height: 420px; background: #f9f9f9; overflow: hidden; margin-bottom: 15px; }
-        .card img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s; opacity: 0; }
+        .card img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.8s; }
         .card img.loaded { opacity: 1; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; z-index: 2000; overflow-y: auto; }
@@ -36,7 +39,7 @@
         .btn-back { background: none; border: 1px solid #ddd; padding: 12px 25px; cursor: pointer; margin-bottom: 30px; align-self: flex-start; }
         .btn-buy { background: var(--gold); color: white; border: none; padding: 25px; font-weight: bold; letter-spacing: 3px; cursor: pointer; }
 
-        @media (max-width: 950px) { .modal-grid { grid-template-columns: 1fr; } .slider img { height: 60vh; } .modal-info { padding: 40px; } }
+        @media (max-width: 950px) { .modal-grid { grid-template-columns: 1fr; } .slider img { height: 50vh; } .modal-info { padding: 40px; } }
     </style>
 </head>
 <body>
@@ -47,7 +50,7 @@
 </header>
 
 <div class="search-container">
-    <input type="text" id="buscador" placeholder="Buscar por nombre o pieza..." oninput="buscar()">
+    <input type="text" id="buscador" placeholder="¿Qué pieza buscas hoy?" oninput="buscar()">
 </div>
 
 <nav class="nav-filters" id="filtros"></nav>
@@ -74,18 +77,25 @@
 
     function render(lista) {
         document.getElementById('catalogo').innerHTML = lista.map(p => `
-            <div class="card" onclick="abrirModal('${p._id}')">
-                <div class="img-box"><img src="${p.imagenes[0]}" loading="lazy" onload="this.classList.add('loaded')"></div>
+            <div class="card">
+                <div class="img-box" onclick="abrirModal('${p._id}')">
+                    <img src="${p.imagenes[0]}" loading="lazy" onload="this.classList.add('loaded')">
+                </div>
                 <h3>${p.nombre}</h3>
                 <p style="color:var(--gold)">$${p.precioBase} USD</p>
             </div>
         `).join('');
-        setTimeout(() => document.querySelectorAll('.card').forEach(c => c.classList.add('visible')), 100);
+        // Re-activar animación de entrada
+        setTimeout(() => {
+            document.querySelectorAll('.card').forEach((c, i) => {
+                setTimeout(() => c.classList.add('visible'), i * 50);
+            });
+        }, 100);
     }
 
     function buscar() {
-        const query = document.getElementById('buscador').value.toLowerCase();
-        filtrados = productos.filter(p => p.nombre.toLowerCase().includes(query) || p.categoria.toLowerCase().includes(query));
+        const q = document.getElementById('buscador').value.toLowerCase();
+        filtrados = productos.filter(p => p.nombre.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q));
         render(filtrados);
     }
 
@@ -96,8 +106,9 @@
             <div class="slider">${p.imagenes.map(img => `<img src="${img}">`).join('')}</div>
             <div class="modal-info">
                 <button class="btn-back" onclick="cerrarModal()">✕ VOLVER AL MENÚ</button>
-                <h2 style="font-family:'Playfair Display'; font-size:2.8rem; margin:0;">${p.nombre}</h2>
-                <p style="font-size:1.8rem; margin:20px 0;">$${p.precioBase} USD</p>
+                <p style="color:var(--gold); letter-spacing:2px; font-size:12px;">${p.categoria.toUpperCase()}</p>
+                <h2 style="font-family:'Playfair Display'; font-size:2.8rem; margin:10px 0;">${p.nombre}</h2>
+                <p style="font-size:1.8rem; margin-bottom:20px;">$${p.precioBase} USD</p>
                 <button class="btn-buy" onclick="interactuar('${p._id}')">INICIAR CONSULTA</button>
             </div>
         `;
@@ -116,7 +127,7 @@
 
     function interactuar(id) {
         fetch(`/api/productos/interact/${id}`, { method: 'POST' });
-        alert("¡Solicitud recibida!");
+        alert("¡Solicitud recibida! Un asesor de GEDALIA le contactará.");
     }
 
     cargar();
