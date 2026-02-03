@@ -10,16 +10,15 @@
         .sidebar { width: 250px; background: var(--black); height: 100vh; color: white; padding: 30px; position: fixed; }
         .main { margin-left: 250px; padding: 40px; width: 100%; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
-        th { color: #888; text-transform: uppercase; font-size: 11px; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 5px; }
         .badge-view { background: #e3f2fd; color: #1976d2; }
         .badge-click { background: #fff3e0; color: #ef6c00; }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
-        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px; }
-        .btn-edit { background: var(--gold); color: white; }
-        .btn-del { background: #ffeded; color: #d32f2f; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
+        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 20px; font-weight: 600; }
+        .btn-edit { background: var(--gold); color: white; margin-right: 5px; }
+        .btn-del { background: #ffebee; color: #c62828; }
         .section { display: none; }
         .active { display: block; }
     </style>
@@ -27,23 +26,21 @@
 <body>
 
 <div class="sidebar">
-    <h2 style="color:var(--gold)">GEDALIA</h2>
-    <p onclick="showSection('inventory')" style="cursor:pointer">💎 Inventario & Stats</p>
-    <p onclick="showSection('new')" style="cursor:pointer">✨ Nueva Publicación</p>
+    <h2 style="color:var(--gold); letter-spacing:2px;">GEDALIA</h2>
+    <p onclick="showSection('inventory')" style="cursor:pointer; margin-top:30px;">💎 Inventario & Stats</p>
+    <p onclick="showSection('form-section')" style="cursor:pointer;">✨ Nueva Publicación</p>
 </div>
 
 <div class="main">
     <div id="inventory" class="section active">
         <div class="card">
-            <h3>Rendimiento del Catálogo</h3>
-            <table id="tabla-admin">
+            <h3>Estadísticas de Joyas</h3>
+            <table>
                 <thead>
                     <tr>
-                        <th>Pieza</th>
-                        <th>Vistas</th>
-                        <th>Interacciones</th>
-                        <th>Ventas</th>
-                        <th>Stock</th>
+                        <th>Producto</th>
+                        <th>Métricas</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -54,9 +51,9 @@
 
     <div id="form-section" class="section">
         <div class="card">
-            <h3 id="form-title">Nueva Publicación</h3>
+            <h3 id="form-title">Nueva Joya</h3>
             <input type="hidden" id="edit-id">
-            <input type="text" id="n" placeholder="Nombre de la Joya">
+            <input type="text" id="n" placeholder="Nombre">
             <select id="c">
                 <option value="Anillos">Anillos</option>
                 <option value="Dije">Dije</option>
@@ -70,35 +67,35 @@
                 <option value="false">Envío Pagado</option>
                 <option value="true">Envío Gratis</option>
             </select>
+            <p style="font-size:12px; color:#888;">Si no subes foto, se mantendrá la actual (en edición)</p>
             <input type="file" id="f1">
-            <button style="background:var(--black); color:white; width:100%" onclick="guardar()">GUARDAR CAMBIOS</button>
-            <button style="background:#ccc; width:100%; margin-top:10px;" onclick="showSection('inventory')">CANCELAR</button>
+            <button style="background:var(--black); color:white; width:100%; margin-top:10px;" onclick="guardar()">FINALIZAR PUBLICACIÓN</button>
+            <button style="background:#eee; width:100%; margin-top:10px;" onclick="showSection('inventory')">CANCELAR</button>
         </div>
     </div>
 </div>
 
 <script>
+    let localProds = [];
+
     function showSection(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        if(id === 'new') {
-            resetForm();
-            document.getElementById('form-section').classList.add('active');
-        } else {
-            document.getElementById(id).classList.add('active');
-            if(id === 'inventory') cargarData();
-        }
+        document.getElementById(id).classList.add('active');
+        if(id === 'form-section' && !document.getElementById('edit-id').value) resetForm();
+        if(id === 'inventory') cargarData();
     }
 
     async function cargarData() {
-        const res = await fetch('/api/admin/productos-detallado');
-        const data = await res.json();
-        document.getElementById('lista-prods').innerHTML = data.map(p => `
+        const res = await fetch('/api/admin/productos-todos');
+        localProds = await res.json();
+        document.getElementById('lista-prods').innerHTML = localProds.map(p => `
             <tr>
                 <td><b>${p.nombre}</b><br><small>${p.categoria}</small></td>
-                <td><span class="badge badge-view">${p.vistas} 👀</span></td>
-                <td><span class="badge badge-click">${p.interacciones} ⚡</span></td>
-                <td>${p.ventas || 0}</td>
-                <td>${p.stock ? '✅' : '❌'}</td>
+                <td>
+                    <span class="badge badge-view">${p.vistas} Vistas</span>
+                    <span class="badge badge-click">${p.interacciones} Interacciones</span>
+                </td>
+                <td>${p.stock ? '✅ En Stock' : '❌ Agotado'}</td>
                 <td>
                     <button class="btn-edit" onclick="editar('${p._id}')">Editar</button>
                     <button class="btn-del" onclick="eliminar('${p._id}')">Eliminar</button>
@@ -107,11 +104,10 @@
         `).join('');
     }
 
-    async function editar(id) {
-        const res = await fetch('/api/admin/productos-todos');
-        const prods = await res.json();
-        const p = prods.find(x => x._id === id);
-        
+    function editar(id) {
+        const p = localProds.find(x => x._id === id);
+        if(!p) return;
+
         document.getElementById('edit-id').value = p._id;
         document.getElementById('n').value = p.nombre;
         document.getElementById('c').value = p.categoria;
@@ -119,9 +115,8 @@
         document.getElementById('desc').value = p.descuento;
         document.getElementById('envio').value = p.envioGratis.toString();
         
-        document.getElementById('form-title').innerText = "Editar Pieza";
-        document.getElementById('form-section').classList.add('active');
-        document.getElementById('inventory').classList.remove('active');
+        document.getElementById('form-title').innerText = "Editando: " + p.nombre;
+        showSection('form-section');
     }
 
     async function guardar() {
@@ -140,8 +135,8 @@
         const payload = {
             nombre: document.getElementById('n').value,
             categoria: document.getElementById('c').value,
-            precioBase: document.getElementById('p').value,
-            descuento: document.getElementById('desc').value || 0,
+            precioBase: Number(document.getElementById('p').value),
+            descuento: Number(document.getElementById('desc').value) || 0,
             envioGratis: document.getElementById('envio').value === "true"
         };
         if(imagenes.length > 0) payload.imagenes = imagenes;
@@ -155,18 +150,21 @@
             body: JSON.stringify(payload)
         });
 
-        alert("Operación exitosa");
+        alert("¡Éxito! Base de datos actualizada.");
+        resetForm();
         showSection('inventory');
     }
 
     function resetForm() {
         document.getElementById('edit-id').value = "";
-        document.getElementById('form-title').innerText = "Nueva Publicación";
-        document.querySelectorAll('input').forEach(i => i.value = "");
+        document.getElementById('form-title').innerText = "Nueva Joya";
+        document.getElementById('n').value = "";
+        document.getElementById('p').value = "";
+        document.getElementById('desc').value = "";
     }
 
     async function eliminar(id) {
-        if(confirm("¿Seguro?")) {
+        if(confirm("¿Seguro de eliminar esta pieza?")) {
             await fetch(`/api/admin/productos/${id}`, { method: 'DELETE' });
             cargarData();
         }
