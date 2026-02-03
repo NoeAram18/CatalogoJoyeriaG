@@ -20,7 +20,7 @@ const Producto = mongoose.model('Producto', new mongoose.Schema({
     stock: { type: Boolean, default: true },
     descuento: { type: Number, default: 0 },
     envioGratis: { type: Boolean, default: false }
-}, { timestamps: true })); // Timestamps para saber qué piezas son nuevas
+}, { timestamps: true }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
@@ -47,13 +47,18 @@ app.get('/api/admin/productos-todos', async (req, res) => {
 });
 
 app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
+    if (!req.file) return res.status(400).send("Sin archivo");
     try {
         const form = new FormData();
         form.append('image', fs.createReadStream(req.file.path));
         const response = await axios.post(`https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`, form, { headers: form.getHeaders() });
+        // SEGURIDAD: Limpieza de archivos temporales recuperada
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.json({ url: response.data.data.url });
-    } catch (e) { res.status(500).send("Error"); }
+    } catch (e) { 
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        res.status(500).send("Error en carga"); 
+    }
 });
 
 app.post('/api/admin/productos', async (req, res) => {
@@ -69,4 +74,4 @@ app.delete('/api/admin/productos/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log("Gedalia ERP con Analytics Ready"));
+app.listen(PORT, '0.0.0.0', () => console.log("Gedalia ERP v2.6 Activo"));
