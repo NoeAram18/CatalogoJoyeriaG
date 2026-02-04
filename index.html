@@ -11,26 +11,18 @@
         header { padding: 50px 20px; text-align: center; background: var(--black); color: white; border-bottom: 4px solid var(--gold); }
         header h1 { font-family: 'Playfair Display'; letter-spacing: 12px; margin: 0; font-size: 3rem; }
         header p { text-transform: uppercase; letter-spacing: 5px; font-size: 10px; margin-top: 10px; color: var(--gold); }
-        
         .search-container { max-width: 600px; margin: 20px auto; padding: 0 20px; }
         #buscador { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 30px; text-align: center; outline: none; transition: 0.3s; }
-        #buscador:focus { border-color: var(--gold); }
-
         .nav-filters { display: flex; justify-content: center; gap: 20px; padding: 20px; background: white; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee; overflow-x: auto; }
         .nav-item { background: none; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; color: #888; font-size: 11px; white-space: nowrap; }
         .nav-item.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-
         .container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px; }
-        
-        /* Animación recuperada */
         .card { cursor: pointer; text-align: center; opacity: 0; transform: translateY(20px); transition: 0.6s all ease-out; }
         .card.visible { opacity: 1; transform: translateY(0); }
-        
         .img-box { width: 100%; height: 420px; background: #f9f9f9; overflow: hidden; margin-bottom: 15px; }
         .card img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.8s; }
         .card img.loaded { opacity: 1; }
-
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; z-index: 2000; overflow-y: auto; }
         .modal-grid { display: grid; grid-template-columns: 1.2fr 1fr; min-height: 100vh; }
         .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; background: #f4f4f4; }
@@ -38,33 +30,18 @@
         .modal-info { padding: 60px; display: flex; flex-direction: column; justify-content: center; }
         .btn-back { background: none; border: 1px solid #ddd; padding: 12px 25px; cursor: pointer; margin-bottom: 30px; align-self: flex-start; }
         .btn-buy { background: var(--gold); color: white; border: none; padding: 25px; font-weight: bold; letter-spacing: 3px; cursor: pointer; }
-
         @media (max-width: 950px) { .modal-grid { grid-template-columns: 1fr; } .slider img { height: 50vh; } .modal-info { padding: 40px; } }
     </style>
 </head>
 <body>
-
-<header>
-    <h1>GEDALIA</h1>
-    <p>Alta joyería en plata</p>
-</header>
-
-<div class="search-container">
-    <input type="text" id="buscador" placeholder="¿Qué pieza buscas hoy?" oninput="buscar()">
-</div>
-
+<header><h1>GEDALIA</h1><p>Alta joyería en plata</p></header>
+<div class="search-container"><input type="text" id="buscador" placeholder="¿Qué pieza buscas hoy?" oninput="buscar()"></div>
 <nav class="nav-filters" id="filtros"></nav>
-
 <div class="container"><div class="grid" id="catalogo"></div></div>
-
-<div id="modal" class="modal">
-    <div class="modal-grid" id="modal-content"></div>
-</div>
-
+<div id="modal" class="modal"><div class="modal-grid" id="modal-content"></div></div>
 <script>
     let productos = [];
     let filtrados = [];
-
     async function cargar() {
         const res = await fetch('/api/productos');
         productos = await res.json();
@@ -74,31 +51,22 @@
             <button class="nav-item ${c==='Todos'?'active':''}" onclick="filtrar('${c}', this)">${c}</button>
         `).join('');
     }
-
     function render(lista) {
         document.getElementById('catalogo').innerHTML = lista.map(p => `
             <div class="card">
                 <div class="img-box" onclick="abrirModal('${p._id}')">
-                    <img src="${p.imagenes[0]}" loading="lazy" onload="this.classList.add('loaded')">
+                    <img src="${p.imagenes[0] || ''}" loading="lazy" onload="this.classList.add('loaded')">
                 </div>
-                <h3>${p.nombre}</h3>
-                <p style="color:var(--gold)">$${p.precioBase} USD</p>
+                <h3>${p.nombre}</h3><p style="color:var(--gold)">$${p.precioBase} USD</p>
             </div>
         `).join('');
-        // Re-activar animación de entrada
-        setTimeout(() => {
-            document.querySelectorAll('.card').forEach((c, i) => {
-                setTimeout(() => c.classList.add('visible'), i * 50);
-            });
-        }, 100);
+        setTimeout(() => { document.querySelectorAll('.card').forEach((c, i) => { setTimeout(() => c.classList.add('visible'), i * 50); }); }, 100);
     }
-
     function buscar() {
         const q = document.getElementById('buscador').value.toLowerCase();
         filtrados = productos.filter(p => p.nombre.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q));
         render(filtrados);
     }
-
     function abrirModal(id) {
         const p = productos.find(x => x._id === id);
         fetch(`/api/productos/view/${id}`, { method: 'POST' });
@@ -115,21 +83,14 @@
         document.getElementById('modal').style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
-
     function cerrarModal() { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
-
     function filtrar(cat, btn) {
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         btn.classList.add('active');
         filtrados = cat === 'Todos' ? productos : productos.filter(p => p.categoria === cat);
         render(filtrados);
     }
-
-    function interactuar(id) {
-        fetch(`/api/productos/interact/${id}`, { method: 'POST' });
-        alert("¡Solicitud recibida! Un asesor de GEDALIA le contactará.");
-    }
-
+    function interactuar(id) { fetch(`/api/productos/interact/${id}`, { method: 'POST' }); alert("¡Solicitud recibida!"); }
     cargar();
 </script>
 </body>
