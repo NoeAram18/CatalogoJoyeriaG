@@ -17,8 +17,7 @@
         .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
         .btn-gold { background: var(--gold); color: white; }
         .btn-black { background: var(--black); color: white; }
-        .input-group { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; }
         .section { display: none; animation: fadeIn 0.3s; }
         .active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -45,16 +44,19 @@
             <div class="stat-card"><h4>Conversión</h4><p id="conv-rate" style="font-size:24px; font-weight:700;">0%</p></div>
         </div>
         <div class="card">
-            <h3>Top Rendimiento</h3>
-            <table id="tabla-stats"></table>
+            <h3>Rendimiento de Piezas</h3>
+            <table id="tabla-stats">
+                <thead><tr><th>Pieza</th><th>Vistas</th><th>Clicks</th><th>%</th></tr></thead>
+                <tbody id="body-stats"></tbody>
+            </table>
         </div>
     </div>
 
     <div id="inventory" class="section">
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h3>Inventario General</h3>
-                <input type="text" id="admin-search" placeholder="Filtrar por nombre..." oninput="filtrarAdmin()" style="width:250px;">
+                <input type="text" id="admin-search" placeholder="Filtrar por nombre..." oninput="filtrarAdmin()" style="width:250px; margin:0;">
             </div>
             <table id="lista-prods"></table>
         </div>
@@ -64,32 +66,42 @@
         <div class="card">
             <h3 id="form-title">Nueva Joya</h3>
             <input type="hidden" id="edit-id">
-            <div class="input-group"><input type="text" id="n" placeholder="Nombre de la pieza"></div>
+            <input type="text" id="n" placeholder="Nombre de la pieza">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <select id="c"><option value="Anillos">Anillos</option><option value="Dije">Dije</option><option value="Collares">Collares</option><option value="Aretes">Aretes</option><option value="Pulseras">Pulseras</option></select>
+                <select id="c">
+                    <option value="Anillos">Anillos</option>
+                    <option value="Dije">Dije</option>
+                    <option value="Collares">Collares</option>
+                    <option value="Aretes">Aretes</option>
+                    <option value="Pulseras">Pulseras</option>
+                </select>
                 <input type="number" id="p" placeholder="Precio USD">
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 <input type="number" id="desc" placeholder="% Descuento">
-                <select id="envio"><option value="false">Envío Pagado</option><option value="true">Envío Gratis</option></select>
+                <select id="envio">
+                    <option value="false">Envío Pagado</option>
+                    <option value="true">Envío Gratis</option>
+                </select>
             </div>
-            <div style="margin-top:20px;">
-                <p style="font-size:12px; color:#888;">Imágenes (Mantenemos el límite de 3 para lujo)</p>
-                <input type="file" id="f1" accept="image/*" style="margin-bottom:5px;">
-                <input type="file" id="f2" accept="image/*" style="margin-bottom:5px;">
+            <div style="margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
+                <p style="font-size:12px; color:#888;">Fotos (Suba solo si desea cambiarlas)</p>
+                <input type="file" id="f1" accept="image/*">
+                <input type="file" id="f2" accept="image/*">
                 <input type="file" id="f3" accept="image/*">
             </div>
-            <button id="btn-save" class="btn btn-gold" style="width:100%; margin-top:20px;" onclick="guardar()">GUARDAR PRODUCTO</button>
+            <button id="btn-save" class="btn btn-gold" style="width:100%; margin-top:20px;" onclick="guardar()">GUARDAR CAMBIOS</button>
+            <button class="btn" style="width:100%; margin-top:10px; background:#eee;" onclick="showSection('inventory')">CANCELAR</button>
         </div>
     </div>
 
     <div id="bulk" class="section">
         <div class="card">
             <h3>Carga Masiva (Archivo .CSV)</h3>
-            <p style="font-size:13px; color:#666;">Use el formato: nombre, categoria, precioBase, descuento, envioGratis (true/false)</p>
+            <p style="font-size:13px; color:#666;">Formato: nombre, categoria, precioBase, descuento, envioGratis (true/false)</p>
             <div class="excel-box">
                 <input type="file" id="csv-file" accept=".csv">
-                <button class="btn btn-black" style="margin-top:15px;" onclick="procesarCSV()">CARGAR EXCEL A GEDALIA</button>
+                <button class="btn btn-black" style="margin-top:15px;" onclick="procesarCSV()">SUBIR ARCHIVO</button>
             </div>
         </div>
     </div>
@@ -97,6 +109,7 @@
 
 <script>
     let productos = [];
+
     async function cargar() {
         const res = await fetch('/api/admin/productos-todos');
         productos = await res.json();
@@ -110,6 +123,15 @@
         document.getElementById('total-vistas').innerText = tv;
         document.getElementById('total-clicks').innerText = tc;
         document.getElementById('conv-rate').innerText = tv > 0 ? ((tc/tv)*100).toFixed(1) + "%" : "0%";
+
+        document.getElementById('body-stats').innerHTML = productos.slice(0,10).map(p => `
+            <tr>
+                <td>${p.nombre}</td>
+                <td>${p.vistas}</td>
+                <td>${p.interacciones}</td>
+                <td>${p.vistas > 0 ? ((p.interacciones/p.vistas)*100).toFixed(1) : 0}%</td>
+            </tr>
+        `).join('');
     }
 
     function renderInventory(lista) {
@@ -117,21 +139,16 @@
             <thead><tr><th>Pieza</th><th>Precio</th><th>Stats</th><th>Acciones</th></tr></thead>
             <tbody>${lista.map(p => `
                 <tr>
-                    <td><b>${p.nombre}</b></td>
+                    <td><b>${p.nombre}</b><br><small>${p.categoria}</small></td>
                     <td>$${p.precioBase}</td>
                     <td>${p.vistas}👀 / ${p.interacciones}⚡</td>
                     <td>
-                        <button class="btn-gold" onclick="editar('${p._id}')">✏️</button>
-                        <button onclick="eliminar('${p._id}')" style="background:#ffebee; color:red; border:none; padding:8px; border-radius:5px;">🗑️</button>
+                        <button class="btn btn-gold" onclick="editar('${p._id}')">EDITAR</button>
+                        <button onclick="eliminar('${p._id}')" style="background:none; border:none; color:red; cursor:pointer; margin-left:10px;">🗑️</button>
                     </td>
                 </tr>
             `).join('')}</tbody>
         `;
-    }
-
-    function filtrarAdmin() {
-        const q = document.getElementById('admin-search').value.toLowerCase();
-        renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q)));
     }
 
     function showSection(id) {
@@ -139,9 +156,26 @@
         document.getElementById(id).classList.add('active');
     }
 
+    // CORRECCIÓN: Función Editar funcional
+    function editar(id) {
+        const p = productos.find(x => x._id === id);
+        if(!p) return;
+
+        document.getElementById('edit-id').value = p._id;
+        document.getElementById('n').value = p.nombre;
+        document.getElementById('c').value = p.categoria;
+        document.getElementById('p').value = p.precioBase;
+        document.getElementById('desc').value = p.descuento;
+        document.getElementById('envio').value = p.envioGratis.toString();
+        
+        document.getElementById('form-title').innerText = "Editando: " + p.nombre;
+        showSection('form-section'); // Cambiar a la pestaña de formulario
+    }
+
     function prepareNew() { 
         document.getElementById('edit-id').value = ""; 
-        document.querySelectorAll('input').forEach(i => i.value = "");
+        document.getElementById('form-title').innerText = "Nueva Joya";
+        document.querySelectorAll('#form-section input').forEach(i => i.value = "");
         showSection('form-section'); 
     }
 
@@ -174,8 +208,13 @@
         btn.disabled = true; btn.innerText = "PROCESANDO...";
         const id = document.getElementById('edit-id').value;
         const urls = [];
-        const files = [document.getElementById('f1').files[0], document.getElementById('f2').files[0], document.getElementById('f3').files[0]];
-        for(let f of files) { if(f) urls.push(await procesarImg(f)); }
+        const f1 = document.getElementById('f1').files[0];
+        const f2 = document.getElementById('f2').files[0];
+        const f3 = document.getElementById('f3').files[0];
+
+        if(f1) urls.push(await procesarImg(f1));
+        if(f2) urls.push(await procesarImg(f2));
+        if(f3) urls.push(await procesarImg(f3));
 
         const payload = {
             nombre: document.getElementById('n').value,
@@ -186,18 +225,30 @@
         };
         if(urls.length > 0) payload.imagenes = urls;
 
-        await fetch(id ? `/api/admin/productos/${id}` : '/api/admin/productos', {
+        const res = await fetch(id ? `/api/admin/productos/${id}` : '/api/admin/productos', {
             method: id ? 'PATCH' : 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-        alert("¡Guardado!"); cargar(); showSection('inventory');
-        btn.disabled = false; btn.innerText = "GUARDAR PRODUCTO";
+
+        if(res.ok) {
+            alert("¡Éxito!");
+            cargar();
+            showSection('inventory');
+        }
+        btn.disabled = false; btn.innerText = "GUARDAR CAMBIOS";
     }
+
+    function filtrarAdmin() {
+        const q = document.getElementById('admin-search').value.toLowerCase();
+        renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q)));
+    }
+
+    async function eliminar(id) { if(confirm("¿Eliminar?")) { await fetch(`/api/admin/productos/${id}`, { method: 'DELETE' }); cargar(); } }
 
     async function procesarCSV() {
         const file = document.getElementById('csv-file').files[0];
-        if(!file) return alert("Seleccione un archivo");
+        if(!file) return alert("Seleccione archivo");
         const reader = new FileReader();
         reader.onload = async (e) => {
             const lines = e.target.result.split('\n').slice(1);
@@ -210,12 +261,10 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            alert("Carga masiva completada"); cargar();
+            alert("Carga completada"); cargar(); showSection('inventory');
         };
         reader.readAsText(file);
     }
-
-    async function eliminar(id) { if(confirm("¿Eliminar?")) { await fetch(`/api/admin/productos/${id}`, { method: 'DELETE' }); cargar(); } }
 
     cargar();
 </script>
