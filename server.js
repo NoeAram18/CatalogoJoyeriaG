@@ -22,7 +22,7 @@ const Producto = mongoose.model('Producto', new mongoose.Schema({
     envioGratis: { type: Boolean, default: false }
 }, { timestamps: true }));
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' })); // Aumentado para carga masiva
 app.use(express.static(__dirname));
 const upload = multer({ dest: 'uploads/' });
 
@@ -52,13 +52,20 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
         const form = new FormData();
         form.append('image', fs.createReadStream(req.file.path));
         const response = await axios.post(`https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`, form, { headers: form.getHeaders() });
-        // SEGURIDAD: Limpieza de archivos temporales recuperada
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.json({ url: response.data.data.url });
-    } catch (e) { 
+    } catch (e) {
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        res.status(500).send("Error en carga"); 
+        res.status(500).send("Error");
     }
+});
+
+// NUEVO: Carga masiva desde Excel/CSV
+app.post('/api/admin/productos-bulk', async (req, res) => {
+    try {
+        const result = await Producto.insertMany(req.body);
+        res.json({ success: true, count: result.length });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/admin/productos', async (req, res) => {
@@ -74,4 +81,4 @@ app.delete('/api/admin/productos/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log("Gedalia ERP v2.6 Activo"));
+app.listen(PORT, '0.0.0.0', () => console.log("Gedalia Enterprise Ready"));
