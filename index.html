@@ -4,44 +4,180 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GEDALIA | Alta Joyería en Plata</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --black: #0a0a0a; --white: #ffffff; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--white); }
-        header { padding: 50px 20px; text-align: center; background: var(--black); color: white; border-bottom: 4px solid var(--gold); }
-        header h1 { font-family: 'Playfair Display'; letter-spacing: 12px; margin: 0; font-size: 3rem; }
-        header p { text-transform: uppercase; letter-spacing: 5px; font-size: 10px; margin-top: 10px; color: var(--gold); }
-        .search-container { max-width: 600px; margin: 20px auto; padding: 0 20px; }
-        #buscador { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 30px; text-align: center; outline: none; transition: 0.3s; }
-        .nav-filters { display: flex; justify-content: center; gap: 20px; padding: 20px; background: white; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #eee; overflow-x: auto; }
-        .nav-item { background: none; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; color: #888; font-size: 11px; white-space: nowrap; }
-        .nav-item.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-        .container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px; }
-        .card { cursor: pointer; text-align: center; opacity: 0; transform: translateY(20px); transition: 0.6s all ease-out; }
+        :root { 
+            --silver: #e5e5e5; 
+            --dark-grey: #1a1a1b; 
+            --deep-black: #0d0d0d; 
+            --accent: #ffffff;
+            --soft-grey: #a0a0a0;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            background-color: var(--deep-black); 
+            color: var(--accent);
+        }
+
+        header { 
+            padding: 60px 20px; 
+            text-align: center; 
+            background: linear-gradient(to bottom, #1a1a1b, #0d0d0d);
+            border-bottom: 1px solid #333;
+        }
+
+        header h1 { 
+            font-family: 'Playfair Display'; 
+            letter-spacing: 15px; 
+            margin: 0; 
+            font-size: 3.5rem; 
+            text-transform: uppercase;
+            background: linear-gradient(45deg, #fff, #888, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p { 
+            text-transform: uppercase; 
+            letter-spacing: 6px; 
+            font-size: 11px; 
+            margin-top: 15px; 
+            color: var(--soft-grey); 
+        }
+
+        .search-container { max-width: 500px; margin: 30px auto; padding: 0 20px; }
+        
+        #buscador { 
+            width: 100%; 
+            padding: 14px; 
+            background: #1a1a1b;
+            border: 1px solid #333; 
+            border-radius: 2px; 
+            color: white;
+            text-align: center; 
+            outline: none; 
+            transition: 0.4s;
+            font-family: 'Inter';
+        }
+
+        #buscador:focus { border-color: var(--silver); background: #252526; }
+
+        .nav-filters { 
+            display: flex; 
+            justify-content: center; 
+            gap: 25px; 
+            padding: 20px; 
+            background: rgba(13, 13, 13, 0.95); 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+            border-bottom: 1px solid #222;
+        }
+
+        .nav-item { 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 3px; 
+            color: var(--soft-grey); 
+            font-size: 10px; 
+            transition: 0.3s;
+        }
+
+        .nav-item:hover, .nav-item.active { color: var(--accent); border-bottom: 1px solid var(--accent); }
+
+        .container { max-width: 1400px; margin: 50px auto; padding: 0 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 50px; }
+        
+        .card { cursor: pointer; text-align: left; opacity: 0; transform: translateY(30px); transition: 0.8s all cubic-bezier(0.2, 1, 0.3, 1); }
         .card.visible { opacity: 1; transform: translateY(0); }
-        .img-box { width: 100%; height: 420px; background: #f9f9f9; overflow: hidden; margin-bottom: 15px; }
-        .card img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 0.8s; }
+        
+        .img-box { 
+            width: 100%; 
+            height: 450px; 
+            background: #141414; 
+            overflow: hidden; 
+            margin-bottom: 20px; 
+            border: 1px solid #1f1f1f;
+        }
+
+        .card img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 1.2s ease; filter: grayscale(20%); }
+        .card:hover img { transform: scale(1.05); filter: grayscale(0%); }
         .card img.loaded { opacity: 1; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; z-index: 2000; overflow-y: auto; }
-        .modal-grid { display: grid; grid-template-columns: 1.2fr 1fr; min-height: 100vh; }
-        .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; background: #f4f4f4; }
+
+        .card h3 { font-family: 'Playfair Display'; font-weight: 400; margin: 10px 0 5px; letter-spacing: 1px; }
+        .card .price { color: var(--soft-grey); font-size: 0.9rem; letter-spacing: 1px; }
+
+        /* Modal Ultra Moderno */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--deep-black); display: none; z-index: 2000; overflow-y: auto; }
+        .modal-grid { display: grid; grid-template-columns: 1.3fr 1fr; min-height: 100vh; }
+        .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; background: #000; scrollbar-width: none; }
         .slider img { min-width: 100%; height: 100vh; object-fit: contain; scroll-snap-align: center; }
-        .modal-info { padding: 60px; display: flex; flex-direction: column; justify-content: center; }
-        .btn-back { background: none; border: 1px solid #ddd; padding: 12px 25px; cursor: pointer; margin-bottom: 30px; align-self: flex-start; }
-        .btn-buy { background: var(--gold); color: white; border: none; padding: 25px; font-weight: bold; letter-spacing: 3px; cursor: pointer; }
-        @media (max-width: 950px) { .modal-grid { grid-template-columns: 1fr; } .slider img { height: 50vh; } .modal-info { padding: 40px; } }
+        .modal-info { padding: 80px; display: flex; flex-direction: column; justify-content: center; background: #0d0d0d; }
+        
+        .btn-back { 
+            background: none; 
+            border: 1px solid #333; 
+            color: #888;
+            padding: 10px 20px; 
+            cursor: pointer; 
+            margin-bottom: 40px; 
+            align-self: flex-start; 
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        .btn-buy { 
+            background: white; 
+            color: black; 
+            border: none; 
+            padding: 22px; 
+            font-weight: 600; 
+            letter-spacing: 4px; 
+            cursor: pointer; 
+            text-transform: uppercase;
+            margin-top: 30px;
+            transition: 0.3s;
+        }
+        .btn-buy:hover { background: var(--silver); }
+
+        @media (max-width: 950px) { 
+            .modal-grid { grid-template-columns: 1fr; } 
+            .slider img { height: 60vh; } 
+            .modal-info { padding: 40px; } 
+            header h1 { font-size: 2rem; }
+        }
     </style>
 </head>
 <body>
-<header><h1>GEDALIA</h1><p>Alta joyería en plata</p></header>
-<div class="search-container"><input type="text" id="buscador" placeholder="¿Qué pieza buscas hoy?" oninput="buscar()"></div>
+
+<header>
+    <h1>GEDALIA</h1>
+    <p>Alta joyería en plata</p>
+</header>
+
+<div class="search-container">
+    <input type="text" id="buscador" placeholder="BUSCAR EN LA COLECCIÓN..." oninput="buscar()">
+</div>
+
 <nav class="nav-filters" id="filtros"></nav>
-<div class="container"><div class="grid" id="catalogo"></div></div>
-<div id="modal" class="modal"><div class="modal-grid" id="modal-content"></div></div>
+
+<div class="container">
+    <div class="grid" id="catalogo"></div>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-grid" id="modal-content"></div>
+</div>
+
 <script>
     let productos = [];
     let filtrados = [];
+
     async function cargar() {
         const res = await fetch('/api/productos');
         productos = await res.json();
@@ -51,46 +187,63 @@
             <button class="nav-item ${c==='Todos'?'active':''}" onclick="filtrar('${c}', this)">${c}</button>
         `).join('');
     }
+
     function render(lista) {
         document.getElementById('catalogo').innerHTML = lista.map(p => `
             <div class="card">
                 <div class="img-box" onclick="abrirModal('${p._id}')">
                     <img src="${p.imagenes[0] || ''}" loading="lazy" onload="this.classList.add('loaded')">
                 </div>
-                <h3>${p.nombre}</h3><p style="color:var(--gold)">$${p.precioBase} USD</p>
+                <h3>${p.nombre}</h3>
+                <div class="price">$${p.precioBase} USD</div>
             </div>
         `).join('');
-        setTimeout(() => { document.querySelectorAll('.card').forEach((c, i) => { setTimeout(() => c.classList.add('visible'), i * 50); }); }, 100);
+        
+        setTimeout(() => {
+            document.querySelectorAll('.card').forEach((c, i) => {
+                setTimeout(() => c.classList.add('visible'), i * 80);
+            });
+        }, 100);
     }
+
     function buscar() {
         const q = document.getElementById('buscador').value.toLowerCase();
         filtrados = productos.filter(p => p.nombre.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q));
         render(filtrados);
     }
+
     function abrirModal(id) {
         const p = productos.find(x => x._id === id);
         fetch(`/api/productos/view/${id}`, { method: 'POST' });
         document.getElementById('modal-content').innerHTML = `
             <div class="slider">${p.imagenes.map(img => `<img src="${img}">`).join('')}</div>
             <div class="modal-info">
-                <button class="btn-back" onclick="cerrarModal()">✕ VOLVER AL MENÚ</button>
-                <p style="color:var(--gold); letter-spacing:2px; font-size:12px;">${p.categoria.toUpperCase()}</p>
-                <h2 style="font-family:'Playfair Display'; font-size:2.8rem; margin:10px 0;">${p.nombre}</h2>
-                <p style="font-size:1.8rem; margin-bottom:20px;">$${p.precioBase} USD</p>
-                <button class="btn-buy" onclick="interactuar('${p._id}')">INICIAR CONSULTA</button>
+                <button class="btn-back" onclick="cerrarModal()">✕ Volver al menú</button>
+                <p style="color:#666; letter-spacing:3px; font-size:10px; margin-bottom:10px;">${p.categoria.toUpperCase()}</p>
+                <h2 style="font-family:'Playfair Display'; font-size:3rem; margin:0; font-weight:400;">${p.nombre}</h2>
+                <p style="font-size:1.5rem; margin:25px 0; color:var(--soft-grey);">$${p.precioBase} USD</p>
+                <div style="height:1px; background:#222; margin:20px 0;"></div>
+                <button class="btn-buy" onclick="interactuar('${p._id}')">Solicitar Información</button>
             </div>
         `;
         document.getElementById('modal').style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
+
     function cerrarModal() { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
+
     function filtrar(cat, btn) {
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         btn.classList.add('active');
         filtrados = cat === 'Todos' ? productos : productos.filter(p => p.categoria === cat);
         render(filtrados);
     }
-    function interactuar(id) { fetch(`/api/productos/interact/${id}`, { method: 'POST' }); alert("¡Solicitud recibida!"); }
+
+    function interactuar(id) {
+        fetch(`/api/productos/interact/${id}`, { method: 'POST' });
+        alert("Su interés en esta pieza ha sido registrado. Un asesor le contactará en breve.");
+    }
+
     cargar();
 </script>
 </body>
