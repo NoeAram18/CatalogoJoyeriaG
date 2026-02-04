@@ -1,3 +1,4 @@
+
 const express = require('express');
 const multer = require('multer');
 const axios = require('axios');
@@ -26,6 +27,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.static(__dirname));
 const upload = multer({ dest: 'uploads/' });
 
+// ENDPOINTS PÚBLICOS
 app.get('/api/productos', async (req, res) => {
     res.json(await Producto.find({ stock: true }).sort({ _id: -1 }));
 });
@@ -40,6 +42,7 @@ app.post('/api/productos/interact/:id', async (req, res) => {
     res.sendStatus(200);
 });
 
+// ENDPOINTS ADMIN
 app.get('/api/admin/productos-todos', async (req, res) => {
     res.json(await Producto.find().sort({ vistas: -1 }));
 });
@@ -53,7 +56,7 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
         res.json({ url: response.data.data.url });
     } catch (e) {
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        res.status(500).send("Error");
+        res.status(500).send("Error en carga");
     }
 });
 
@@ -77,4 +80,4 @@ app.delete('/api/admin/productos/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log("Gedalia ERP Ready"));
+app.listen(PORT, '0.0.0.0', () => console.log("Gedalia ERP Online"));
