@@ -22,11 +22,10 @@ const Producto = mongoose.model('Producto', new mongoose.Schema({
     envioGratis: { type: Boolean, default: false }
 }, { timestamps: true }));
 
-app.use(express.json({ limit: '50mb' })); // Aumentado para carga masiva
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static(__dirname));
 const upload = multer({ dest: 'uploads/' });
 
-// API TIENDA
 app.get('/api/productos', async (req, res) => {
     res.json(await Producto.find({ stock: true }).sort({ _id: -1 }));
 });
@@ -41,13 +40,11 @@ app.post('/api/productos/interact/:id', async (req, res) => {
     res.sendStatus(200);
 });
 
-// API ADMIN
 app.get('/api/admin/productos-todos', async (req, res) => {
     res.json(await Producto.find().sort({ vistas: -1 }));
 });
 
 app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
-    if (!req.file) return res.status(400).send("Sin archivo");
     try {
         const form = new FormData();
         form.append('image', fs.createReadStream(req.file.path));
@@ -60,7 +57,6 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
     }
 });
 
-// NUEVO: Carga masiva desde Excel/CSV
 app.post('/api/admin/productos-bulk', async (req, res) => {
     try {
         const result = await Producto.insertMany(req.body);
@@ -81,4 +77,4 @@ app.delete('/api/admin/productos/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log("Gedalia Enterprise Ready"));
+app.listen(PORT, '0.0.0.0', () => console.log("Gedalia ERP Ready"));
