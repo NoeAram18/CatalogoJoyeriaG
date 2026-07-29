@@ -10,8 +10,6 @@
         .sidebar { width: 280px; background: var(--black); height: 100vh; color: white; padding: 40px 20px; position: fixed; }
         .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px; }
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 12px; border-left: 4px solid var(--gold); }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
         .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
@@ -27,208 +25,130 @@
 <div class="sidebar">
     <h2 style="color:var(--gold); letter-spacing:2px;">GEDALIA</h2>
     <div style="margin-top:40px;">
-        <p onclick="showSection('stats')" style="cursor:pointer; padding:10px 0;">📊 Estadísticas</p>
         <p onclick="showSection('inventory')" style="cursor:pointer; padding:10px 0;">💎 Inventario</p>
         <p onclick="prepareNew()" style="cursor:pointer; padding:10px 0;">✨ Nueva Pieza</p>
-        <p onclick="showSection('bulk')" style="cursor:pointer; padding:10px 0;">📂 Carga Excel</p>
     </div>
 </div>
 
 <div class="main">
-    <div id="stats" class="section active">
-        <div class="stat-grid">
-            <div class="stat-card"><h4>Vistas</h4><p id="total-vistas" style="font-size:24px; font-weight:bold;">0</p></div>
-            <div class="stat-card"><h4>Consultas</h4><p id="total-clicks" style="font-size:24px; font-weight:bold;">0</p></div>
-            <div class="stat-card"><h4>Interés</h4><p id="conv-rate" style="font-size:24px; font-weight:bold;">0%</p></div>
-        </div>
-        <div class="card">
-            <h3>Top Rendimiento</h3>
-            <table>
-                <thead><tr><th>Nombre</th><th>Vistas</th><th>Clicks</th><th>%</th></tr></thead>
-                <tbody id="body-stats"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="inventory" class="section">
+    <div id="inventory" class="section active">
         <div class="card">
             <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <h3>Inventario General</h3>
+                <h3>Inventario de Plata</h3>
                 <input type="text" id="admin-search" placeholder="Buscar pieza..." oninput="filtrarAdmin()" style="width:200px; margin:0;">
             </div>
-            <table id="lista-prods"></table>
+            <table id="lista-prods">
+                </table>
         </div>
     </div>
 
     <div id="form-section" class="section">
         <div class="card">
-            <h3 id="form-title">Nueva Joya</h3>
+            <h3 id="form-title">Nueva Joya de Plata</h3>
             <input type="hidden" id="edit-id">
-            <input type="text" id="n" placeholder="Nombre">
+            
+            <input type="text" id="codigo" placeholder="Código (ej. PLT-001)">
+            <input type="text" id="nombre" placeholder="Nombre descriptivo">
+            
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <select id="c">
-                    <option value="Anillos">Anillos</option><option value="Dije">Dije</option>
-                    <option value="Collares">Collares</option><option value="Aretes">Aretes</option>
-                    <option value="Pulseras">Pulseras</option>
-                </select>
-                <input type="number" id="p" placeholder="Precio USD">
+                <input type="number" id="precio" placeholder="Precio USD">
+                <input type="number" id="stock" placeholder="Cantidad en Stock">
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <input type="number" id="desc" placeholder="% Descuento">
-                <select id="envio">
-                    <option value="false">Envío Pagado</option><option value="true">Envío Gratis</option>
-                </select>
-            </div>
-            <p style="font-size:12px; color:#888; margin-top:15px;">Imágenes (Max 3)</p>
-            <input type="file" id="f1" accept="image/*"><input type="file" id="f2" accept="image/*"><input type="file" id="f3" accept="image/*">
-            <button id="btn-save" class="btn btn-gold" style="width:100%; margin-top:15px;" onclick="guardar()">GUARDAR CAMBIOS</button>
-            <button class="btn" style="width:100%; margin-top:10px; background:#ddd;" onclick="showSection('inventory')">CANCELAR</button>
-        </div>
-    </div>
 
-    <div id="bulk" class="section">
-        <div class="card">
-            <h3>Carga Masiva .CSV</h3>
-            <input type="file" id="csv-file" accept=".csv">
-            <button class="btn btn-gold" onclick="procesarCSV()">SUBIR ARCHIVO</button>
+            <button id="btn-save" class="btn btn-gold" style="width:100%; margin-top:15px;" onclick="guardar()">GUARDAR JOYA EN AIVEN</button>
+            <button class="btn" style="width:100%; margin-top:10px; background:#ddd;" onclick="showSection('inventory')">CANCELAR</button>
         </div>
     </div>
 </div>
 
 <script>
     let productos = [];
+
+    // 1. Obtener productos de PostgreSQL
     async function cargar() {
-        const res = await fetch('/api/admin/productos-todos');
-        productos = await res.json();
-        renderInventory(productos);
-        renderStats();
+        try {
+            const res = await fetch('/api/productos');
+            productos = await res.json();
+            renderInventory(productos);
+        } catch (error) {
+            console.error("Error cargando inventario:", error);
+        }
     }
 
-    function renderStats() {
-        const tv = productos.reduce((a, b) => a + b.vistas, 0);
-        const tc = productos.reduce((a, b) => a + b.interacciones, 0);
-        document.getElementById('total-vistas').innerText = tv;
-        document.getElementById('total-clicks').innerText = tc;
-        document.getElementById('conv-rate').innerText = tv > 0 ? ((tc/tv)*100).toFixed(1) + "%" : "0%";
-        document.getElementById('body-stats').innerHTML = productos.slice(0,10).map(p => `
-            <tr><td>${p.nombre}</td><td>${p.vistas}</td><td>${p.interacciones}</td><td>${p.vistas>0?((p.interacciones/p.vistas)*100).toFixed(1):0}%</td></tr>
-        `).join('');
-    }
-
+    // 2. Mostrar la tabla
     function renderInventory(lista) {
         document.getElementById('lista-prods').innerHTML = `
-            <thead><tr><th>Pieza</th><th>Precio</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Código</th><th>Pieza</th><th>Precio</th><th>Stock</th></tr></thead>
             <tbody>${lista.map(p => `
                 <tr>
-                    <td><b>${p.nombre}</b><br><small>${p.categoria}</small></td>
-                    <td>$${p.precioBase}</td>
-                    <td>
-                        <button class="btn btn-gold" onclick="editar('${p._id}')">EDITAR</button>
-                        <button onclick="eliminar('${p._id}')" style="color:red; background:none; border:none; cursor:pointer; margin-left:10px;">🗑️</button>
-                    </td>
+                    <td>${p.codigo}</td>
+                    <td><b>${p.nombre}</b></td>
+                    <td>$${p.precio}</td>
+                    <td>${p.stock} pz</td>
                 </tr>
             `).join('')}</tbody>
         `;
     }
 
+    // 3. Cambiar de pantalla
     function showSection(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
-    function editar(id) {
-        const p = productos.find(x => x._id === id);
-        if(!p) return;
-        document.getElementById('edit-id').value = p._id;
-        document.getElementById('n').value = p.nombre;
-        document.getElementById('c').value = p.categoria;
-        document.getElementById('p').value = p.precioBase;
-        document.getElementById('desc').value = p.descuento;
-        document.getElementById('envio').value = p.envioGratis.toString();
-        document.getElementById('form-title').innerText = "Editando Pieza";
-        showSection('form-section');
-    }
-
     function prepareNew() {
         document.getElementById('edit-id').value = "";
-        document.getElementById('form-title').innerText = "Nueva Joya";
-        document.querySelectorAll('#form-section input').forEach(i => i.value = "");
+        document.getElementById('form-title').innerText = "Nueva Joya de Plata";
+        document.getElementById('codigo').value = "";
+        document.getElementById('nombre').value = "";
+        document.getElementById('precio').value = "";
+        document.getElementById('stock').value = "";
         showSection('form-section');
     }
 
-    async function procesarImg(file) {
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX = 1200;
-                    let w = img.width, h = img.height;
-                    if(w > MAX) { h *= MAX/w; w = MAX; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    canvas.toBlob(async b => {
-                        const fd = new FormData(); fd.append('image', b);
-                        const r = await fetch('/api/admin/upload-image', { method: 'POST', body: fd });
-                        const d = await r.json(); resolve(d.url);
-                    }, 'image/jpeg', 0.8);
-                }
-            }
-        });
-    }
-
+    // 4. Guardar en PostgreSQL (¡Sin falsos positivos!)
     async function guardar() {
         const btn = document.getElementById('btn-save');
-        btn.disabled = true; btn.innerText = "PROCESANDO IMÁGENES...";
-        const id = document.getElementById('edit-id').value;
-        const urls = [];
-        const files = [document.getElementById('f1').files[0], document.getElementById('f2').files[0], document.getElementById('f3').files[0]];
-        for(let f of files) if(f) urls.push(await procesarImg(f));
+        btn.disabled = true; 
+        btn.innerText = "GUARDANDO...";
 
         const payload = {
-            nombre: document.getElementById('n').value,
-            categoria: document.getElementById('c').value,
-            precioBase: Number(document.getElementById('p').value),
-            descuento: Number(document.getElementById('desc').value) || 0,
-            envioGratis: document.getElementById('envio').value === "true"
+            codigo: document.getElementById('codigo').value,
+            nombre: document.getElementById('nombre').value,
+            precio: parseFloat(document.getElementById('precio').value),
+            stock: parseInt(document.getElementById('stock').value)
         };
-        if(urls.length > 0) payload.imagenes = urls;
 
-        await fetch(id ? `/api/admin/productos/${id}` : '/api/admin/productos', {
-            method: id ? 'PATCH' : 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        alert("¡Éxito!"); cargar(); showSection('inventory');
-        btn.disabled = false; btn.innerText = "GUARDAR CAMBIOS";
-    }
-
-    async function procesarCSV() {
-        const file = document.getElementById('csv-file').files[0];
-        if(!file) return alert("Seleccione archivo");
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const lines = e.target.result.split('\n').slice(1);
-            const data = lines.filter(l => l.trim()).map(line => {
-                const [nombre, categoria, precioBase, descuento, envioGratis] = line.split(',');
-                return { nombre, categoria, precioBase: Number(precioBase), descuento: Number(descuento), envioGratis: envioGratis.trim() === 'true' };
+        try {
+            const respuesta = await fetch('/api/productos', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
             });
-            await fetch('/api/admin/productos-bulk', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            alert("Carga completa"); cargar(); showSection('inventory');
-        };
-        reader.readAsText(file);
+
+            if (respuesta.ok) {
+                alert("¡Éxito! La joya se guardó correctamente en tu base de datos.");
+                cargar(); 
+                showSection('inventory');
+            } else {
+                alert("Error: Verifica que el código no esté repetido.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de comunicación con el servidor.");
+        } finally {
+            btn.disabled = false; 
+            btn.innerText = "GUARDAR JOYA EN AIVEN";
+        }
     }
 
+    // 5. Buscador rápido
     function filtrarAdmin() {
         const q = document.getElementById('admin-search').value.toLowerCase();
-        renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q)));
+        renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
     }
 
-    async function eliminar(id) { if(confirm("¿Eliminar?")) { await fetch(`/api/admin/productos/${id}`, { method: 'DELETE' }); cargar(); } }
-
+    // Iniciar
     cargar();
 </script>
 </body>
