@@ -13,21 +13,18 @@
             --accent: #ffffff;
             --soft-grey: #a0a0a0;
         }
-        
         body { 
             font-family: 'Inter', sans-serif; 
             margin: 0; 
             background-color: var(--deep-black); 
             color: var(--accent);
         }
-
         header { 
             padding: 60px 20px; 
             text-align: center; 
             background: linear-gradient(to bottom, #1a1a1b, #0d0d0d);
             border-bottom: 1px solid #333;
         }
-
         header h1 { 
             font-family: 'Playfair Display'; 
             letter-spacing: 15px; 
@@ -38,7 +35,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         header p { 
             text-transform: uppercase; 
             letter-spacing: 6px; 
@@ -46,9 +42,7 @@
             margin-top: 15px; 
             color: var(--soft-grey); 
         }
-
         .search-container { max-width: 500px; margin: 30px auto; padding: 0 20px; }
-        
         #buscador { 
             width: 100%; 
             padding: 14px; 
@@ -61,40 +55,10 @@
             transition: 0.4s;
             font-family: 'Inter';
         }
-
         #buscador:focus { border-color: var(--silver); background: #252526; }
-
-        .nav-filters { 
-            display: flex; 
-            justify-content: center; 
-            gap: 25px; 
-            padding: 20px; 
-            background: rgba(13, 13, 13, 0.95); 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-            border-bottom: 1px solid #222;
-        }
-
-        .nav-item { 
-            background: none; 
-            border: none; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-            letter-spacing: 3px; 
-            color: var(--soft-grey); 
-            font-size: 10px; 
-            transition: 0.3s;
-        }
-
-        .nav-item:hover, .nav-item.active { color: var(--accent); border-bottom: 1px solid var(--accent); }
-
         .container { max-width: 1400px; margin: 50px auto; padding: 0 30px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 50px; }
-        
-        .card { cursor: pointer; text-align: left; opacity: 0; transform: translateY(30px); transition: 0.8s all cubic-bezier(0.2, 1, 0.3, 1); }
-        .card.visible { opacity: 1; transform: translateY(0); }
-        
+        .card { cursor: pointer; text-align: left; }
         .img-box { 
             width: 100%; 
             height: 450px; 
@@ -103,54 +67,21 @@
             margin-bottom: 20px; 
             border: 1px solid #1f1f1f;
         }
-
-        .card img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: 1.2s ease; filter: grayscale(20%); }
+        .card img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(20%); transition: 1.2s ease; }
         .card:hover img { transform: scale(1.05); filter: grayscale(0%); }
-        .card img.loaded { opacity: 1; }
-
         .card h3 { font-family: 'Playfair Display'; font-weight: 400; margin: 10px 0 5px; letter-spacing: 1px; }
         .card .price { color: var(--soft-grey); font-size: 0.9rem; letter-spacing: 1px; }
 
-        /* Modal Ultra Moderno */
+        /* Modal */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--deep-black); display: none; z-index: 2000; overflow-y: auto; }
         .modal-grid { display: grid; grid-template-columns: 1.3fr 1fr; min-height: 100vh; }
         .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; background: #000; scrollbar-width: none; }
         .slider img { min-width: 100%; height: 100vh; object-fit: contain; scroll-snap-align: center; }
         .modal-info { padding: 80px; display: flex; flex-direction: column; justify-content: center; background: #0d0d0d; }
-        
-        .btn-back { 
-            background: none; 
-            border: 1px solid #333; 
-            color: #888;
-            padding: 10px 20px; 
-            cursor: pointer; 
-            margin-bottom: 40px; 
-            align-self: flex-start; 
-            text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 2px;
-        }
-
-        .btn-buy { 
-            background: white; 
-            color: black; 
-            border: none; 
-            padding: 22px; 
-            font-weight: 600; 
-            letter-spacing: 4px; 
-            cursor: pointer; 
-            text-transform: uppercase;
-            margin-top: 30px;
-            transition: 0.3s;
-        }
+        .btn-back { background: none; border: 1px solid #333; color: #888; padding: 10px 20px; cursor: pointer; margin-bottom: 40px; align-self: flex-start; text-transform: uppercase; font-size: 10px; letter-spacing: 2px; }
+        .btn-buy { background: white; color: black; border: none; padding: 22px; font-weight: 600; letter-spacing: 4px; cursor: pointer; text-transform: uppercase; margin-top: 30px; transition: 0.3s; }
         .btn-buy:hover { background: var(--silver); }
-
-        @media (max-width: 950px) { 
-            .modal-grid { grid-template-columns: 1fr; } 
-            .slider img { height: 60vh; } 
-            .modal-info { padding: 40px; } 
-            header h1 { font-size: 2rem; }
-        }
+        @media (max-width: 950px) { .modal-grid { grid-template-columns: 1fr; } .slider img { height: 60vh; } .modal-info { padding: 40px; } header h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
@@ -163,8 +94,6 @@
 <div class="search-container">
     <input type="text" id="buscador" placeholder="BUSCAR EN LA COLECCIÓN..." oninput="buscar()">
 </div>
-
-<nav class="nav-filters" id="filtros"></nav>
 
 <div class="container">
     <div class="grid" id="catalogo"></div>
@@ -179,69 +108,69 @@
     let filtrados = [];
 
     async function cargar() {
-        const res = await fetch('/api/productos');
-        productos = await res.json();
-        filtrados = productos;
-        render(filtrados);
-        document.getElementById('filtros').innerHTML = ['Todos', 'Anillos', 'Dije', 'Collares', 'Aretes', 'Pulseras'].map(c => `
-            <button class="nav-item ${c==='Todos'?'active':''}" onclick="filtrar('${c}', this)">${c}</button>
-        `).join('');
+        try {
+            const res = await fetch('/api/productos');
+            productos = await res.json();
+            filtrados = productos;
+            render(filtrados);
+        } catch (e) {
+            console.error("Error al cargar catálogo:", e);
+        }
     }
 
     function render(lista) {
-        document.getElementById('catalogo').innerHTML = lista.map(p => `
-            <div class="card">
-                <div class="img-box" onclick="abrirModal('${p._id}')">
-                    <img src="${p.imagenes[0] || ''}" loading="lazy" onload="this.classList.add('loaded')">
+        const contenedor = document.getElementById('catalogo');
+        if (!lista || lista.length === 0) {
+            contenedor.innerHTML = "<p style='color: #888; text-align:center;'>No hay piezas disponibles en este momento.</p>";
+            return;
+        }
+
+        contenedor.innerHTML = lista.map(p => {
+            // Manejo por si trae varias imágenes o solo una de respaldo
+            const imagenPrincipal = (p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://images.unsplash.com/photo-1598560917505-59a3555ae0bb?auto=format&fit=crop&w=800&q=80';
+            return `
+                <div class="card" onclick="abrirModal(${p.id})">
+                    <div class="img-box">
+                        <img src="${imagenPrincipal}" alt="${p.nombre}">
+                    </div>
+                    <h3>${p.nombre}</h3>
+                    <div class="price">$${p.precio} USD</div>
                 </div>
-                <h3>${p.nombre}</h3>
-                <div class="price">$${p.precioBase} USD</div>
-            </div>
-        `).join('');
-        
-        setTimeout(() => {
-            document.querySelectorAll('.card').forEach((c, i) => {
-                setTimeout(() => c.classList.add('visible'), i * 80);
-            });
-        }, 100);
+            `;
+        }).join('');
     }
 
     function buscar() {
         const q = document.getElementById('buscador').value.toLowerCase();
-        filtrados = productos.filter(p => p.nombre.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q));
+        filtrados = productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q));
         render(filtrados);
     }
 
     function abrirModal(id) {
-        const p = productos.find(x => x._id === id);
-        fetch(`/api/productos/view/${id}`, { method: 'POST' });
+        const p = productos.find(x => x.id === id);
+        if (!p) return;
+
+        const imgs = (p.imagenes && p.imagenes.length > 0) ? p.imagenes : ['https://images.unsplash.com/photo-1598560917505-59a3555ae0bb?auto=format&fit=crop&w=800&q=80'];
+
         document.getElementById('modal-content').innerHTML = `
-            <div class="slider">${p.imagenes.map(img => `<img src="${img}">`).join('')}</div>
+            <div class="slider">${imgs.map(img => `<img src="${img}">`).join('')}</div>
             <div class="modal-info">
-                <button class="btn-back" onclick="cerrarModal()">✕ Volver al menú</button>
-                <p style="color:#666; letter-spacing:3px; font-size:10px; margin-bottom:10px;">${p.categoria.toUpperCase()}</p>
-                <h2 style="font-family:'Playfair Display'; font-size:3rem; margin:0; font-weight:400;">${p.nombre}</h2>
-                <p style="font-size:1.5rem; margin:25px 0; color:var(--soft-grey);">$${p.precioBase} USD</p>
+                <button class="btn-back" onclick="cerrarModal()">✕ Volver al catálogo</button>
+                <p style="color:#666; letter-spacing:3px; font-size:10px; margin-bottom:10px;">CÓDIGO: ${p.codigo}</p>
+                <h2 style="font-family:'Playfair Display'; font-size:2.5rem; margin:0; font-weight:400;">${p.nombre}</h2>
+                <p style="font-size:1.5rem; margin:25px 0; color:var(--soft-grey);">$${p.precio} USD</p>
+                <p style="font-size:14px; color:#aaa;">Stock disponible: ${p.stock} piezas</p>
                 <div style="height:1px; background:#222; margin:20px 0;"></div>
-                <button class="btn-buy" onclick="interactuar('${p._id}')">Solicitar Información</button>
+                <button class="btn-buy" onclick="window.open('https://wa.me/?text=Hola,%20me%20interesa%20la%20joya%20${p.codigo}:%20${p.nombre}', '_blank')">Pedir por WhatsApp</button>
             </div>
         `;
         document.getElementById('modal').style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
 
-    function cerrarModal() { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
-
-    function filtrar(cat, btn) {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        btn.classList.add('active');
-        filtrados = cat === 'Todos' ? productos : productos.filter(p => p.categoria === cat);
-        render(filtrados);
-    }
-
-    function interactuar(id) {
-        fetch(`/api/productos/interact/${id}`, { method: 'POST' });
-        alert("Su interés en esta pieza ha sido registrado. Un asesor le contactará en breve.");
+    function cerrarModal() { 
+        document.getElementById('modal').style.display = 'none'; 
+        document.body.style.overflow = 'auto'; 
     }
 
     cargar();
