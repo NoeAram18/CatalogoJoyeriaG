@@ -1,31 +1,46 @@
-
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
 
 const app = express();
 
-// Permitir que el servidor entienda datos JSON y formularios
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Servir automáticamente archivos estáticos (HTML, CSS, JS si los tienes en la raíz)
 app.use(express.static(path.join(__dirname)));
 
 // 1. Configuración de Conexión a Aiven PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false // ¡OBLIGATORIO! Aiven exige SSL seguro para conectar desde Render
+    rejectUnauthorized: false // Obligatorio para Aiven
   }
 });
 
-// Probar conexión en los logs de Render
+// Probar conexión y CREAR LA TABLA AUTOMÁTICAMENTE
 pool.connect((err) => {
   if (err) {
     console.error('Error conectando a Aiven PostgreSQL:', err.stack);
   } else {
     console.log('Gedalia ERP Online - ¡Conectado a Aiven con éxito! 💎');
+    
+    // TRUCO: El servidor crea la tabla de joyería si no existe
+    const crearTablaSQL = `
+      CREATE TABLE IF NOT EXISTS productos (
+          id SERIAL PRIMARY KEY,
+          codigo VARCHAR(50) UNIQUE NOT NULL,
+          nombre VARCHAR(100) NOT NULL,
+          precio NUMERIC(10, 2) NOT NULL,
+          stock INT NOT NULL
+      );
+    `;
+    
+    pool.query(crearTablaSQL, (errQuery, resQuery) => {
+      if (errQuery) {
+        console.error('Error creando la tabla en Aiven:', errQuery.stack);
+      } else {
+        console.log('Tabla "productos" verificada y lista para las 800 piezas. 🛠️');
+      }
+    });
   }
 });
 
@@ -38,18 +53,18 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// 3. API RETAIL: Obtener las 800 piezas de joyería para el catálogo
+// 3. API RETAIL: Obtener los productos para el catálogo
 app.get('/api/productos', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM productos ORDER BY id DESC');
-    res.json(result.rows); // PostgreSQL devuelve las filas en .rows
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener el inventario de joyería' });
   }
 });
 
-// 4. API ERP: Agregar una nueva joya de plata desde el panel admin
+// 4. API ERP: Agregar una nueva joya de plata
 app.post('/api/productos', async (req, res) => {
   const { codigo, nombre, precio, stock } = req.body;
   try {
@@ -63,7 +78,7 @@ app.post('/api/productos', async (req, res) => {
   }
 });
 
-// Encender el servidor en Render
+// Encender el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor de Gedalia ERP corriendo en el puerto ${PORT}`);
