@@ -5,8 +5,19 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
-// Servir los archivos estáticos de tu tienda (index.html y admin.html)
+// Servir archivos estáticos del proyecto
 app.use(express.static(__dirname));
+
+// --- RUTAS DE NAVEGACIÓN (URLs Limpias) ---
+// Permite entrar escribiendo /admin en lugar de /admin.html
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Permite entrar a la raíz principal
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // 1. Configuración de Conexión a Aiven PostgreSQL
 const pool = new Pool({
@@ -33,7 +44,7 @@ async function inicializarBD() {
             await pool.query(`ALTER TABLE productos ADD COLUMN imagenes TEXT[];`);
             console.log('Columna de imágenes lista.');
         } catch (e) {
-            // Ignorar si ya existe
+            // Ignorar si ya existe la columna
         }
         
         console.log('Gedalia ERP Online - Conectado a Aiven con éxito 💎');
@@ -43,7 +54,7 @@ async function inicializarBD() {
 }
 inicializarBD();
 
-// 3. RUTA: Obtener todo el inventario
+// 3. RUTA API: Obtener todo el inventario
 app.get('/api/productos', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM productos ORDER BY id DESC');
@@ -53,7 +64,7 @@ app.get('/api/productos', async (req, res) => {
     }
 });
 
-// 4. RUTA: Crear un nuevo producto
+// 4. RUTA API: Crear un nuevo producto
 app.post('/api/productos', async (req, res) => {
     const { codigo, nombre, precio, stock, imagenes } = req.body;
     try {
@@ -67,7 +78,7 @@ app.post('/api/productos', async (req, res) => {
     }
 });
 
-// 5. RUTA: ACTUALIZAR/EDITAR una joya existente
+// 5. RUTA API: ACTUALIZAR/EDITAR una joya existente
 app.put('/api/productos/:id', async (req, res) => {
     const { id } = req.params;
     const { codigo, nombre, precio, stock, imagenes } = req.body;
@@ -89,7 +100,7 @@ app.put('/api/productos/:id', async (req, res) => {
     }
 });
 
-// 6. RUTA: Eliminar una pieza del inventario
+// 6. RUTA API: Eliminar una pieza del inventario
 app.delete('/api/productos/:id', async (req, res) => {
     const { id } = req.params;
     try {
