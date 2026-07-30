@@ -15,13 +15,16 @@
         .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.3s;}
         .btn-gold { background: var(--gold); color: white; }
         .btn-gold:disabled { background: #ccc; cursor: not-allowed; }
-        .btn-danger { background: #ff4d4d; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; }
+        .btn-edit { background: #4a90e2; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; margin-right: 5px; border:none; cursor:pointer;}
+        .btn-danger { background: #ff4d4d; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; border:none; cursor:pointer;}
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
         .img-input-group { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; }
         .section { display: none; animation: fadeIn 0.3s; }
         .active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .current-imgs-container { display: flex; gap: 8px; margin-bottom: 10px; }
+        .current-img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
@@ -56,12 +59,20 @@
             </div>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <input type="number" id="precio" placeholder="Precio de Venta (USD)">
+                <input type="number" id="precio" placeholder="Precio de Venta (USD)" step="0.01">
                 <input type="number" id="stock" placeholder="Cantidad física en Stock">
             </div>
 
+            <div id="preview-imagenes-actuales" style="display:none; margin-bottom:15px;">
+                <p style="margin:0 0 5px 0; font-size:13px; color:#666;"><strong>Imágenes guardadas actualmente:</strong></p>
+                <div id="galeria-preview" class="current-imgs-container"></div>
+            </div>
+
             <div class="img-input-group">
-                <p style="margin-top: 0; font-size: 14px; color: #555;"><strong>Fotografías de la Joya (Max 4):</strong><br><small>Selecciona imágenes claras. La Foto 1 será la principal en la tienda.</small></p>
+                <p style="margin-top: 0; font-size: 14px; color: #555;">
+                    <strong id="label-fotos-titulo">Fotografías de la Joya (Max 4):</strong><br>
+                    <small id="label-fotos-sub">Si no seleccionas archivos nuevos en edición, se conservarán las fotos actuales.</small>
+                </p>
                 <input type="file" id="foto1" accept="image/*">
                 <input type="file" id="foto2" accept="image/*">
                 <input type="file" id="foto3" accept="image/*">
@@ -80,6 +91,8 @@
     const UPLOAD_PRESET = "gedalia_preset"; 
 
     let productos = [];
+    let editandoId = null; // Guardará el ID de la pieza cuando estemos editando
+    let imagenesExistentes = []; // Guardará los links de imágenes actuales al editar
 
     // 1. Obtener productos de PostgreSQL
     async function cargar() {
@@ -92,7 +105,7 @@
         }
     }
 
-    // 2. Mostrar la tabla con miniatura
+    // 2. Mostrar la tabla con miniatura y botones de Editar / Borrar
     function renderInventory(lista) {
         document.getElementById('lista-prods').innerHTML = `
             <thead><tr><th>Foto</th><th>Código</th><th>Pieza</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
@@ -104,6 +117,7 @@
                     <td>$${p.precio}</td>
                     <td>${p.stock} pz</td>
                     <td>
+                        <button class="btn-edit" onclick="iniciarEdicion(${p.id})">Editar</button>
                         <button class="btn-danger" onclick="eliminarProducto(${p.id})">Borrar</button>
                     </td>
                 </tr>
@@ -111,13 +125,17 @@
         `;
     }
 
-    // 3. Cambiar de pantalla y limpiar formulario
+    // 3. Cambiar de pantalla y limpiar o preparar estado
     function showSection(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
     function prepareNew() {
+        editandoId = null;
+        imagenesExistentes = [];
+        document.getElementById('form-title').innerText = "Añadir Nueva Joya al Catálogo";
+        document.getElementById('btn-save').innerText = "GUARDAR JOYA EN CATÁLOGO";
         document.getElementById('codigo').value = "";
         document.getElementById('nombre').value = "";
         document.getElementById('precio').value = "";
@@ -126,10 +144,45 @@
         document.getElementById('foto2').value = "";
         document.getElementById('foto3').value = "";
         document.getElementById('foto4').value = "";
+        document.getElementById('preview-imagenes-actuales').style.display = "none";
         showSection('form-section');
     }
 
-    // 4. Subir una imagen individual a Cloudinary
+    // 4. Cargar los datos de una joya existente en el formulario para editar
+    function iniciarEdicion(id) {
+        const prod = productos.find(p => p.id === id);
+        if(!prod) return;
+
+        editandoId = id;
+        imagenesExistentes = prod.imagenes || [];
+
+        document.getElementById('form-title').innerText = `Editar Joya: ${prod.codigo}`;
+        document.getElementById('btn-save').innerText = "ACTUALIZAR DATOS DE LA JOYA";
+        
+        document.getElementById('codigo').value = prod.codigo;
+        document.getElementById('nombre').value = prod.nombre;
+        document.getElementById('precio').value = prod.precio;
+        document.getElementById('stock').value = prod.stock;
+
+        // Limpiar inputs de archivos
+        document.getElementById('foto1').value = "";
+        document.getElementById('foto2').value = "";
+        document.getElementById('foto3').value = "";
+        document.getElementById('foto4').value = "";
+
+        // Mostrar vista previa de imágenes guardadas
+        const galeria = document.getElementById('galeria-preview');
+        if(imagenesExistentes.length > 0) {
+            galeria.innerHTML = imagenesExistentes.map(img => `<img src="${img}" class="current-img-preview">`).join('');
+            document.getElementById('preview-imagenes-actuales').style.display = "block";
+        } else {
+            document.getElementById('preview-imagenes-actuales').style.display = "none";
+        }
+
+        showSection('form-section');
+    }
+
+    // 5. Subir una imagen individual a Cloudinary
     async function subirImagenACloudinary(file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -141,33 +194,29 @@
                 body: formData
             });
             const datos = await respuesta.json();
-            return datos.secure_url; // Retorna el enlace público
+            return datos.secure_url;
         } catch (error) {
             console.error("Error en Cloudinary:", error);
             return null;
         }
     }
 
-    // 5. Flujo principal: Guardar fotos y luego guardar en Base de Datos
+    // 6. Flujo principal: Crear o Editar
     async function guardarProducto() {
         const btn = document.getElementById('btn-save');
         btn.disabled = true; 
 
-        // Leer inputs de texto
         const codigo = document.getElementById('codigo').value.trim();
         const nombre = document.getElementById('nombre').value.trim();
         const precio = parseFloat(document.getElementById('precio').value);
         const stock = parseInt(document.getElementById('stock').value);
 
-        if(!codigo || !nombre || !precio || !stock) {
-            alert("Por favor llena todos los campos de texto.");
+        if(!codigo || !nombre || isNaN(precio) || isNaN(stock)) {
+            alert("Por favor llena todos los campos correctamente.");
             btn.disabled = false;
             return;
         }
 
-        btn.innerText = "⏳ SUBIENDO FOTOGRAFÍAS A CLOUDINARY...";
-
-        // Recolectar archivos de imagen seleccionados
         const inputsFotos = [
             document.getElementById('foto1').files[0],
             document.getElementById('foto2').files[0],
@@ -175,60 +224,81 @@
             document.getElementById('foto4').files[0]
         ];
 
-        let urlsImagenes = [];
+        let urlsNuevas = [];
+        let hayArchivosNuevos = inputsFotos.some(f => f !== undefined);
 
-        // Subir a Cloudinary una por una si existen
-        for (let archivo of inputsFotos) {
-            if (archivo) {
-                const url = await subirImagenACloudinary(archivo);
-                if (url) urlsImagenes.push(url);
+        if (hayArchivosNuevos) {
+            btn.innerText = "⏳ SUBIENDO NUEVAS FOTOS A CLOUDINARY...";
+            for (let archivo of inputsFotos) {
+                if (archivo) {
+                    const url = await subirImagenACloudinary(archivo);
+                    if (url) urlsNuevas.push(url);
+                }
             }
         }
 
-        btn.innerText = "💾 GUARDANDO EN POSTGRESQL...";
+        // Si subió fotos nuevas, usamos esas. Si no subió nada y estamos editando, mantenemos las anteriores.
+        let imagenesFinales = (urlsNuevas.length > 0) ? urlsNuevas : imagenesExistentes;
 
-        // Crear el paquete de datos para tu base de datos
-        const payload = { codigo, nombre, precio, stock, imagenes: urlsImagenes };
+        btn.innerText = "💾 GUARDANDO EN BASE DE DATOS...";
+
+        const payload = { codigo, nombre, precio, stock, imagenes: imagenesFinales };
 
         try {
-            // Guardar en Render/Aiven
-            const respuesta = await fetch('/api/productos', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
+            let respuesta;
+            
+            if (editandoId) {
+                // MODO EDICIÓN (PUT)
+                respuesta = await fetch(`/api/productos/${editandoId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                // MODO NUEVO (POST)
+                respuesta = await fetch('/api/productos', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+            }
 
             if (respuesta.ok) {
-                alert("¡Joya guardada exitosamente con sus fotos!");
+                alert(editandoId ? "¡Joya actualizada con éxito!" : "¡Joya registrada con éxito!");
                 cargar(); 
                 showSection('inventory');
             } else {
-                alert("Error al guardar. Verifica que el código no esté repetido.");
+                const err = await respuesta.json();
+                alert("Error al guardar: " + (err.error || "Verifica los datos."));
             }
         } catch (error) {
             console.error(error);
             alert("Error de comunicación con el servidor.");
         } finally {
             btn.disabled = false; 
-            btn.innerText = "GUARDAR JOYA EN CATÁLOGO";
+            btn.innerText = editandoId ? "ACTUALIZAR DATOS DE LA JOYA" : "GUARDAR JOYA EN CATÁLOGO";
         }
     }
 
-    // 6. Eliminar un producto
+    // 7. Eliminar producto
     async function eliminarProducto(id) {
         if (confirm("¿Estás seguro de que deseas eliminar esta joya de plata del inventario?")) {
             try {
-                await fetch(`/api/productos/${id}`, { method: 'DELETE' });
-                alert("Pieza eliminada correctamente.");
-                cargar(); // Recargar la tabla
+                const res = await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    alert("Pieza eliminada correctamente.");
+                    cargar();
+                } else {
+                    alert("No se pudo eliminar de la base de datos.");
+                }
             } catch (error) {
                 console.error("Error al eliminar:", error);
-                alert("No se pudo eliminar la pieza.");
+                alert("Error de conexión al eliminar.");
             }
         }
     }
 
-    // 7. Buscador rápido
+    // 8. Buscador rápido
     function filtrarAdmin() {
         const q = document.getElementById('admin-search').value.toLowerCase();
         renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
