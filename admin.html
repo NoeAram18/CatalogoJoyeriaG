@@ -5,7 +5,7 @@
     <title>Gedalia ERP | Administración de Joyería</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #f4f7f6; }
+        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #f4f7f6; --red-sale: #d9534f; }
         body { font-family: 'Inter', sans-serif; margin: 0; display: flex; background: var(--bg); }
         .sidebar { width: 280px; background: var(--black); height: 100vh; color: white; padding: 40px 20px; position: fixed; }
         .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
@@ -25,6 +25,8 @@
         .thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
         .current-imgs-container { display: flex; gap: 8px; margin-bottom: 10px; }
         .current-img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; }
+        .badge-desc { background: var(--red-sale); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px;}
+        .badge-talla { background: #eee; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; border: 1px solid #ddd;}
     </style>
 </head>
 <body>
@@ -45,7 +47,7 @@
                 <input type="text" id="admin-search" placeholder="Buscar por código o nombre..." oninput="filtrarAdmin()" style="width:250px; margin:0;">
             </div>
             <table id="lista-prods">
-                </table>
+            </table>
         </div>
     </div>
 
@@ -58,9 +60,11 @@
                 <input type="text" id="nombre" placeholder="Nombre descriptivo de la pieza">
             </div>
             
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <input type="number" id="precio" placeholder="Precio de Venta (USD)" step="0.01">
-                <input type="number" id="stock" placeholder="Cantidad física en Stock">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+                <input type="number" id="precio" placeholder="Precio Base (MXN)" step="0.01">
+                <input type="number" id="stock" placeholder="Stock">
+                <input type="number" id="descuento" placeholder="Descuento % (Ej. 50)" min="0" max="100">
+                <input type="text" id="talla" placeholder="Talla (Ej. 7, Unitalla)">
             </div>
 
             <div id="preview-imagenes-actuales" style="display:none; margin-bottom:15px;">
@@ -91,8 +95,8 @@
     const UPLOAD_PRESET = "gedalia_preset"; 
 
     let productos = [];
-    let editandoId = null; // Guardará el ID de la pieza cuando estemos editando
-    let imagenesExistentes = []; // Guardará los links de imágenes actuales al editar
+    let editandoId = null; 
+    let imagenesExistentes = []; 
 
     // 1. Obtener productos de PostgreSQL
     async function cargar() {
@@ -105,15 +109,20 @@
         }
     }
 
-    // 2. Mostrar la tabla con miniatura y botones de Editar / Borrar
+    // 2. Mostrar la tabla
     function renderInventory(lista) {
         document.getElementById('lista-prods').innerHTML = `
             <thead><tr><th>Foto</th><th>Código</th><th>Pieza</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
-            <tbody>${lista.map(p => `
+            <tbody>${lista.map(p => {
+                let tagsAdicionales = '';
+                if(p.descuento && parseFloat(p.descuento) > 0) tagsAdicionales += `<span class="badge-desc">-${p.descuento}%</span>`;
+                if(p.talla && p.talla.trim() !== '') tagsAdicionales += `<span class="badge-talla">T: ${p.talla}</span>`;
+
+                return `
                 <tr>
                     <td><img src="${(p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://via.placeholder.com/50'}" class="thumb"></td>
                     <td><b>${p.codigo}</b></td>
-                    <td>${p.nombre}</td>
+                    <td>${p.nombre} ${tagsAdicionales}</td>
                     <td>$${p.precio}</td>
                     <td>${p.stock} pz</td>
                     <td>
@@ -121,11 +130,11 @@
                         <button class="btn-danger" onclick="eliminarProducto(${p.id})">Borrar</button>
                     </td>
                 </tr>
-            `).join('')}</tbody>
+            `}).join('')}</tbody>
         `;
     }
 
-    // 3. Cambiar de pantalla y limpiar o preparar estado
+    // 3. Cambiar de pantalla y limpiar
     function showSection(id) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
@@ -140,6 +149,8 @@
         document.getElementById('nombre').value = "";
         document.getElementById('precio').value = "";
         document.getElementById('stock').value = "";
+        document.getElementById('descuento').value = "";
+        document.getElementById('talla').value = "";
         document.getElementById('foto1').value = "";
         document.getElementById('foto2').value = "";
         document.getElementById('foto3').value = "";
@@ -148,7 +159,7 @@
         showSection('form-section');
     }
 
-    // 4. Cargar los datos de una joya existente en el formulario para editar
+    // 4. Cargar datos en el formulario para editar
     function iniciarEdicion(id) {
         const prod = productos.find(p => p.id === id);
         if(!prod) return;
@@ -163,6 +174,8 @@
         document.getElementById('nombre').value = prod.nombre;
         document.getElementById('precio').value = prod.precio;
         document.getElementById('stock').value = prod.stock;
+        document.getElementById('descuento').value = prod.descuento || "";
+        document.getElementById('talla').value = prod.talla || "";
 
         // Limpiar inputs de archivos
         document.getElementById('foto1').value = "";
@@ -170,7 +183,7 @@
         document.getElementById('foto3').value = "";
         document.getElementById('foto4').value = "";
 
-        // Mostrar vista previa de imágenes guardadas
+        // Mostrar vista previa
         const galeria = document.getElementById('galeria-preview');
         if(imagenesExistentes.length > 0) {
             galeria.innerHTML = imagenesExistentes.map(img => `<img src="${img}" class="current-img-preview">`).join('');
@@ -182,7 +195,7 @@
         showSection('form-section');
     }
 
-    // 5. Subir una imagen individual a Cloudinary
+    // 5. Subir imagen a Cloudinary
     async function subirImagenACloudinary(file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -201,7 +214,7 @@
         }
     }
 
-    // 6. Flujo principal: Crear o Editar
+    // 6. Guardar / Editar
     async function guardarProducto() {
         const btn = document.getElementById('btn-save');
         btn.disabled = true; 
@@ -210,9 +223,11 @@
         const nombre = document.getElementById('nombre').value.trim();
         const precio = parseFloat(document.getElementById('precio').value);
         const stock = parseInt(document.getElementById('stock').value);
+        const descuento = parseFloat(document.getElementById('descuento').value) || 0; // Por defecto 0
+        const talla = document.getElementById('talla').value.trim(); // Texto libre o vacío
 
         if(!codigo || !nombre || isNaN(precio) || isNaN(stock)) {
-            alert("Por favor llena todos los campos correctamente.");
+            alert("Por favor llena todos los campos obligatorios correctamente (Código, Nombre, Precio y Stock).");
             btn.disabled = false;
             return;
         }
@@ -237,25 +252,23 @@
             }
         }
 
-        // Si subió fotos nuevas, usamos esas. Si no subió nada y estamos editando, mantenemos las anteriores.
         let imagenesFinales = (urlsNuevas.length > 0) ? urlsNuevas : imagenesExistentes;
 
         btn.innerText = "💾 GUARDANDO EN BASE DE DATOS...";
 
-        const payload = { codigo, nombre, precio, stock, imagenes: imagenesFinales };
+        // Payload actualizado con descuento y talla
+        const payload = { codigo, nombre, precio, stock, descuento, talla, imagenes: imagenesFinales };
 
         try {
             let respuesta;
             
             if (editandoId) {
-                // MODO EDICIÓN (PUT)
                 respuesta = await fetch(`/api/productos/${editandoId}`, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
             } else {
-                // MODO NUEVO (POST)
                 respuesta = await fetch('/api/productos', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
