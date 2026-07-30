@@ -3,177 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GEDALIA | Alta Joyería en Plata</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Gedalia | Joyería de Plata Ley 925</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --silver: #e5e5e5; 
-            --dark-grey: #1a1a1b; 
-            --deep-black: #0d0d0d; 
-            --accent: #ffffff;
-            --soft-grey: #a0a0a0;
-        }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            background-color: var(--deep-black); 
-            color: var(--accent);
-        }
-        header { 
-            padding: 60px 20px; 
-            text-align: center; 
-            background: linear-gradient(to bottom, #1a1a1b, #0d0d0d);
-            border-bottom: 1px solid #333;
-        }
-        header h1 { 
-            font-family: 'Playfair Display'; 
-            letter-spacing: 15px; 
-            margin: 0; 
-            font-size: 3.5rem; 
-            text-transform: uppercase;
-            background: linear-gradient(45deg, #fff, #888, #fff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        header p { 
-            text-transform: uppercase; 
-            letter-spacing: 6px; 
-            font-size: 11px; 
-            margin-top: 15px; 
-            color: var(--soft-grey); 
-        }
-        .search-container { max-width: 500px; margin: 30px auto; padding: 0 20px; }
-        #buscador { 
-            width: 100%; 
-            padding: 14px; 
-            background: #1a1a1b;
-            border: 1px solid #333; 
-            border-radius: 2px; 
-            color: white;
-            text-align: center; 
-            outline: none; 
-            transition: 0.4s;
-            font-family: 'Inter';
-        }
-        #buscador:focus { border-color: var(--silver); background: #252526; }
-        .container { max-width: 1400px; margin: 50px auto; padding: 0 30px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 50px; }
-        .card { cursor: pointer; text-align: left; }
-        .img-box { 
-            width: 100%; 
-            height: 450px; 
-            background: #141414; 
-            overflow: hidden; 
-            margin-bottom: 20px; 
-            border: 1px solid #1f1f1f;
-        }
-        .card img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(20%); transition: 1.2s ease; }
-        .card:hover img { transform: scale(1.05); filter: grayscale(0%); }
-        .card h3 { font-family: 'Playfair Display'; font-weight: 400; margin: 10px 0 5px; letter-spacing: 1px; }
-        .card .price { color: var(--soft-grey); font-size: 0.9rem; letter-spacing: 1px; }
+        /* --- ESTILOS GENERALES Y COLORES --- */
+        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; }
+        
+        header { background: var(--black); color: var(--gold); padding: 30px 20px; text-align: center; letter-spacing: 3px; }
+        header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        header p { color: white; font-size: 14px; margin: 5px 0 0 0; font-weight: 300; letter-spacing: 1px; }
 
-        /* Modal */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--deep-black); display: none; z-index: 2000; overflow-y: auto; }
-        .modal-grid { display: grid; grid-template-columns: 1.3fr 1fr; min-height: 100vh; }
-        .slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; background: #000; scrollbar-width: none; }
-        .slider img { min-width: 100%; height: 100vh; object-fit: contain; scroll-snap-align: center; }
-        .modal-info { padding: 80px; display: flex; flex-direction: column; justify-content: center; background: #0d0d0d; }
-        .btn-back { background: none; border: 1px solid #333; color: #888; padding: 10px 20px; cursor: pointer; margin-bottom: 40px; align-self: flex-start; text-transform: uppercase; font-size: 10px; letter-spacing: 2px; }
-        .btn-buy { background: white; color: black; border: none; padding: 22px; font-weight: 600; letter-spacing: 4px; cursor: pointer; text-transform: uppercase; margin-top: 30px; transition: 0.3s; }
-        .btn-buy:hover { background: var(--silver); }
-        @media (max-width: 950px) { .modal-grid { grid-template-columns: 1fr; } .slider img { height: 60vh; } .modal-info { padding: 40px; } header h1 { font-size: 2rem; } }
+        /* --- CUADRÍCULA DE PRODUCTOS --- */
+        .catalogo-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
+        
+        /* --- TARJETA DE PRODUCTO --- */
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; }
+        .card:hover { transform: translateY(-5px); }
+        
+        /* Imagen Principal */
+        .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; transition: opacity 0.3s; }
+        
+        /* --- CARRUSEL DE MINIATURAS (SCROLL HORIZONTAL) --- */
+        .carousel { 
+            display: flex; 
+            gap: 10px; 
+            overflow-x: auto; 
+            padding-bottom: 8px; 
+            scroll-snap-type: x mandatory; 
+            scrollbar-width: none; /* Oculta scrollbar en Firefox */
+        }
+        .carousel::-webkit-scrollbar { display: none; /* Oculta scrollbar en Chrome/Safari */ }
+        
+        .thumb { 
+            width: 65px; 
+            height: 65px; 
+            object-fit: cover; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            border: 2px solid transparent; 
+            scroll-snap-align: start; 
+            flex-shrink: 0; 
+            transition: 0.2s;
+        }
+        .thumb:hover { border-color: var(--gold); }
+        .thumb.active { border-color: var(--gold); }
+
+        /* --- INFO DEL PRODUCTO --- */
+        .info { text-align: center; margin-top: 15px; }
+        .codigo { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .nombre { margin: 8px 0; font-size: 18px; font-weight: 400; }
+        .precio { color: var(--gold); font-weight: 600; font-size: 22px; margin: 10px 0; }
+        
+        .btn-comprar { 
+            width: 100%; background: var(--black); color: white; padding: 14px; 
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; 
+            font-size: 14px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase;
+        }
+        .btn-comprar:hover { background: var(--gold); }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>GEDALIA</h1>
-    <p>Alta joyería en plata</p>
-</header>
+    <header>
+        <h1>GEDALIA</h1>
+        <p>COLECCIÓN EXCLUSIVA DE PLATA 925</p>
+    </header>
 
-<div class="search-container">
-    <input type="text" id="buscador" placeholder="BUSCAR EN LA COLECCIÓN..." oninput="buscar()">
-</div>
+    <div class="catalogo-container">
+        <div class="grid" id="contenedor-tienda">
+            <p style="text-align:center; grid-column: 1/-1; color:#888;">Cargando catálogo de joyas...</p>
+        </div>
+    </div>
 
-<div class="container">
-    <div class="grid" id="catalogo"></div>
-</div>
+    <script>
+        // 1. Conectar con el servidor y pedir los productos
+        async function cargarCatalogoFront() {
+            try {
+                const respuesta = await fetch('/api/productos');
+                const productos = await respuesta.json();
+                const contenedor = document.getElementById('contenedor-tienda');
+                
+                if(productos.length === 0) {
+                    contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Catálogo en preparación. ¡Vuelve pronto!</p>";
+                    return;
+                }
 
-<div id="modal" class="modal">
-    <div class="modal-grid" id="modal-content"></div>
-</div>
+                // 2. Generar el HTML por cada producto
+                contenedor.innerHTML = productos.map(prod => {
+                    // Verificamos si tiene imágenes, si no, ponemos una genérica
+                    const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+                    const imgPrincipal = imgs[0]; // La primera es la principal por defecto
+                    
+                    // 3. Crear el carrusel de miniaturas solo si hay más de 1 foto
+                    let carruselHTML = '';
+                    if(imgs.length > 1) {
+                        carruselHTML = `
+                            <div class="carousel">
+                                ${imgs.map(img => `
+                                    <img src="${img}" class="thumb" onclick="cambiarImagen(${prod.id}, '${img}', this)">
+                                `).join('')}
+                            </div>
+                        `;
+                    }
 
-<script>
-    let productos = [];
-    let filtrados = [];
-
-    async function cargar() {
-        try {
-            const res = await fetch('/api/productos');
-            productos = await res.json();
-            filtrados = productos;
-            render(filtrados);
-        } catch (e) {
-            console.error("Error al cargar catálogo:", e);
-        }
-    }
-
-    function render(lista) {
-        const contenedor = document.getElementById('catalogo');
-        if (!lista || lista.length === 0) {
-            contenedor.innerHTML = "<p style='color: #888; text-align:center;'>No hay piezas disponibles en este momento.</p>";
-            return;
-        }
-
-        contenedor.innerHTML = lista.map(p => {
-            // Manejo por si trae varias imágenes o solo una de respaldo
-            const imagenPrincipal = (p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://images.unsplash.com/photo-1598560917505-59a3555ae0bb?auto=format&fit=crop&w=800&q=80';
-            return `
-                <div class="card" onclick="abrirModal(${p.id})">
-                    <div class="img-box">
-                        <img src="${imagenPrincipal}" alt="${p.nombre}">
+                    // 4. Devolver la tarjeta completa
+                    return `
+                    <div class="card">
+                        <img src="${imgPrincipal}" id="main-img-${prod.id}" class="main-img" alt="${prod.nombre}">
+                        
+                        ${carruselHTML}
+                        
+                        <div class="info">
+                            <span class="codigo">${prod.codigo}</span>
+                            <h3 class="nombre">${prod.nombre}</h3>
+                            <p class="precio">$${prod.precio.toFixed(2)}</p>
+                            <button class="btn-comprar">Lo Quiero</button>
+                        </div>
                     </div>
-                    <h3>${p.nombre}</h3>
-                    <div class="price">$${p.precio} USD</div>
-                </div>
-            `;
-        }).join('');
-    }
+                    `;
+                }).join('');
+            } catch(err) {
+                console.error("Error cargando la tienda:", err);
+                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
+            }
+        }
 
-    function buscar() {
-        const q = document.getElementById('buscador').value.toLowerCase();
-        filtrados = productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q));
-        render(filtrados);
-    }
+        // 5. Función que hace la magia del clic en el carrusel
+        window.cambiarImagen = function(idProducto, nuevaUrl, elementoThumb) {
+            // Cambia la foto grande
+            document.getElementById(`main-img-${idProducto}`).src = nuevaUrl;
+            
+            // Efecto visual: quita el borde dorado a las demás fotos y se lo pone a la clickeada
+            const thumbnails = elementoThumb.parentElement.querySelectorAll('.thumb');
+            thumbnails.forEach(t => t.classList.remove('active'));
+            elementoThumb.classList.add('active');
+        }
 
-    function abrirModal(id) {
-        const p = productos.find(x => x.id === id);
-        if (!p) return;
-
-        const imgs = (p.imagenes && p.imagenes.length > 0) ? p.imagenes : ['https://images.unsplash.com/photo-1598560917505-59a3555ae0bb?auto=format&fit=crop&w=800&q=80'];
-
-        document.getElementById('modal-content').innerHTML = `
-            <div class="slider">${imgs.map(img => `<img src="${img}">`).join('')}</div>
-            <div class="modal-info">
-                <button class="btn-back" onclick="cerrarModal()">✕ Volver al catálogo</button>
-                <p style="color:#666; letter-spacing:3px; font-size:10px; margin-bottom:10px;">CÓDIGO: ${p.codigo}</p>
-                <h2 style="font-family:'Playfair Display'; font-size:2.5rem; margin:0; font-weight:400;">${p.nombre}</h2>
-                <p style="font-size:1.5rem; margin:25px 0; color:var(--soft-grey);">$${p.precio} USD</p>
-                <p style="font-size:14px; color:#aaa;">Stock disponible: ${p.stock} piezas</p>
-                <div style="height:1px; background:#222; margin:20px 0;"></div>
-                <button class="btn-buy" onclick="window.open('https://wa.me/?text=Hola,%20me%20interesa%20la%20joya%20${p.codigo}:%20${p.nombre}', '_blank')">Pedir por WhatsApp</button>
-            </div>
-        `;
-        document.getElementById('modal').style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-
-    function cerrarModal() { 
-        document.getElementById('modal').style.display = 'none'; 
-        document.body.style.overflow = 'auto'; 
-    }
-
-    cargar();
-</script>
+        // 6. Iniciar la carga al abrir la página
+        cargarCatalogoFront();
+    </script>
 </body>
 </html>
