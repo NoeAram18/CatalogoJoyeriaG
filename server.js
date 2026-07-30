@@ -12,14 +12,13 @@ app.use(express.static(__dirname));
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
-        rejectUnauthorized: false // Evita el error de certificado
+        rejectUnauthorized: false
     }
 });
 
-// 2. Inicializar la Base de Datos (Crear tabla y agregar columna de imágenes)
+// 2. Inicializar la Base de Datos
 async function inicializarBD() {
     try {
-        // Crea la base principal si no existe
         await pool.query(`
             CREATE TABLE IF NOT EXISTS productos (
                 id SERIAL PRIMARY KEY,
@@ -30,23 +29,21 @@ async function inicializarBD() {
             );
         `);
         
-        // TRUCO: Intenta agregar la columna de imágenes a tu tabla existente
         try {
             await pool.query(`ALTER TABLE productos ADD COLUMN imagenes TEXT[];`);
-            console.log('Columna de imágenes agregada con éxito a PostgreSQL.');
+            console.log('Columna de imágenes lista.');
         } catch (e) {
-            // Si la columna ya existe, PostgreSQL lanzará un error que podemos ignorar en silencio
+            // Ignorar si ya existe
         }
         
-        console.log('Gedalia ERP Online - ¡Conectado a Aiven con éxito! 💎');
-        console.log('Tabla "productos" verificada y lista para tu catálogo. 🛠️');
+        console.log('Gedalia ERP Online - Conectado a Aiven con éxito 💎');
     } catch (error) {
         console.error('Error inicializando la base de datos:', error);
     }
 }
 inicializarBD();
 
-// 3. RUTA: Mostrar todo el inventario
+// 3. RUTA: Obtener todo el inventario
 app.get('/api/productos', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM productos ORDER BY id DESC');
@@ -56,7 +53,7 @@ app.get('/api/productos', async (req, res) => {
     }
 });
 
-// 4. RUTA: Guardar una nueva joya (¡Ahora con imágenes!)
+// 4. RUTA: Crear un nuevo producto
 app.post('/api/productos', async (req, res) => {
     const { codigo, nombre, precio, stock, imagenes } = req.body;
     try {
@@ -70,18 +67,40 @@ app.post('/api/productos', async (req, res) => {
     }
 });
 
-// 5. RUTA: Eliminar una pieza del inventario
-app.delete('/api/productos/:id', async (req, res) => {
+// 5. RUTA: ACTUALIZAR/EDITAR una joya existente
+app.put('/api/productos/:id', async (req, res) => {
     const { id } = req.params;
+    const { codigo, nombre, precio, stock, imagenes } = req.body;
     try {
-        await pool.query('DELETE FROM productos WHERE id = $1', [id]);
-        res.json({ message: 'Joya eliminada correctamente de Aiven' });
+        const result = await pool.query(
+            `UPDATE productos 
+             SET codigo = $1, nombre = $2, precio = $3, stock = $4, imagenes = $5 
+             WHERE id = $6 RETURNING *`,
+            [codigo, nombre, precio, stock, imagenes || [], id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 6. Encender el servidor
+// 6. RUTA: Eliminar una pieza del inventario
+app.delete('/api/productos/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM productos WHERE id = $1', [id]);
+        res.json({ message: 'Joya eliminada correctamente' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 7. Encender servidor
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`Servidor de Gedalia ERP corriendo en el puerto ${PORT}`);
