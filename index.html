@@ -77,72 +77,70 @@
         </div>
     </div>
 
-    <script>
-        // 1. Conectar con el servidor y pedir los productos
-        async function cargarCatalogoFront() {
-            try {
-                const respuesta = await fetch('/api/productos');
-                const productos = await respuesta.json();
-                const contenedor = document.getElementById('contenedor-tienda');
+<script>
+    // 1. Conectar con el servidor y pedir los productos
+    async function cargarCatalogoFront() {
+        try {
+            const respuesta = await fetch('/api/productos');
+            const productos = await respuesta.json();
+            const contenedor = document.getElementById('contenedor-tienda');
+            
+            if(productos.length === 0) {
+                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Catálogo en preparación. ¡Vuelve pronto!</p>";
+                return;
+            }
+
+            // 2. Generar el HTML por cada producto
+            contenedor.innerHTML = productos.map(prod => {
+                // Verificamos si tiene imágenes, si no, ponemos una genérica
+                const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+                const imgPrincipal = imgs[0]; 
                 
-                if(productos.length === 0) {
-                    contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Catálogo en preparación. ¡Vuelve pronto!</p>";
-                    return;
+                // 3. Crear el carrusel de miniaturas solo si hay más de 1 foto
+                let carruselHTML = '';
+                if(imgs.length > 1) {
+                    carruselHTML = `
+                        <div class="carousel">
+                            ${imgs.map(img => `
+                                <img src="${img}" class="thumb" onclick="cambiarImagen(${prod.id}, '${img}', this)">
+                            `).join('')}
+                        </div>
+                    `;
                 }
 
-                // 2. Generar el HTML por cada producto
-                contenedor.innerHTML = productos.map(prod => {
-                    // Verificamos si tiene imágenes, si no, ponemos una genérica
-                    const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
-                    const imgPrincipal = imgs[0]; // La primera es la principal por defecto
+                // 4. Devolver la tarjeta completa (¡Con el error matemático solucionado!)
+                return `
+                <div class="card">
+                    <img src="${imgPrincipal}" id="main-img-${prod.id}" class="main-img" alt="${prod.nombre}">
                     
-                    // 3. Crear el carrusel de miniaturas solo si hay más de 1 foto
-                    let carruselHTML = '';
-                    if(imgs.length > 1) {
-                        carruselHTML = `
-                            <div class="carousel">
-                                ${imgs.map(img => `
-                                    <img src="${img}" class="thumb" onclick="cambiarImagen(${prod.id}, '${img}', this)">
-                                `).join('')}
-                            </div>
-                        `;
-                    }
-
-                    // 4. Devolver la tarjeta completa
-                    return `
-                    <div class="card">
-                        <img src="${imgPrincipal}" id="main-img-${prod.id}" class="main-img" alt="${prod.nombre}">
-                        
-                        ${carruselHTML}
-                        
-                        <div class="info">
-                            <span class="codigo">${prod.codigo}</span>
-                            <h3 class="nombre">${prod.nombre}</h3>
-                            <p class="precio">$${prod.precio.toFixed(2)}</p>
-                            <button class="btn-comprar">Lo Quiero</button>
-                        </div>
+                    ${carruselHTML}
+                    
+                    <div class="info">
+                        <span class="codigo">${prod.codigo}</span>
+                        <h3 class="nombre">${prod.nombre}</h3>
+                        <p class="precio">$${parseFloat(prod.precio).toFixed(2)}</p>
+                        <button class="btn-comprar">Lo Quiero</button>
                     </div>
-                    `;
-                }).join('');
-            } catch(err) {
-                console.error("Error cargando la tienda:", err);
-                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
-            }
+                </div>
+                `;
+            }).join('');
+        } catch(err) {
+            console.error("Error cargando la tienda:", err);
+            document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
         }
+    }
 
-        // 5. Función que hace la magia del clic en el carrusel
-        window.cambiarImagen = function(idProducto, nuevaUrl, elementoThumb) {
-            // Cambia la foto grande
-            document.getElementById(`main-img-${idProducto}`).src = nuevaUrl;
-            
-            // Efecto visual: quita el borde dorado a las demás fotos y se lo pone a la clickeada
-            const thumbnails = elementoThumb.parentElement.querySelectorAll('.thumb');
-            thumbnails.forEach(t => t.classList.remove('active'));
-            elementoThumb.classList.add('active');
-        }
+    // 5. Función que hace la magia del clic en el carrusel
+    window.cambiarImagen = function(idProducto, nuevaUrl, elementoThumb) {
+        document.getElementById(`main-img-${idProducto}`).src = nuevaUrl;
+        
+        const thumbnails = elementoThumb.parentElement.querySelectorAll('.thumb');
+        thumbnails.forEach(t => t.classList.remove('active'));
+        elementoThumb.classList.add('active');
+    }
 
-        // 6. Iniciar la carga al abrir la página
-        cargarCatalogoFront();
-    </script>
+    // 6. Iniciar la carga al abrir la página
+    cargarCatalogoFront();
+</script>
 </body>
 </html>
