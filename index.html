@@ -6,12 +6,48 @@
     <title>Gedalia | Joyería de Plata Ley 925</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; --gray-light: #f7f7f7; }
+        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; --gray-light: #f7f7f7; --red-sale: #d9534f; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; }
         
         header { background: var(--black); color: var(--gold); padding: 30px 20px; text-align: center; letter-spacing: 3px; }
         header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         header p { color: white; font-size: 14px; margin: 5px 0 0 0; font-weight: 300; letter-spacing: 1px; }
+
+        /* --- CINTA DE OFERTAS EN BUCLE --- */
+        .ticker-wrap {
+            background-color: var(--gold);
+            color: var(--black);
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none; /* Se oculta si no hay ofertas */
+        }
+        .ticker-move {
+            display: inline-block;
+            animation: scroll-left 25s linear infinite;
+        }
+        .ticker-move:hover {
+            animation-play-state: paused;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .ticker-item:hover { color: white; }
+        .ticker-item img {
+            width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 12px; border: 2px solid white;
+        }
+        .ticker-price { margin-left: 10px; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
         /* Contenedor del Buscador */
         .search-container { max-width: 500px; margin: 30px auto 10px auto; padding: 0 20px; text-align: center; }
@@ -23,12 +59,14 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
         
         /* Tarjeta de Producto */
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; cursor: pointer; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; cursor: pointer; position: relative; }
         .card:hover { transform: translateY(-5px); }
         
+        /* Etiqueta de Descuento */
+        .badge-descuento { position: absolute; top: 15px; right: 15px; background: var(--red-sale); color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; border-radius: 20px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
         .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; }
         
-        /* Carrusel en tarjeta principal */
         .carousel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
         .carousel::-webkit-scrollbar { display: none; }
         .thumb { width: 55px; height: 55px; object-fit: cover; border-radius: 6px; border: 2px solid transparent; flex-shrink: 0; }
@@ -36,7 +74,11 @@
         .info { text-align: center; margin-top: 15px; }
         .codigo { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .nombre { margin: 8px 0; font-size: 18px; font-weight: 400; }
-        .precio { color: var(--gold); font-weight: 600; font-size: 22px; margin: 10px 0; }
+        
+        /* Estilos de Precios */
+        .precio-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0; }
+        .precio { color: var(--gold); font-weight: 600; font-size: 22px; }
+        .precio-original { color: #aaa; text-decoration: line-through; font-size: 16px; }
         
         .btn-comprar { 
             width: 100%; background: var(--black); color: white; padding: 12px; 
@@ -45,14 +87,13 @@
         }
         .btn-comprar:hover { background: var(--gold); }
 
-        /* --- SECCIÓN CORPORATIVA (MISIÓN / VISIÓN) --- */
+        /* --- SECCIONES CORPORATIVAS Y FOOTER --- */
         .corporate-section { background: var(--gray-light); padding: 60px 20px; border-top: 1px solid #eaeaea; }
         .corporate-container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
         .corporate-box h2 { color: var(--black); font-size: 22px; font-weight: 600; letter-spacing: 1px; margin-bottom: 15px; position: relative; }
         .corporate-box h2::after { content: ''; display: block; width: 40px; height: 2px; background: var(--gold); margin-top: 8px; }
         .corporate-box p { font-size: 15px; color: #555; line-height: 1.7; font-weight: 300; }
 
-        /* --- FOOTER / DATOS DE CONTACTO --- */
         footer { background: var(--black); color: white; padding: 40px 20px; text-align: center; font-size: 14px; border-top: 3px solid var(--gold); }
         .footer-container { max-width: 800px; margin: 0 auto; }
         .footer-title { color: var(--gold); font-size: 18px; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600; }
@@ -61,45 +102,25 @@
         .footer-links a:hover { color: white; }
         .footer-credits { font-size: 12px; color: #666; margin-top: 25px; border-top: 1px solid #222; padding-top: 15px; }
 
-        /* --- ESTILOS DE LA VENTANA EMERGENTE (MODAL) --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.6);
-            backdrop-filter: blur(8px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .modal-content {
-            background: white; width: 100%; max-width: 800px; border-radius: 16px; padding: 30px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
-            position: relative; animation: modalFadeIn 0.3s ease; max-height: 90vh; overflow-y: auto;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
+        /* --- MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: white; width: 100%; max-width: 800px; border-radius: 16px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 30px; position: relative; animation: modalFadeIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
+        
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
         .modal-main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: #f4f4f4; border: 1px solid #eee; }
         .modal-carousel { display: flex; gap: 10px; overflow-x: auto; margin-top: 12px; padding-bottom: 5px; }
         .modal-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: 0.2s; }
         .modal-thumb:hover, .modal-thumb.active { border-color: var(--gold); }
 
-        .modal-details h2 { margin: 0 0 10px 0; font-weight: 500; font-size: 24px; color: var(--black); }
-        .modal-details .codigo { display: block; margin-bottom: 15px; }
-        .modal-details .precio { font-size: 28px; margin: 15px 0; }
+        .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 24px; color: var(--black); }
+        .modal-details .codigo { display: block; margin-bottom: 10px; }
+        .modal-details .badge-talla { display: inline-block; background: var(--gray-light); padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 15px; border: 1px solid #ddd; }
         .modal-details .stock-info { font-size: 13px; color: #666; margin-bottom: 20px; }
-
+        
         .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
         .btn-cerrar-modal:hover { color: var(--black); }
 
-        /* Adaptabilidad para celulares */
         @media (max-width: 768px) {
             .modal-content { grid-template-columns: 1fr; padding: 20px; }
             .corporate-container { grid-template-columns: 1fr; gap: 30px; }
@@ -107,6 +128,11 @@
     </style>
 </head>
 <body>
+
+    <div class="ticker-wrap" id="contenedor-ticker">
+        <div class="ticker-move" id="ticker-items">
+            </div>
+    </div>
 
     <header>
         <h1>GEDALIA</h1>
@@ -165,7 +191,12 @@
             <div class="modal-details">
                 <span id="modal-codigo" class="codigo"></span>
                 <h2 id="modal-nombre"></h2>
-                <p id="modal-precio" class="precio"></p>
+                
+                <div id="modal-talla-container"></div> 
+
+                <div class="precio-container" style="justify-content: flex-start;" id="modal-precio-container">
+                    </div>
+                
                 <p id="modal-stock" class="stock-info"></p>
                 <p style="font-size: 14px; color: #555; line-height: 1.6;">
                     Pieza elaborada artesanalmente en Plata Ley 925 con altos estándares de calidad. Ideal para realzar cualquier estilo con elegancia y distinción.
@@ -182,19 +213,53 @@
             try {
                 const respuesta = await fetch('/api/productos');
                 listaProductos = await respuesta.json();
+                
                 renderizarProductos(listaProductos);
+                renderizarTickerOfertas(listaProductos);
+
             } catch(err) {
                 console.error("Error cargando la tienda:", err);
                 document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
             }
         }
 
-        // Nueva función dedicada a renderizar los productos en la cuadrícula
+        // --- RENDERIZAR CINTA DE OFERTAS ---
+        function renderizarTickerOfertas(productos) {
+            const contenedorTicker = document.getElementById('contenedor-ticker');
+            const tickerItems = document.getElementById('ticker-items');
+            
+            // Filtramos productos que tengan un descuento mayor a 0 (ej. 50%)
+            const ofertas = productos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
+
+            if (ofertas.length === 0) {
+                contenedorTicker.style.display = 'none';
+                return;
+            }
+
+            contenedorTicker.style.display = 'block';
+            tickerItems.innerHTML = ofertas.map(prod => {
+                const imgPrincipal = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : 'https://via.placeholder.com/50';
+                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
+                
+                return `
+                    <div class="ticker-item" onclick="abrirModal(${prod.id})">
+                        <img src="${imgPrincipal}" alt="Oferta">
+                        🔥 ¡OFERTA! ${prod.nombre} - ${prod.descuento}% OFF 
+                        <span class="ticker-price">$${precioFinal.toFixed(2)} MXN</span>
+                    </div>
+                `;
+            }).join('');
+            
+            // Duplicamos el contenido para asegurar el bucle visual sin cortes
+            tickerItems.innerHTML += tickerItems.innerHTML;
+        }
+
+        // --- RENDERIZAR CUADRÍCULA ---
         function renderizarProductos(productos) {
             const contenedor = document.getElementById('contenedor-tienda');
             
             if(productos.length === 0) {
-                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888;'>No se encontraron joyas que coincidan con tu búsqueda.</p>";
+                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888;'>No se encontraron joyas.</p>";
                 return;
             }
 
@@ -202,6 +267,22 @@
                 const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
                 const imgPrincipal = imgs[0];
                 
+                // Lógica de Descuentos
+                let descuentoHTML = '';
+                let precioHTML = `<p class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</p>`;
+                
+                if (prod.descuento && parseFloat(prod.descuento) > 0) {
+                    const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
+                    descuentoHTML = `<span class="badge-descuento">-${prod.descuento}%</span>`;
+                    precioHTML = `
+                        <div class="precio-container">
+                            <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
+                            <span class="precio">$${precioFinal.toFixed(2)} MXN</span>
+                        </div>
+                    `;
+                }
+
+                // Miniaturas
                 let carruselHTML = '';
                 if(imgs.length > 1) {
                     carruselHTML = `
@@ -213,12 +294,13 @@
 
                 return `
                 <div class="card" onclick="abrirModal(${prod.id})">
+                    ${descuentoHTML}
                     <img src="${imgPrincipal}" class="main-img" alt="${prod.nombre}">
                     ${carruselHTML}
                     <div class="info">
                         <span class="codigo">${prod.codigo}</span>
                         <h3 class="nombre">${prod.nombre}</h3>
-                        <p class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</p>
+                        ${precioHTML}
                         <button class="btn-comprar" onclick="event.stopPropagation(); abrirModal(${prod.id});">Ver Detalles</button>
                     </div>
                 </div>
@@ -226,17 +308,14 @@
             }).join('');
         }
 
-        // Función del buscador en tiempo real (Cliente)
+        // --- BUSCADOR ---
         function filtrarProductos() {
             const textoBusqueda = document.getElementById('buscador').value.toLowerCase().trim();
-            
-            // Filtra si coincide el nombre o el código del artículo
             const productosFiltrados = listaProductos.filter(prod => {
                 const nombreOk = prod.nombre ? prod.nombre.toLowerCase().includes(textoBusqueda) : false;
                 const codigoOk = prod.codigo ? prod.codigo.toLowerCase().includes(textoBusqueda) : false;
                 return nombreOk || codigoOk;
             });
-
             renderizarProductos(productosFiltrados);
         }
 
@@ -249,12 +328,30 @@
 
             document.getElementById('modal-codigo').innerText = `Código: ${prod.codigo}`;
             document.getElementById('modal-nombre').innerText = prod.nombre;
-            document.getElementById('modal-precio').innerText = `$${parseFloat(prod.precio).toFixed(2)} MXN`;
             document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
 
-            const imgGrande = document.getElementById('modal-img-grande');
-            imgGrande.src = imgs[0];
+            // Lógica de Talla (Si existe)
+            const contenedorTalla = document.getElementById('modal-talla-container');
+            if(prod.talla && prod.talla.trim() !== "") {
+                contenedorTalla.innerHTML = `<span class="badge-talla">Talla: ${prod.talla}</span>`;
+            } else {
+                contenedorTalla.innerHTML = '';
+            }
 
+            // Lógica de Precios en el Modal
+            const contenedorPrecio = document.getElementById('modal-precio-container');
+            if (prod.descuento && parseFloat(prod.descuento) > 0) {
+                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
+                contenedorPrecio.innerHTML = `
+                    <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
+                    <span class="precio" style="color: var(--red-sale);">$${precioFinal.toFixed(2)} MXN</span>
+                `;
+            } else {
+                contenedorPrecio.innerHTML = `<span class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</span>`;
+            }
+
+            // Imágenes
+            document.getElementById('modal-img-grande').src = imgs[0];
             const contenedorMinis = document.getElementById('modal-minis-container');
             if(imgs.length > 1) {
                 contenedorMinis.innerHTML = imgs.map((img, index) => `
