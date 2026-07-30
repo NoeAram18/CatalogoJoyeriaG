@@ -6,7 +6,6 @@
     <title>Gedalia | Joyería de Plata Ley 925</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* --- ESTILOS GENERALES Y COLORES --- */
         :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; }
         
@@ -14,54 +13,114 @@
         header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         header p { color: white; font-size: 14px; margin: 5px 0 0 0; font-weight: 300; letter-spacing: 1px; }
 
-        /* --- CUADRÍCULA DE PRODUCTOS --- */
+        /* Cuadrícula de Productos */
         .catalogo-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
         
-        /* --- TARJETA DE PRODUCTO --- */
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; }
+        /* Tarjeta de Producto */
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; cursor: pointer; }
         .card:hover { transform: translateY(-5px); }
         
-        /* Imagen Principal */
-        .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; transition: opacity 0.3s; }
+        .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; }
         
-        /* --- CARRUSEL DE MINIATURAS (SCROLL HORIZONTAL) --- */
-        .carousel { 
-            display: flex; 
-            gap: 10px; 
-            overflow-x: auto; 
-            padding-bottom: 8px; 
-            scroll-snap-type: x mandatory; 
-            scrollbar-width: none; /* Oculta scrollbar en Firefox */
-        }
-        .carousel::-webkit-scrollbar { display: none; /* Oculta scrollbar en Chrome/Safari */ }
-        
-        .thumb { 
-            width: 65px; 
-            height: 65px; 
-            object-fit: cover; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            border: 2px solid transparent; 
-            scroll-snap-align: start; 
-            flex-shrink: 0; 
-            transition: 0.2s;
-        }
-        .thumb:hover { border-color: var(--gold); }
-        .thumb.active { border-color: var(--gold); }
+        /* Carrusel en tarjeta principal */
+        .carousel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+        .carousel::-webkit-scrollbar { display: none; }
+        .thumb { width: 55px; height: 55px; object-fit: cover; border-radius: 6px; border: 2px solid transparent; flex-shrink: 0; }
 
-        /* --- INFO DEL PRODUCTO --- */
         .info { text-align: center; margin-top: 15px; }
         .codigo { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .nombre { margin: 8px 0; font-size: 18px; font-weight: 400; }
         .precio { color: var(--gold); font-weight: 600; font-size: 22px; margin: 10px 0; }
         
         .btn-comprar { 
-            width: 100%; background: var(--black); color: white; padding: 14px; 
+            width: 100%; background: var(--black); color: white; padding: 12px; 
             border: none; border-radius: 8px; cursor: pointer; font-weight: 600; 
-            font-size: 14px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase;
+            font-size: 13px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px;
         }
         .btn-comprar:hover { background: var(--gold); }
+
+        /* --- ESTILOS DE LA VENTANA EMERGENTE (MODAL CON EFECTO DIFUMINADO) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 10, 0.6); /* Fondo oscuro semitransparente */
+            backdrop-filter: blur(8px); /* ¡Aquí ocurre el efecto difuminado! */
+            display: none; /* Oculto por defecto */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-main-img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #f4f4f4;
+            border: 1px solid #eee;
+        }
+
+        .modal-carousel {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            margin-top: 12px;
+            padding-bottom: 5px;
+        }
+
+        .modal-thumb {
+            width: 65px;
+            height: 65px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+            transition: 0.2s;
+        }
+        .modal-thumb:hover, .modal-thumb.active { border-color: var(--gold); }
+
+        .modal-details h2 { margin: 0 0 10px 0; font-weight: 500; font-size: 24px; color: var(--black); }
+        .modal-details .codigo { display: block; margin-bottom: 15px; }
+        .modal-details .precio { font-size: 28px; margin: 15px 0; }
+        .modal-details .stock-info { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+        .btn-cerrar-modal {
+            position: absolute;
+            top: 15px; right: 20px;
+            background: none; border: none;
+            font-size: 24px; cursor: pointer; color: #888;
+        }
+        .btn-cerrar-modal:hover { color: var(--black); }
+
+        /* Adaptabilidad para celulares */
+        @media (max-width: 768px) {
+            .modal-content { grid-template-columns: 1fr; padding: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -77,70 +136,128 @@
         </div>
     </div>
 
-<script>
-    // 1. Conectar con el servidor y pedir los productos
-    async function cargarCatalogoFront() {
-        try {
-            const respuesta = await fetch('/api/productos');
-            const productos = await respuesta.json();
-            const contenedor = document.getElementById('contenedor-tienda');
+    <div id="productModal" class="modal-overlay" onclick="cerrarModalAfuera(event)">
+        <div class="modal-content" id="modalBox">
+            <button class="btn-cerrar-modal" onclick="cerrarModal()">×</button>
             
-            if(productos.length === 0) {
-                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Catálogo en preparación. ¡Vuelve pronto!</p>";
-                return;
-            }
+            <div>
+                <img id="modal-img-grande" class="modal-main-img" src="" alt="Vista previa de la joya">
+                <div id="modal-minis-container" class="modal-carousel">
+                    </div>
+            </div>
 
-            // 2. Generar el HTML por cada producto
-            contenedor.innerHTML = productos.map(prod => {
-                // Verificamos si tiene imágenes, si no, ponemos una genérica
-                const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
-                const imgPrincipal = imgs[0]; 
+            <div class="modal-details">
+                <span id="modal-codigo" class="codigo"></span>
+                <h2 id="modal-nombre"></h2>
+                <p id="modal-precio" class="precio"></p>
+                <p id="modal-stock" class="stock-info"></p>
+                <p style="font-size: 14px; color: #555; line-height: 1.6;">
+                    Pieza elaborada artesanalmente en Plata Ley 925 con altos estándares de calidad. Ideal para realzar cualquier estilo con elegancia y distinción.
+                </p>
+                <button class="btn-comprar" style="margin-top: 20px;">Comprar por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let listaProductos = [];
+
+        async function cargarCatalogoFront() {
+            try {
+                const respuesta = await fetch('/api/productos');
+                listaProductos = await respuesta.json();
+                const contenedor = document.getElementById('contenedor-tienda');
                 
-                // 3. Crear el carrusel de miniaturas solo si hay más de 1 foto
-                let carruselHTML = '';
-                if(imgs.length > 1) {
-                    carruselHTML = `
-                        <div class="carousel">
-                            ${imgs.map(img => `
-                                <img src="${img}" class="thumb" onclick="cambiarImagen(${prod.id}, '${img}', this)">
-                            `).join('')}
-                        </div>
-                    `;
+                if(listaProductos.length === 0) {
+                    contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Catálogo en preparación. ¡Vuelve pronto!</p>";
+                    return;
                 }
 
-                // 4. Devolver la tarjeta completa (¡Con el error matemático solucionado!)
-                return `
-                <div class="card">
-                    <img src="${imgPrincipal}" id="main-img-${prod.id}" class="main-img" alt="${prod.nombre}">
+                contenedor.innerHTML = listaProductos.map(prod => {
+                    const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+                    const imgPrincipal = imgs[0];
                     
-                    ${carruselHTML}
-                    
-                    <div class="info">
-                        <span class="codigo">${prod.codigo}</span>
-                        <h3 class="nombre">${prod.nombre}</h3>
-                        <p class="precio">$${parseFloat(prod.precio).toFixed(2)}</p>
-                        <button class="btn-comprar">Lo Quiero</button>
+                    let carruselHTML = '';
+                    if(imgs.length > 1) {
+                        carruselHTML = `
+                            <div class="carousel">
+                                ${imgs.map(img => `<img src="${img}" class="thumb">`).join('')}
+                            </div>
+                        `;
+                    }
+
+                    return `
+                    <div class="card" onclick="abrirModal(${prod.id})">
+                        <img src="${imgPrincipal}" class="main-img" alt="${prod.nombre}">
+                        ${carruselHTML}
+                        <div class="info">
+                            <span class="codigo">${prod.codigo}</span>
+                            <h3 class="nombre">${prod.nombre}</h3>
+                            <p class="precio">$${parseFloat(prod.precio).toFixed(2)}</p>
+                            <button class="btn-comprar" onclick="event.stopPropagation(); abrirModal(${prod.id});">Ver Detalles</button>
+                        </div>
                     </div>
-                </div>
-                `;
-            }).join('');
-        } catch(err) {
-            console.error("Error cargando la tienda:", err);
-            document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
+                    `;
+                }).join('');
+            } catch(err) {
+                console.error("Error cargando la tienda:", err);
+                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
+            }
         }
-    }
 
-    // 5. Función que hace la magia del clic en el carrusel
-    window.cambiarImagen = function(idProducto, nuevaUrl, elementoThumb) {
-        document.getElementById(`main-img-${idProducto}`).src = nuevaUrl;
-        
-        const thumbnails = elementoThumb.parentElement.querySelectorAll('.thumb');
-        thumbnails.forEach(t => t.classList.remove('active'));
-        elementoThumb.classList.add('active');
-    }
+        // --- FUNCIONES DEL MODAL ---
+        window.abrirModal = function(id) {
+            const prod = listaProductos.find(p => p.id === id);
+            if(!prod) return;
 
-    // 6. Iniciar la carga al abrir la página
-    cargarCatalogoFront();
-</script>
+            const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+
+            // Llenar datos de texto
+            document.getElementById('modal-codigo').innerText = `Código: ${prod.codigo}`;
+            document.getElementById('modal-nombre').innerText = prod.nombre;
+            document.getElementById('modal-precio').innerText = `$${parseFloat(prod.precio).toFixed(2)} USD`;
+            document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
+
+            // Imagen principal inicial
+            const imgGrande = document.getElementById('modal-img-grande');
+            imgGrande.src = imgs[0];
+
+            // Generar miniaturas en el modal con interactividad
+            const contenedorMinis = document.getElementById('modal-minis-container');
+            if(imgs.length > 1) {
+                contenedorMinis.innerHTML = imgs.map((img, index) => `
+                    <img src="${img}" class="modal-thumb ${index === 0 ? 'active' : ''}" onclick="cambiarFotoModal('${img}', this)">
+                `).join('');
+                contenedorMinis.style.display = "flex";
+            } else {
+                contenedorMinis.style.display = "none";
+            }
+
+            // Mostrar el modal con difuminado
+            document.getElementById('productModal').style.display = "flex";
+        }
+
+        window.cambiarFotoModal = function(url, thumbElement) {
+            document.getElementById('modal-img-grande').src = url;
+            const todas = thumbElement.parentElement.querySelectorAll('.modal-thumb');
+            todas.forEach(t => t.classList.remove('active'));
+            thumbElement.classList.add('active');
+        }
+
+        window.cerrarModal = function() {
+            document.getElementById('productModal').style.display = "none";
+        }
+
+        // Cerrar al hacer clic fuera del marco blanco (en el fondo difuminado)
+        window.cerrarModalAfuera = function(event) {
+            const modalBox = document.getElementById('modalBox');
+            // Si el clic ocurrió directamente sobre el overlay oscuro y no dentro de la caja blanca
+            if (event.target === document.getElementById('productModal')) {
+                cerrarModal();
+            }
+        }
+
+        cargarCatalogoFront();
+    </script>
 </body>
 </html>
