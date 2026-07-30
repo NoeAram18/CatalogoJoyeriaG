@@ -6,15 +6,20 @@
     <title>Gedalia | Joyería de Plata Ley 925</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; }
+        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; --gray-light: #f7f7f7; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; }
         
         header { background: var(--black); color: var(--gold); padding: 30px 20px; text-align: center; letter-spacing: 3px; }
         header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         header p { color: white; font-size: 14px; margin: 5px 0 0 0; font-weight: 300; letter-spacing: 1px; }
 
+        /* Contenedor del Buscador */
+        .search-container { max-width: 500px; margin: 30px auto 10px auto; padding: 0 20px; text-align: center; }
+        .search-input { width: 100%; padding: 12px 20px; font-size: 15px; font-family: 'Inter', sans-serif; border: 1px solid #ccc; border-radius: 30px; box-sizing: border-box; outline: none; transition: 0.3s; background: white; }
+        .search-input:focus { border-color: var(--gold); box-shadow: 0 0 8px rgba(197, 160, 89, 0.2); }
+
         /* Cuadrícula de Productos */
-        .catalogo-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .catalogo-container { max-width: 1200px; margin: 20px auto 60px auto; padding: 0 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
         
         /* Tarjeta de Producto */
@@ -40,13 +45,29 @@
         }
         .btn-comprar:hover { background: var(--gold); }
 
-        /* --- ESTILOS DE LA VENTANA EMERGENTE (MODAL CON EFECTO DIFUMINADO) --- */
+        /* --- SECCIÓN CORPORATIVA (MISIÓN / VISIÓN) --- */
+        .corporate-section { background: var(--gray-light); padding: 60px 20px; border-top: 1px solid #eaeaea; }
+        .corporate-container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .corporate-box h2 { color: var(--black); font-size: 22px; font-weight: 600; letter-spacing: 1px; margin-bottom: 15px; position: relative; }
+        .corporate-box h2::after { content: ''; display: block; width: 40px; height: 2px; background: var(--gold); margin-top: 8px; }
+        .corporate-box p { font-size: 15px; color: #555; line-height: 1.7; font-weight: 300; }
+
+        /* --- FOOTER / DATOS DE CONTACTO --- */
+        footer { background: var(--black); color: white; padding: 40px 20px; text-align: center; font-size: 14px; border-top: 3px solid var(--gold); }
+        .footer-container { max-width: 800px; margin: 0 auto; }
+        .footer-title { color: var(--gold); font-size: 18px; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600; }
+        .footer-info { margin-bottom: 20px; font-weight: 300; color: #ccc; line-height: 1.6; }
+        .footer-links a { color: var(--gold); text-decoration: none; margin: 0 15px; transition: 0.3s; }
+        .footer-links a:hover { color: white; }
+        .footer-credits { font-size: 12px; color: #666; margin-top: 25px; border-top: 1px solid #222; padding-top: 15px; }
+
+        /* --- ESTILOS DE LA VENTANA EMERGENTE (MODAL) --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.6); /* Fondo oscuro semitransparente */
-            backdrop-filter: blur(8px); /* ¡Aquí ocurre el efecto difuminado! */
-            display: none; /* Oculto por defecto */
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -55,19 +76,9 @@
         }
 
         .modal-content {
-            background: white;
-            width: 100%;
-            max-width: 800px;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            position: relative;
-            animation: modalFadeIn 0.3s ease;
-            max-height: 90vh;
-            overflow-y: auto;
+            background: white; width: 100%; max-width: 800px; border-radius: 16px; padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+            position: relative; animation: modalFadeIn 0.3s ease; max-height: 90vh; overflow-y: auto;
         }
 
         @keyframes modalFadeIn {
@@ -75,33 +86,9 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        .modal-main-img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: cover;
-            border-radius: 10px;
-            background: #f4f4f4;
-            border: 1px solid #eee;
-        }
-
-        .modal-carousel {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            margin-top: 12px;
-            padding-bottom: 5px;
-        }
-
-        .modal-thumb {
-            width: 65px;
-            height: 65px;
-            object-fit: cover;
-            border-radius: 6px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            flex-shrink: 0;
-            transition: 0.2s;
-        }
+        .modal-main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: #f4f4f4; border: 1px solid #eee; }
+        .modal-carousel { display: flex; gap: 10px; overflow-x: auto; margin-top: 12px; padding-bottom: 5px; }
+        .modal-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: 0.2s; }
         .modal-thumb:hover, .modal-thumb.active { border-color: var(--gold); }
 
         .modal-details h2 { margin: 0 0 10px 0; font-weight: 500; font-size: 24px; color: var(--black); }
@@ -109,17 +96,13 @@
         .modal-details .precio { font-size: 28px; margin: 15px 0; }
         .modal-details .stock-info { font-size: 13px; color: #666; margin-bottom: 20px; }
 
-        .btn-cerrar-modal {
-            position: absolute;
-            top: 15px; right: 20px;
-            background: none; border: none;
-            font-size: 24px; cursor: pointer; color: #888;
-        }
+        .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
         .btn-cerrar-modal:hover { color: var(--black); }
 
         /* Adaptabilidad para celulares */
         @media (max-width: 768px) {
             .modal-content { grid-template-columns: 1fr; padding: 20px; }
+            .corporate-container { grid-template-columns: 1fr; gap: 30px; }
         }
     </style>
 </head>
@@ -130,11 +113,45 @@
         <p>COLECCIÓN EXCLUSIVA DE PLATA 925</p>
     </header>
 
+    <div class="search-container">
+        <input type="text" id="buscador" class="search-input" placeholder="Buscar joyería por nombre o código..." oninput="filtrarProductos()">
+    </div>
+
     <div class="catalogo-container">
         <div class="grid" id="contenedor-tienda">
             <p style="text-align:center; grid-column: 1/-1; color:#888;">Cargando catálogo de joyas...</p>
         </div>
     </div>
+
+    <section class="corporate-section">
+        <div class="corporate-container">
+            <div class="corporate-box">
+                <h2>Nuestra Misión</h2>
+                <p>Ofrecer piezas de joyería en Plata Ley 925 que fusionen la elegancia atemporal con el diseño contemporáneo, brindando a nuestros clientes en la CDMX y en toda la República Mexicana un símbolo de distinción, exclusividad y calidad artesanal inigualable.</p>
+            </div>
+            <div class="corporate-box">
+                <h2>Nuestra Visión</h2>
+                <p>Consolidarnos como la marca de retail referente en joyería de plata a nivel nacional, expandiendo nuestra presencia digital desde el corazón de la Ciudad de México hacia cada rincón del país, siendo reconocidos por nuestra excelencia en el servicio y sofisticación.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-title">GEDALIA JOYERÍA</div>
+            <div class="footer-info">
+                <p>📍 Centro Histórico, Ciudad de México (CDMX) | Envíos seguros a toda la República Mexicana 🇲🇽</p>
+                <p>✉️ contacto@gedalia.com | 📞 Tel / WhatsApp: +52 55 XXXX XXXX</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://wa.me/5255XXXXXXXXX" target="_blank">Atención por WhatsApp</a>
+                <a href="#buscador">Volver Arriba</a>
+            </div>
+            <div class="footer-credits">
+                &copy; 2026 Gedalia Joyería. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
 
     <div id="productModal" class="modal-overlay" onclick="cerrarModalAfuera(event)">
         <div class="modal-content" id="modalBox">
@@ -142,8 +159,7 @@
             
             <div>
                 <img id="modal-img-grande" class="modal-main-img" src="" alt="Vista previa de la joya">
-                <div id="modal-minis-container" class="modal-carousel">
-                    </div>
+                <div id="modal-minis-container" class="modal-carousel"></div>
             </div>
 
             <div class="modal-details">
@@ -166,43 +182,62 @@
             try {
                 const respuesta = await fetch('/api/productos');
                 listaProductos = await respuesta.json();
-                const contenedor = document.getElementById('contenedor-tienda');
-                
-                if(listaProductos.length === 0) {
-                    contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Catálogo en preparación. ¡Vuelve pronto!</p>";
-                    return;
-                }
-
-                contenedor.innerHTML = listaProductos.map(prod => {
-                    const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
-                    const imgPrincipal = imgs[0];
-                    
-                    let carruselHTML = '';
-                    if(imgs.length > 1) {
-                        carruselHTML = `
-                            <div class="carousel">
-                                ${imgs.map(img => `<img src="${img}" class="thumb">`).join('')}
-                            </div>
-                        `;
-                    }
-
-                    return `
-                    <div class="card" onclick="abrirModal(${prod.id})">
-                        <img src="${imgPrincipal}" class="main-img" alt="${prod.nombre}">
-                        ${carruselHTML}
-                        <div class="info">
-                            <span class="codigo">${prod.codigo}</span>
-                            <h3 class="nombre">${prod.nombre}</h3>
-                            <p class="precio">$${parseFloat(prod.precio).toFixed(2)}</p>
-                            <button class="btn-comprar" onclick="event.stopPropagation(); abrirModal(${prod.id});">Ver Detalles</button>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
+                renderizarProductos(listaProductos);
             } catch(err) {
                 console.error("Error cargando la tienda:", err);
                 document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
             }
+        }
+
+        // Nueva función dedicada a renderizar los productos en la cuadrícula
+        function renderizarProductos(productos) {
+            const contenedor = document.getElementById('contenedor-tienda');
+            
+            if(productos.length === 0) {
+                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888;'>No se encontraron joyas que coincidan con tu búsqueda.</p>";
+                return;
+            }
+
+            contenedor.innerHTML = productos.map(prod => {
+                const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+                const imgPrincipal = imgs[0];
+                
+                let carruselHTML = '';
+                if(imgs.length > 1) {
+                    carruselHTML = `
+                        <div class="carousel">
+                            ${imgs.map(img => `<img src="${img}" class="thumb">`).join('')}
+                        </div>
+                    `;
+                }
+
+                return `
+                <div class="card" onclick="abrirModal(${prod.id})">
+                    <img src="${imgPrincipal}" class="main-img" alt="${prod.nombre}">
+                    ${carruselHTML}
+                    <div class="info">
+                        <span class="codigo">${prod.codigo}</span>
+                        <h3 class="nombre">${prod.nombre}</h3>
+                        <p class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</p>
+                        <button class="btn-comprar" onclick="event.stopPropagation(); abrirModal(${prod.id});">Ver Detalles</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Función del buscador en tiempo real (Cliente)
+        function filtrarProductos() {
+            const textoBusqueda = document.getElementById('buscador').value.toLowerCase().trim();
+            
+            // Filtra si coincide el nombre o el código del artículo
+            const productosFiltrados = listaProductos.filter(prod => {
+                const nombreOk = prod.nombre ? prod.nombre.toLowerCase().includes(textoBusqueda) : false;
+                const codigoOk = prod.codigo ? prod.codigo.toLowerCase().includes(textoBusqueda) : false;
+                return nombreOk || codigoOk;
+            });
+
+            renderizarProductos(productosFiltrados);
         }
 
         // --- FUNCIONES DEL MODAL ---
@@ -212,17 +247,14 @@
 
             const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
 
-            // Llenar datos de texto
             document.getElementById('modal-codigo').innerText = `Código: ${prod.codigo}`;
             document.getElementById('modal-nombre').innerText = prod.nombre;
-            document.getElementById('modal-precio').innerText = `$${parseFloat(prod.precio).toFixed(2)} USD`;
+            document.getElementById('modal-precio').innerText = `$${parseFloat(prod.precio).toFixed(2)} MXN`;
             document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
 
-            // Imagen principal inicial
             const imgGrande = document.getElementById('modal-img-grande');
             imgGrande.src = imgs[0];
 
-            // Generar miniaturas en el modal con interactividad
             const contenedorMinis = document.getElementById('modal-minis-container');
             if(imgs.length > 1) {
                 contenedorMinis.innerHTML = imgs.map((img, index) => `
@@ -233,7 +265,6 @@
                 contenedorMinis.style.display = "none";
             }
 
-            // Mostrar el modal con difuminado
             document.getElementById('productModal').style.display = "flex";
         }
 
@@ -248,10 +279,7 @@
             document.getElementById('productModal').style.display = "none";
         }
 
-        // Cerrar al hacer clic fuera del marco blanco (en el fondo difuminado)
         window.cerrarModalAfuera = function(event) {
-            const modalBox = document.getElementById('modalBox');
-            // Si el clic ocurrió directamente sobre el overlay oscuro y no dentro de la caja blanca
             if (event.target === document.getElementById('productModal')) {
                 cerrarModal();
             }
