@@ -64,7 +64,10 @@
                 <input type="number" id="precio" placeholder="Precio Base (MXN)" step="0.01">
                 <input type="number" id="stock" placeholder="Stock">
                 <input type="number" id="descuento" placeholder="Descuento % (Ej. 50)" min="0" max="100">
-                <input type="text" id="talla" placeholder="Talla (Ej. 7, Unitalla)">
+                <div style="display:flex; flex-direction:column;">
+                <input type="text" id="talla" placeholder="Tallas (Ej. 6, 7, 8 o Unitalla)">
+               <small style="font-size:11px; color:#666; margin-top:-8px; margin-bottom:10px;">Separa las tallas con comas.</small>
+            </div>
             </div>
 
             <div id="preview-imagenes-actuales" style="display:none; margin-bottom:15px;">
