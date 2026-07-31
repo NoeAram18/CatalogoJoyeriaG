@@ -21,38 +21,40 @@
             white-space: nowrap;
             padding: 8px 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: none; /* Se oculta si no hay ofertas */
+            display: none;
         }
-        .ticker-move {
-            display: inline-block;
-            animation: scroll-left 25s linear infinite;
-        }
-        .ticker-move:hover {
-            animation-play-state: paused;
-        }
-        @keyframes scroll-left {
-            0% { transform: translateX(100vw); }
-            100% { transform: translateX(-100%); }
-        }
-        .ticker-item {
-            display: inline-flex;
-            align-items: center;
-            margin-right: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: 0.2s;
-        }
+        .ticker-move { display: inline-block; animation: scroll-left 25s linear infinite; }
+        .ticker-move:hover { animation-play-state: paused; }
+        @keyframes scroll-left { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+        .ticker-item { display: inline-flex; align-items: center; margin-right: 50px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; }
         .ticker-item:hover { color: white; }
-        .ticker-item img {
-            width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 12px; border: 2px solid white;
-        }
+        .ticker-item img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 12px; border: 2px solid white; }
         .ticker-price { margin-left: 10px; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
+        /* --- NUEVO HERO BANNER ELEGANTE --- */
+        .hero-banner {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.8)), url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop') center/cover;
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .hero-banner h2 { color: var(--gold); font-size: 32px; letter-spacing: 2px; margin: 0 0 15px 0; font-weight: 600; }
+        .hero-banner p { font-size: 16px; font-weight: 300; max-width: 600px; margin: 0 0 25px 0; line-height: 1.6; }
+        .btn-hero { background: var(--gold); color: var(--black); border: none; padding: 12px 30px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 30px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .btn-hero:hover { background: white; color: var(--black); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+
         /* Contenedor del Buscador */
-        .search-container { max-width: 500px; margin: 30px auto 10px auto; padding: 0 20px; text-align: center; }
-        .search-input { width: 100%; padding: 12px 20px; font-size: 15px; font-family: 'Inter', sans-serif; border: 1px solid #ccc; border-radius: 30px; box-sizing: border-box; outline: none; transition: 0.3s; background: white; }
-        .search-input:focus { border-color: var(--gold); box-shadow: 0 0 8px rgba(197, 160, 89, 0.2); }
+        .search-container { max-width: 600px; margin: 30px auto 10px auto; padding: 0 20px; text-align: center; }
+        .search-input { width: 100%; padding: 15px 25px; font-size: 16px; font-family: 'Inter', sans-serif; border: 1px solid #ddd; border-radius: 30px; box-sizing: border-box; outline: none; transition: 0.3s; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .search-input:focus { border-color: var(--gold); box-shadow: 0 0 12px rgba(197, 160, 89, 0.3); }
 
         /* Cuadrícula de Productos */
         .catalogo-container { max-width: 1200px; margin: 20px auto 60px auto; padding: 0 20px; }
@@ -60,31 +62,21 @@
         
         /* Tarjeta de Producto */
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; cursor: pointer; position: relative; }
-        .card:hover { transform: translateY(-5px); }
-        
-        /* Etiqueta de Descuento */
+        .card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
         .badge-descuento { position: absolute; top: 15px; right: 15px; background: var(--red-sale); color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; border-radius: 20px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-
         .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; }
-        
         .carousel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
         .carousel::-webkit-scrollbar { display: none; }
         .thumb { width: 55px; height: 55px; object-fit: cover; border-radius: 6px; border: 2px solid transparent; flex-shrink: 0; }
-
         .info { text-align: center; margin-top: 15px; }
         .codigo { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .nombre { margin: 8px 0; font-size: 18px; font-weight: 400; }
         
-        /* Estilos de Precios */
         .precio-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0; }
         .precio { color: var(--gold); font-weight: 600; font-size: 22px; }
         .precio-original { color: #aaa; text-decoration: line-through; font-size: 16px; }
         
-        .btn-comprar { 
-            width: 100%; background: var(--black); color: white; padding: 12px; 
-            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; 
-            font-size: 13px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px;
-        }
+        .btn-comprar { width: 100%; background: var(--black); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
         .btn-comprar:hover { background: var(--gold); }
 
         /* --- SECCIONES CORPORATIVAS Y FOOTER --- */
@@ -104,7 +96,7 @@
 
         /* --- MODAL --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
-        .modal-content { background: white; width: 100%; max-width: 800px; border-radius: 16px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 30px; position: relative; animation: modalFadeIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; width: 100%; max-width: 850px; border-radius: 16px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; position: relative; animation: modalFadeIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
         
         @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         
@@ -113,16 +105,22 @@
         .modal-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: 0.2s; }
         .modal-thumb:hover, .modal-thumb.active { border-color: var(--gold); }
 
-        .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 24px; color: var(--black); }
-        .modal-details .codigo { display: block; margin-bottom: 10px; }
-        .modal-details .badge-talla { display: inline-block; background: var(--gray-light); padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 15px; border: 1px solid #ddd; }
-        .modal-details .stock-info { font-size: 13px; color: #666; margin-bottom: 20px; }
+        .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 26px; color: var(--black); }
+        .modal-details .codigo { display: block; margin-bottom: 15px; }
         
-        .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #888; }
+        /* BOTONES DE TALLAS */
+        .talla-btn { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .talla-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .talla-btn.selected { background: var(--gold); color: white; border-color: var(--gold); }
+
+        .modal-details .stock-info { font-size: 13px; color: #666; margin-bottom: 20px; }
+        .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #888; }
         .btn-cerrar-modal:hover { color: var(--black); }
 
         @media (max-width: 768px) {
-            .modal-content { grid-template-columns: 1fr; padding: 20px; }
+            .hero-banner { padding: 40px 20px; margin: 10px; }
+            .hero-banner h2 { font-size: 24px; }
+            .modal-content { grid-template-columns: 1fr; padding: 20px; gap: 20px;}
             .corporate-container { grid-template-columns: 1fr; gap: 30px; }
         }
     </style>
@@ -130,8 +128,7 @@
 <body>
 
     <div class="ticker-wrap" id="contenedor-ticker">
-        <div class="ticker-move" id="ticker-items">
-            </div>
+        <div class="ticker-move" id="ticker-items"></div>
     </div>
 
     <header>
@@ -141,6 +138,12 @@
 
     <div class="search-container">
         <input type="text" id="buscador" class="search-input" placeholder="Buscar joyería por nombre o código..." oninput="filtrarProductos()">
+    </div>
+
+    <div class="hero-banner" id="banner-nuevos">
+        <h2>NUEVOS DISEÑOS EXCLUSIVOS</h2>
+        <p>Descubre nuestra más reciente colección de piezas elaboradas artesanalmente. Elegancia que perdura en cada detalle de Plata Ley 925.</p>
+        <button class="btn-hero" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">Explorar Colección</button>
     </div>
 
     <div class="catalogo-container">
@@ -192,22 +195,23 @@
                 <span id="modal-codigo" class="codigo"></span>
                 <h2 id="modal-nombre"></h2>
                 
-                <div id="modal-talla-container"></div> 
-
-                <div class="precio-container" style="justify-content: flex-start;" id="modal-precio-container">
+                <div class="precio-container" style="justify-content: flex-start; margin-top:0;" id="modal-precio-container">
                     </div>
+
+                <div id="modal-talla-container" style="margin: 20px 0;"></div> 
                 
                 <p id="modal-stock" class="stock-info"></p>
-                <p style="font-size: 14px; color: #555; line-height: 1.6;">
+                <p style="font-size: 14px; color: #555; line-height: 1.6; border-top: 1px solid #eee; padding-top: 15px;">
                     Pieza elaborada artesanalmente en Plata Ley 925 con altos estándares de calidad. Ideal para realzar cualquier estilo con elegancia y distinción.
                 </p>
-                <button class="btn-comprar" style="margin-top: 20px;">Comprar por WhatsApp</button>
+                <button class="btn-comprar" style="margin-top: 10px;" id="btn-comprar-whatsapp">Comprar por WhatsApp</button>
             </div>
         </div>
     </div>
 
     <script>
         let listaProductos = [];
+        let tallaSeleccionadaModal = "";
 
         async function cargarCatalogoFront() {
             try {
@@ -223,12 +227,10 @@
             }
         }
 
-        // --- RENDERIZAR CINTA DE OFERTAS ---
         function renderizarTickerOfertas(productos) {
             const contenedorTicker = document.getElementById('contenedor-ticker');
             const tickerItems = document.getElementById('ticker-items');
             
-            // Filtramos productos que tengan un descuento mayor a 0 (ej. 50%)
             const ofertas = productos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
 
             if (ofertas.length === 0) {
@@ -250,11 +252,9 @@
                 `;
             }).join('');
             
-            // Duplicamos el contenido para asegurar el bucle visual sin cortes
             tickerItems.innerHTML += tickerItems.innerHTML;
         }
 
-        // --- RENDERIZAR CUADRÍCULA ---
         function renderizarProductos(productos) {
             const contenedor = document.getElementById('contenedor-tienda');
             
@@ -267,7 +267,6 @@
                 const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
                 const imgPrincipal = imgs[0];
                 
-                // Lógica de Descuentos
                 let descuentoHTML = '';
                 let precioHTML = `<p class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</p>`;
                 
@@ -282,7 +281,6 @@
                     `;
                 }
 
-                // Miniaturas
                 let carruselHTML = '';
                 if(imgs.length > 1) {
                     carruselHTML = `
@@ -308,7 +306,6 @@
             }).join('');
         }
 
-        // --- BUSCADOR ---
         function filtrarProductos() {
             const textoBusqueda = document.getElementById('buscador').value.toLowerCase().trim();
             const productosFiltrados = listaProductos.filter(prod => {
@@ -317,12 +314,17 @@
                 return nombreOk || codigoOk;
             });
             renderizarProductos(productosFiltrados);
+            
+            // Ocultar banner si el usuario está buscando para dar prioridad a los resultados
+            document.getElementById('banner-nuevos').style.display = textoBusqueda === "" ? "flex" : "none";
         }
 
-        // --- FUNCIONES DEL MODAL ---
+        // --- FUNCIONES DEL MODAL Y SELECCIÓN DE TALLA ---
         window.abrirModal = function(id) {
             const prod = listaProductos.find(p => p.id === id);
             if(!prod) return;
+            
+            tallaSeleccionadaModal = ""; // Resetear talla
 
             const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
 
@@ -330,27 +332,38 @@
             document.getElementById('modal-nombre').innerText = prod.nombre;
             document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
 
-            // Lógica de Talla (Si existe)
+            // Lógica de Múltiples Tallas (separadas por comas)
             const contenedorTalla = document.getElementById('modal-talla-container');
             if(prod.talla && prod.talla.trim() !== "") {
-                contenedorTalla.innerHTML = `<span class="badge-talla">Talla: ${prod.talla}</span>`;
+                const tallasArray = prod.talla.split(',').map(t => t.trim()).filter(t => t !== "");
+                
+                if (tallasArray.length > 0) {
+                    let botonesHTML = tallasArray.map(t => `
+                        <button class="talla-btn" onclick="seleccionarTalla(this, '${t}')">${t}</button>
+                    `).join('');
+                    
+                    contenedorTalla.innerHTML = `
+                        <p style="font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 8px;">Selecciona tu Talla:</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${botonesHTML}
+                        </div>
+                    `;
+                }
             } else {
                 contenedorTalla.innerHTML = '';
             }
 
-            // Lógica de Precios en el Modal
             const contenedorPrecio = document.getElementById('modal-precio-container');
             if (prod.descuento && parseFloat(prod.descuento) > 0) {
                 const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
                 contenedorPrecio.innerHTML = `
                     <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
-                    <span class="precio" style="color: var(--red-sale);">$${precioFinal.toFixed(2)} MXN</span>
+                    <span class="precio" style="color: var(--red-sale); font-size:32px;">$${precioFinal.toFixed(2)} MXN</span>
                 `;
             } else {
-                contenedorPrecio.innerHTML = `<span class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</span>`;
+                contenedorPrecio.innerHTML = `<span class="precio" style="font-size:32px;">$${parseFloat(prod.precio).toFixed(2)} MXN</span>`;
             }
 
-            // Imágenes
             document.getElementById('modal-img-grande').src = imgs[0];
             const contenedorMinis = document.getElementById('modal-minis-container');
             if(imgs.length > 1) {
@@ -363,6 +376,16 @@
             }
 
             document.getElementById('productModal').style.display = "flex";
+        }
+
+        window.seleccionarTalla = function(boton, talla) {
+            // Remover clase selected de todos los botones
+            const botones = document.querySelectorAll('.talla-btn');
+            botones.forEach(b => b.classList.remove('selected'));
+            
+            // Agregar al botón clickeado
+            boton.classList.add('selected');
+            tallaSeleccionadaModal = talla;
         }
 
         window.cambiarFotoModal = function(url, thumbElement) {
