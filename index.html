@@ -23,7 +23,7 @@
         .ticker-item img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 12px; border: 2px solid white; }
         .ticker-price { margin-left: 10px; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
-        /* --- BANNER --- */
+        /* --- HERO BANNER --- */
         .hero-banner { max-width: 1200px; margin: 20px auto; background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.8)), url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop') center/cover; color: white; padding: 60px 20px; text-align: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .hero-banner h2 { color: var(--gold); font-size: 32px; letter-spacing: 2px; margin: 0 0 15px 0; font-weight: 600; }
         .hero-banner p { font-size: 16px; font-weight: 300; max-width: 600px; margin: 0 0 25px 0; line-height: 1.6; }
@@ -64,7 +64,7 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; cursor: pointer; position: relative; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        .badge-descuento { position: absolute; top: 15px; right: 15px; background: var(--red-sale); color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; border-radius: 20px; z-index: 10; }
+        .badge-descuento { position: absolute; top: 15px; right: 15px; background: var(--red-sale); color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; border-radius: 20px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; }
         .carousel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
         .carousel::-webkit-scrollbar { display: none; }
@@ -75,25 +75,55 @@
         .precio-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0; }
         .precio { color: var(--gold); font-weight: 600; font-size: 22px; }
         .precio-original { color: #aaa; text-decoration: line-through; font-size: 16px; }
-        .btn-comprar { width: 100%; background: var(--black); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
+        
+        .btn-comprar { width: 100%; background: var(--black); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
         .btn-comprar:hover { background: var(--gold); }
 
-        /* --- MODAL (Simplificado para el ejemplo) --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; box-sizing: border-box; }
-        .modal-content { background: white; width: 100%; max-width: 850px; border-radius: 16px; padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .modal-main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
-        .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #888; }
-        
-        /* FOOTER / SECCIONES */
+        /* --- SECCIONES CORPORATIVAS Y FOOTER --- */
         .corporate-section { background: var(--gray-light); padding: 60px 20px; border-top: 1px solid #eaeaea; }
         .corporate-container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .corporate-box h2 { color: var(--black); font-size: 22px; font-weight: 600; letter-spacing: 1px; margin-bottom: 15px; position: relative; }
+        .corporate-box h2::after { content: ''; display: block; width: 40px; height: 2px; background: var(--gold); margin-top: 8px; }
+        .corporate-box p { font-size: 15px; color: #555; line-height: 1.7; font-weight: 300; }
+
         footer { background: var(--black); color: white; padding: 40px 20px; text-align: center; font-size: 14px; border-top: 3px solid var(--gold); }
+        .footer-container { max-width: 800px; margin: 0 auto; }
+        .footer-title { color: var(--gold); font-size: 18px; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600; }
+        .footer-info { margin-bottom: 20px; font-weight: 300; color: #ccc; line-height: 1.6; }
+        .footer-links a { color: var(--gold); text-decoration: none; margin: 0 15px; transition: 0.3s; }
+        .footer-links a:hover { color: white; }
+        .footer-credits { font-size: 12px; color: #666; margin-top: 25px; border-top: 1px solid #222; padding-top: 15px; }
+
+        /* --- MODAL DE DETALLES --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: white; width: 100%; max-width: 850px; border-radius: 16px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; position: relative; animation: modalFadeIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
+        
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .modal-main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: #f4f4f4; border: 1px solid #eee; }
+        .modal-carousel { display: flex; gap: 10px; overflow-x: auto; margin-top: 12px; padding-bottom: 5px; }
+        .modal-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: 0.2s; }
+        .modal-thumb:hover, .modal-thumb.active { border-color: var(--gold); }
+
+        .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 26px; color: var(--black); }
+        .modal-details .codigo { display: block; margin-bottom: 15px; }
+        
+        /* BOTONES DE TALLAS EN EL MODAL */
+        .talla-btn { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .talla-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .talla-btn.selected { background: var(--gold); color: white; border-color: var(--gold); }
+
+        .modal-details .stock-info { font-size: 13px; color: #666; margin-bottom: 20px; }
+        .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #888; }
+        .btn-cerrar-modal:hover { color: var(--black); }
 
         @media (max-width: 768px) {
+            .hero-banner { padding: 40px 20px; margin: 10px; }
+            .hero-banner h2 { font-size: 24px; }
             .search-container { flex-direction: column; }
             .btn-abrir-filtros { width: 100%; justify-content: center; }
-            .modal-content { grid-template-columns: 1fr; gap: 20px;}
-            .corporate-container { grid-template-columns: 1fr; }
+            .modal-content { grid-template-columns: 1fr; padding: 20px; gap: 20px;}
+            .corporate-container { grid-template-columns: 1fr; gap: 30px; }
         }
     </style>
 </head>
@@ -174,8 +204,66 @@
         </div>
     </div>
 
+    <section class="corporate-section">
+        <div class="corporate-container">
+            <div class="corporate-box">
+                <h2>Nuestra Misión</h2>
+                <p>Ofrecer piezas de joyería en Plata Ley 925 que fusionen la elegancia atemporal con el diseño contemporáneo, brindando a nuestros clientes en la CDMX y en toda la República Mexicana un símbolo de distinción, exclusividad y calidad artesanal inigualable.</p>
+            </div>
+            <div class="corporate-box">
+                <h2>Nuestra Visión</h2>
+                <p>Consolidarnos como la marca de retail referente en joyería de plata a nivel nacional, expandiendo nuestra presencia digital desde el corazón de la Ciudad de México hacia cada rincón del país, siendo reconocidos por nuestra excelencia en el servicio y sofisticación.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-title">GEDALIA JOYERÍA</div>
+            <div class="footer-info">
+                <p>📍 Centro Histórico, Ciudad de México (CDMX) | Envíos seguros a toda la República Mexicana 🇲🇽</p>
+                <p>✉️ contacto@gedalia.com | 📞 Tel / WhatsApp: +52 55 XXXX XXXX</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://wa.me/5255XXXXXXXXX" target="_blank">Atención por WhatsApp</a>
+                <a href="#buscador">Volver Arriba</a>
+            </div>
+            <div class="footer-credits">
+                &copy; 2026 Gedalia Joyería. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <div id="productModal" class="modal-overlay" onclick="cerrarModalAfuera(event)">
+        <div class="modal-content" id="modalBox">
+            <button class="btn-cerrar-modal" onclick="cerrarModal()">×</button>
+            
+            <div>
+                <img id="modal-img-grande" class="modal-main-img" src="" alt="Vista previa de la joya">
+                <div id="modal-minis-container" class="modal-carousel"></div>
+            </div>
+
+            <div class="modal-details">
+                <span id="modal-codigo" class="codigo"></span>
+                <h2 id="modal-nombre"></h2>
+                
+                <div class="precio-container" style="justify-content: flex-start; margin-top:0;" id="modal-precio-container">
+                    </div>
+
+                <div id="modal-talla-container" style="margin: 20px 0;"></div> 
+                
+                <p id="modal-stock" class="stock-info"></p>
+                <p style="font-size: 14px; color: #555; line-height: 1.6; border-top: 1px solid #eee; padding-top: 15px;">
+                    Pieza elaborada artesanalmente en Plata Ley 925 con altos estándares de calidad. Ideal para realzar cualquier estilo con elegancia y distinción.
+                </p>
+                <button class="btn-comprar" style="margin-top: 10px;" id="btn-comprar-whatsapp">Comprar por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let listaProductos = [];
+        let tallaSeleccionadaModal = "";
 
         async function cargarCatalogoFront() {
             try {
@@ -185,10 +273,11 @@
                 renderizarTickerOfertas(listaProductos);
             } catch(err) {
                 console.error("Error:", err);
+                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
             }
         }
 
-        // --- LÓGICA DE INTERFAZ DEL PANEL DE FILTROS ---
+        // --- LÓGICA DEL PANEL DE FILTROS ---
         function toggleSidebarFiltros() {
             document.getElementById('filter-sidebar').classList.toggle('active');
             document.getElementById('filter-overlay').classList.toggle('active');
@@ -205,7 +294,6 @@
             toggleSidebarFiltros();
         }
 
-        // --- EL CEREBRO DE LOS FILTROS ---
         function aplicarFiltrosInteligentes() {
             const txtBusqueda = document.getElementById('buscador').value.toLowerCase().trim();
             const cat = document.getElementById('filtro-categoria').value.toLowerCase();
@@ -218,21 +306,11 @@
                 const codigo = (prod.codigo || "").toLowerCase();
                 const tallaBD = (prod.talla || "").toLowerCase();
                 
-                // Calcular el precio real del producto (por si tiene descuento)
                 const precioReal = prod.descuento ? prod.precio * (1 - (prod.descuento / 100)) : parseFloat(prod.precio);
-
-                // 1. Coincidencia de Buscador (Nombre o código)
                 const matchBusqueda = nombre.includes(txtBusqueda) || codigo.includes(txtBusqueda);
-                
-                // 2. Coincidencia de Categoría y Piedra (Buscamos la palabra dentro del nombre)
                 const matchCat = cat === "" || nombre.includes(cat);
                 const matchPiedra = piedra === "" || nombre.includes(piedra);
-                
-                // 3. Coincidencia de Talla
                 const matchTalla = tallaInput === "" || tallaBD.includes(tallaInput);
-                
-                // 4. Coincidencia de Precio
-                // Si el slider está al máximo (10000), asumimos que el usuario no quiere límite.
                 const matchPrecio = precioMax >= 10000 ? true : precioReal <= precioMax;
 
                 return matchBusqueda && matchCat && matchPiedra && matchTalla && matchPrecio;
@@ -240,7 +318,6 @@
 
             renderizarProductos(filtrados);
 
-            // Ocultar el Hero Banner si el usuario está filtrando cosas
             const hayFiltros = txtBusqueda || cat || piedra || tallaInput || precioMax < 10000;
             document.getElementById('banner-nuevos').style.display = hayFiltros ? "none" : "flex";
         }
@@ -253,7 +330,8 @@
             }
 
             contenedor.innerHTML = productos.map(prod => {
-                const imgPrincipal = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : 'https://via.placeholder.com/400';
+                const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+                const imgPrincipal = imgs[0];
                 let descuentoHTML = '';
                 let precioHTML = `<p class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</p>`;
                 
@@ -268,15 +346,25 @@
                     `;
                 }
 
+                let carruselHTML = '';
+                if(imgs.length > 1) {
+                    carruselHTML = `
+                        <div class="carousel">
+                            ${imgs.map(img => `<img src="${img}" class="thumb">`).join('')}
+                        </div>
+                    `;
+                }
+
                 return `
-                <div class="card" onclick="alert('Aquí se abre tu modal de compra para: ${prod.nombre}')">
+                <div class="card" onclick="abrirModal(${prod.id})">
                     ${descuentoHTML}
                     <img src="${imgPrincipal}" class="main-img" alt="${prod.nombre}">
+                    ${carruselHTML}
                     <div class="info">
                         <span class="codigo">${prod.codigo}</span>
                         <h3 class="nombre">${prod.nombre}</h3>
                         ${precioHTML}
-                        <button class="btn-comprar">Ver Detalles</button>
+                        <button class="btn-comprar" onclick="event.stopPropagation(); abrirModal(${prod.id});">Ver Detalles</button>
                     </div>
                 </div>
                 `;
@@ -287,16 +375,109 @@
             const contenedorTicker = document.getElementById('contenedor-ticker');
             const tickerItems = document.getElementById('ticker-items');
             const ofertas = productos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
-            if (ofertas.length === 0) return;
+            
+            if (ofertas.length === 0) {
+                contenedorTicker.style.display = 'none';
+                return;
+            }
 
             contenedorTicker.style.display = 'block';
-            tickerItems.innerHTML = ofertas.map(prod => `
-                <div class="ticker-item">
-                    <img src="${(prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : ''}">
-                    🔥 ${prod.nombre} - ${prod.descuento}% OFF 
-                </div>
-            `).join('');
+            tickerItems.innerHTML = ofertas.map(prod => {
+                const imgPrincipal = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : 'https://via.placeholder.com/50';
+                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
+                return `
+                    <div class="ticker-item" onclick="abrirModal(${prod.id})">
+                        <img src="${imgPrincipal}" alt="Oferta">
+                        🔥 ¡OFERTA! ${prod.nombre} - ${prod.descuento}% OFF 
+                        <span class="ticker-price">$${precioFinal.toFixed(2)} MXN</span>
+                    </div>
+                `;
+            }).join('');
+            
             tickerItems.innerHTML += tickerItems.innerHTML;
+        }
+
+        // --- FUNCIONES DEL MODAL INTERACTIVO ---
+        window.abrirModal = function(id) {
+            const prod = listaProductos.find(p => p.id === id);
+            if(!prod) return;
+            
+            tallaSeleccionadaModal = ""; // Resetear talla
+
+            const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+
+            document.getElementById('modal-codigo').innerText = `Código: ${prod.codigo}`;
+            document.getElementById('modal-nombre').innerText = prod.nombre;
+            document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
+
+            // Lógica de Múltiples Tallas (separadas por comas)
+            const contenedorTalla = document.getElementById('modal-talla-container');
+            if(prod.talla && prod.talla.trim() !== "") {
+                const tallasArray = prod.talla.split(',').map(t => t.trim()).filter(t => t !== "");
+                
+                if (tallasArray.length > 0) {
+                    let botonesHTML = tallasArray.map(t => `
+                        <button class="talla-btn" onclick="seleccionarTalla(this, '${t}')">${t}</button>
+                    `).join('');
+                    
+                    contenedorTalla.innerHTML = `
+                        <p style="font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 8px;">Selecciona tu Talla:</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${botonesHTML}
+                        </div>
+                    `;
+                }
+            } else {
+                contenedorTalla.innerHTML = '';
+            }
+
+            const contenedorPrecio = document.getElementById('modal-precio-container');
+            if (prod.descuento && parseFloat(prod.descuento) > 0) {
+                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
+                contenedorPrecio.innerHTML = `
+                    <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
+                    <span class="precio" style="color: var(--red-sale); font-size:32px;">$${precioFinal.toFixed(2)} MXN</span>
+                `;
+            } else {
+                contenedorPrecio.innerHTML = `<span class="precio" style="font-size:32px;">$${parseFloat(prod.precio).toFixed(2)} MXN</span>`;
+            }
+
+            document.getElementById('modal-img-grande').src = imgs[0];
+            const contenedorMinis = document.getElementById('modal-minis-container');
+            if(imgs.length > 1) {
+                contenedorMinis.innerHTML = imgs.map((img, index) => `
+                    <img src="${img}" class="modal-thumb ${index === 0 ? 'active' : ''}" onclick="cambiarFotoModal('${img}', this)">
+                `).join('');
+                contenedorMinis.style.display = "flex";
+            } else {
+                contenedorMinis.style.display = "none";
+            }
+
+            document.getElementById('productModal').style.display = "flex";
+        }
+
+        window.seleccionarTalla = function(boton, talla) {
+            const botones = document.querySelectorAll('.talla-btn');
+            botones.forEach(b => b.classList.remove('selected'));
+            boton.classList.add('selected');
+            tallaSeleccionadaModal = talla;
+        }
+
+        window.cambiarFotoModal = function(url, thumbElement) {
+            document.getElementById('modal-img-grande').src = url;
+            const todas = thumbElement.parentElement.querySelectorAll('.modal-thumb');
+            todas.forEach(t => t.classList.remove('active'));
+            thumbElement.classList.add('active');
+        }
+
+        window.cerrarModal = function() {
+            document.getElementById('productModal').style.display = "none";
+        }
+
+        window.cerrarModalAfuera = function(event) {
+            if (event.target === document.getElementById('productModal')) {
+                cerrarModal();
+            }
         }
 
         cargarCatalogoFront();
