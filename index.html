@@ -7,22 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; --gray-light: #f7f7f7; --red-sale: #d9534f; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; overflow-x: hidden; }
         
         header { background: var(--black); color: var(--gold); padding: 30px 20px; text-align: center; letter-spacing: 3px; }
         header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         header p { color: white; font-size: 14px; margin: 5px 0 0 0; font-weight: 300; letter-spacing: 1px; }
 
-        /* --- CINTA DE OFERTAS EN BUCLE --- */
-        .ticker-wrap {
-            background-color: var(--gold);
-            color: var(--black);
-            overflow: hidden;
-            white-space: nowrap;
-            padding: 8px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: none;
-        }
+        /* --- CINTA DE OFERTAS --- */
+        .ticker-wrap { background-color: var(--gold); color: var(--black); overflow: hidden; white-space: nowrap; padding: 8px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none; }
         .ticker-move { display: inline-block; animation: scroll-left 25s linear infinite; }
         .ticker-move:hover { animation-play-state: paused; }
         @keyframes scroll-left { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
@@ -31,39 +23,48 @@
         .ticker-item img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 12px; border: 2px solid white; }
         .ticker-price { margin-left: 10px; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
-        /* --- NUEVO HERO BANNER ELEGANTE --- */
-        .hero-banner {
-            max-width: 1200px;
-            margin: 20px auto;
-            background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.8)), url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop') center/cover;
-            color: white;
-            padding: 60px 20px;
-            text-align: center;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+        /* --- BANNER --- */
+        .hero-banner { max-width: 1200px; margin: 20px auto; background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.8)), url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop') center/cover; color: white; padding: 60px 20px; text-align: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .hero-banner h2 { color: var(--gold); font-size: 32px; letter-spacing: 2px; margin: 0 0 15px 0; font-weight: 600; }
         .hero-banner p { font-size: 16px; font-weight: 300; max-width: 600px; margin: 0 0 25px 0; line-height: 1.6; }
         .btn-hero { background: var(--gold); color: var(--black); border: none; padding: 12px 30px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 30px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        .btn-hero:hover { background: white; color: var(--black); box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .btn-hero:hover { background: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
 
-        /* Contenedor del Buscador */
-        .search-container { max-width: 600px; margin: 30px auto 10px auto; padding: 0 20px; text-align: center; }
-        .search-input { width: 100%; padding: 15px 25px; font-size: 16px; font-family: 'Inter', sans-serif; border: 1px solid #ddd; border-radius: 30px; box-sizing: border-box; outline: none; transition: 0.3s; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        /* --- BUSCADOR Y BOTÓN FILTRO --- */
+        .search-container { max-width: 800px; margin: 30px auto 10px auto; padding: 0 20px; display: flex; gap: 10px; align-items: center; }
+        .search-input { flex-grow: 1; padding: 15px 25px; font-size: 16px; font-family: 'Inter', sans-serif; border: 1px solid #ddd; border-radius: 30px; outline: none; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .search-input:focus { border-color: var(--gold); box-shadow: 0 0 12px rgba(197, 160, 89, 0.3); }
+        .btn-abrir-filtros { background: var(--black); color: white; border: none; padding: 0 25px; height: 50px; border-radius: 30px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-abrir-filtros:hover { background: var(--gold); }
 
-        /* Cuadrícula de Productos */
+        /* --- PANEL LATERAL DESLIZANTE (FILTROS) --- */
+        .filter-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; opacity: 0; visibility: hidden; transition: 0.3s; }
+        .filter-overlay.active { opacity: 1; visibility: visible; }
+        
+        .filter-sidebar { position: fixed; top: 0; right: -350px; width: 300px; height: 100vh; background: white; z-index: 2000; box-shadow: -5px 0 20px rgba(0,0,0,0.15); transition: right 0.3s ease; display: flex; flex-direction: column; }
+        .filter-sidebar.active { right: 0; }
+        
+        .filter-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eee; }
+        .filter-header h3 { margin: 0; font-size: 18px; color: var(--black); }
+        .btn-cerrar-filtros { background: none; border: none; font-size: 24px; color: #888; cursor: pointer; }
+        
+        .filter-body { padding: 20px; overflow-y: auto; flex-grow: 1; }
+        .filter-group { margin-bottom: 25px; }
+        .filter-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .filter-group select, .filter-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; box-sizing: border-box; outline: none; }
+        .filter-group select:focus, .filter-group input:focus { border-color: var(--gold); }
+        
+        .filter-footer { padding: 20px; border-top: 1px solid #eee; background: #fafafa; }
+        .btn-aplicar-filtros { width: 100%; background: var(--gold); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .btn-aplicar-filtros:hover { background: var(--black); }
+        .btn-limpiar-filtros { width: 100%; background: transparent; color: #666; padding: 10px; border: none; margin-top: 10px; font-size: 13px; cursor: pointer; text-decoration: underline; }
+
+        /* --- CATÁLOGO --- */
         .catalogo-container { max-width: 1200px; margin: 20px auto 60px auto; padding: 0 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
-        
-        /* Tarjeta de Producto */
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transition: transform 0.3s; cursor: pointer; position: relative; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        .badge-descuento { position: absolute; top: 15px; right: 15px; background: var(--red-sale); color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; border-radius: 20px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .badge-descuento { position: absolute; top: 15px; right: 15px; background: var(--red-sale); color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; border-radius: 20px; z-index: 10; }
         .main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; margin-bottom: 12px; background: #f4f4f4; }
         .carousel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
         .carousel::-webkit-scrollbar { display: none; }
@@ -71,65 +72,34 @@
         .info { text-align: center; margin-top: 15px; }
         .codigo { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .nombre { margin: 8px 0; font-size: 18px; font-weight: 400; }
-        
         .precio-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0; }
         .precio { color: var(--gold); font-weight: 600; font-size: 22px; }
         .precio-original { color: #aaa; text-decoration: line-through; font-size: 16px; }
-        
-        .btn-comprar { width: 100%; background: var(--black); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
+        .btn-comprar { width: 100%; background: var(--black); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
         .btn-comprar:hover { background: var(--gold); }
 
-        /* --- SECCIONES CORPORATIVAS Y FOOTER --- */
+        /* --- MODAL (Simplificado para el ejemplo) --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 3000; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: white; width: 100%; max-width: 850px; border-radius: 16px; padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+        .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #888; }
+        
+        /* FOOTER / SECCIONES */
         .corporate-section { background: var(--gray-light); padding: 60px 20px; border-top: 1px solid #eaeaea; }
         .corporate-container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-        .corporate-box h2 { color: var(--black); font-size: 22px; font-weight: 600; letter-spacing: 1px; margin-bottom: 15px; position: relative; }
-        .corporate-box h2::after { content: ''; display: block; width: 40px; height: 2px; background: var(--gold); margin-top: 8px; }
-        .corporate-box p { font-size: 15px; color: #555; line-height: 1.7; font-weight: 300; }
-
         footer { background: var(--black); color: white; padding: 40px 20px; text-align: center; font-size: 14px; border-top: 3px solid var(--gold); }
-        .footer-container { max-width: 800px; margin: 0 auto; }
-        .footer-title { color: var(--gold); font-size: 18px; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600; }
-        .footer-info { margin-bottom: 20px; font-weight: 300; color: #ccc; line-height: 1.6; }
-        .footer-links a { color: var(--gold); text-decoration: none; margin: 0 15px; transition: 0.3s; }
-        .footer-links a:hover { color: white; }
-        .footer-credits { font-size: 12px; color: #666; margin-top: 25px; border-top: 1px solid #222; padding-top: 15px; }
-
-        /* --- MODAL --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
-        .modal-content { background: white; width: 100%; max-width: 850px; border-radius: 16px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; position: relative; animation: modalFadeIn 0.3s ease; max-height: 90vh; overflow-y: auto; }
-        
-        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        
-        .modal-main-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: #f4f4f4; border: 1px solid #eee; }
-        .modal-carousel { display: flex; gap: 10px; overflow-x: auto; margin-top: 12px; padding-bottom: 5px; }
-        .modal-thumb { width: 65px; height: 65px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: 0.2s; }
-        .modal-thumb:hover, .modal-thumb.active { border-color: var(--gold); }
-
-        .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 26px; color: var(--black); }
-        .modal-details .codigo { display: block; margin-bottom: 15px; }
-        
-        /* BOTONES DE TALLAS */
-        .talla-btn { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .talla-btn:hover { border-color: var(--gold); color: var(--gold); }
-        .talla-btn.selected { background: var(--gold); color: white; border-color: var(--gold); }
-
-        .modal-details .stock-info { font-size: 13px; color: #666; margin-bottom: 20px; }
-        .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #888; }
-        .btn-cerrar-modal:hover { color: var(--black); }
 
         @media (max-width: 768px) {
-            .hero-banner { padding: 40px 20px; margin: 10px; }
-            .hero-banner h2 { font-size: 24px; }
-            .modal-content { grid-template-columns: 1fr; padding: 20px; gap: 20px;}
-            .corporate-container { grid-template-columns: 1fr; gap: 30px; }
+            .search-container { flex-direction: column; }
+            .btn-abrir-filtros { width: 100%; justify-content: center; }
+            .modal-content { grid-template-columns: 1fr; gap: 20px;}
+            .corporate-container { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <div class="ticker-wrap" id="contenedor-ticker">
-        <div class="ticker-move" id="ticker-items"></div>
-    </div>
+    <div class="ticker-wrap" id="contenedor-ticker"><div class="ticker-move" id="ticker-items"></div></div>
 
     <header>
         <h1>GEDALIA</h1>
@@ -137,136 +107,153 @@
     </header>
 
     <div class="search-container">
-        <input type="text" id="buscador" class="search-input" placeholder="Buscar joyería por nombre o código..." oninput="filtrarProductos()">
+        <input type="text" id="buscador" class="search-input" placeholder="Buscar joyería por nombre o código..." oninput="aplicarFiltrosInteligentes()">
+        <button class="btn-abrir-filtros" onclick="toggleSidebarFiltros()">
+            <span>⚙️ Filtros</span>
+        </button>
+    </div>
+
+    <div class="filter-overlay" id="filter-overlay" onclick="toggleSidebarFiltros()"></div>
+    <div class="filter-sidebar" id="filter-sidebar">
+        <div class="filter-header">
+            <h3>Filtrar Joyería</h3>
+            <button class="btn-cerrar-filtros" onclick="toggleSidebarFiltros()">×</button>
+        </div>
+        <div class="filter-body">
+            <div class="filter-group">
+                <label>Categoría</label>
+                <select id="filtro-categoria" onchange="aplicarFiltrosInteligentes()">
+                    <option value="">Todas las categorías</option>
+                    <option value="anillo">Anillos</option>
+                    <option value="collar">Collares</option>
+                    <option value="dije">Dijes</option>
+                    <option value="arete">Aretes</option>
+                    <option value="pulsera">Pulseras</option>
+                    <option value="exotico">Exóticos / Especiales</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Precio Máximo (MXN)</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="color:#888;">$0</span>
+                    <input type="range" id="filtro-precio" min="0" max="10000" step="100" value="10000" oninput="document.getElementById('precio-val').innerText = '$'+this.value; aplicarFiltrosInteligentes();" style="width:100%;">
+                </div>
+                <div style="text-align:right; font-size:12px; font-weight:bold; color:var(--gold); margin-top:5px;" id="precio-val">Sin límite</div>
+            </div>
+            <div class="filter-group">
+                <label>Piedra Principal</label>
+                <select id="filtro-piedra" onchange="aplicarFiltrosInteligentes()">
+                    <option value="">Cualquier piedra (o sin piedra)</option>
+                    <option value="circonia">Circonia</option>
+                    <option value="zafiro">Zafiro</option>
+                    <option value="rubi">Rubí</option>
+                    <option value="esmeralda">Esmeralda</option>
+                    <option value="onix">Ónix</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Talla (Opcional)</label>
+                <input type="text" id="filtro-talla" placeholder="Ej. 6, 7, Unitalla..." oninput="aplicarFiltrosInteligentes()">
+            </div>
+        </div>
+        <div class="filter-footer">
+            <button class="btn-aplicar-filtros" onclick="toggleSidebarFiltros()">VER RESULTADOS</button>
+            <button class="btn-limpiar-filtros" onclick="limpiarFiltros()">Borrar todos los filtros</button>
+        </div>
     </div>
 
     <div class="hero-banner" id="banner-nuevos">
         <h2>NUEVOS DISEÑOS EXCLUSIVOS</h2>
-        <p>Descubre nuestra más reciente colección de piezas elaboradas artesanalmente. Elegancia que perdura en cada detalle de Plata Ley 925.</p>
+        <p>Descubre nuestra más reciente colección. Elegancia que perdura en cada detalle.</p>
         <button class="btn-hero" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">Explorar Colección</button>
     </div>
 
     <div class="catalogo-container">
         <div class="grid" id="contenedor-tienda">
-            <p style="text-align:center; grid-column: 1/-1; color:#888;">Cargando catálogo de joyas...</p>
-        </div>
-    </div>
-
-    <section class="corporate-section">
-        <div class="corporate-container">
-            <div class="corporate-box">
-                <h2>Nuestra Misión</h2>
-                <p>Ofrecer piezas de joyería en Plata Ley 925 que fusionen la elegancia atemporal con el diseño contemporáneo, brindando a nuestros clientes en la CDMX y en toda la República Mexicana un símbolo de distinción, exclusividad y calidad artesanal inigualable.</p>
-            </div>
-            <div class="corporate-box">
-                <h2>Nuestra Visión</h2>
-                <p>Consolidarnos como la marca de retail referente en joyería de plata a nivel nacional, expandiendo nuestra presencia digital desde el corazón de la Ciudad de México hacia cada rincón del país, siendo reconocidos por nuestra excelencia en el servicio y sofisticación.</p>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="footer-container">
-            <div class="footer-title">GEDALIA JOYERÍA</div>
-            <div class="footer-info">
-                <p>📍 Centro Histórico, Ciudad de México (CDMX) | Envíos seguros a toda la República Mexicana 🇲🇽</p>
-                <p>✉️ contacto@gedalia.com | 📞 Tel / WhatsApp: +52 55 XXXX XXXX</p>
-            </div>
-            <div class="footer-links">
-                <a href="https://wa.me/5255XXXXXXXXX" target="_blank">Atención por WhatsApp</a>
-                <a href="#buscador">Volver Arriba</a>
-            </div>
-            <div class="footer-credits">
-                &copy; 2026 Gedalia Joyería. Todos los derechos reservados.
-            </div>
-        </div>
-    </footer>
-
-    <div id="productModal" class="modal-overlay" onclick="cerrarModalAfuera(event)">
-        <div class="modal-content" id="modalBox">
-            <button class="btn-cerrar-modal" onclick="cerrarModal()">×</button>
-            
-            <div>
-                <img id="modal-img-grande" class="modal-main-img" src="" alt="Vista previa de la joya">
-                <div id="modal-minis-container" class="modal-carousel"></div>
-            </div>
-
-            <div class="modal-details">
-                <span id="modal-codigo" class="codigo"></span>
-                <h2 id="modal-nombre"></h2>
-                
-                <div class="precio-container" style="justify-content: flex-start; margin-top:0;" id="modal-precio-container">
-                    </div>
-
-                <div id="modal-talla-container" style="margin: 20px 0;"></div> 
-                
-                <p id="modal-stock" class="stock-info"></p>
-                <p style="font-size: 14px; color: #555; line-height: 1.6; border-top: 1px solid #eee; padding-top: 15px;">
-                    Pieza elaborada artesanalmente en Plata Ley 925 con altos estándares de calidad. Ideal para realzar cualquier estilo con elegancia y distinción.
-                </p>
-                <button class="btn-comprar" style="margin-top: 10px;" id="btn-comprar-whatsapp">Comprar por WhatsApp</button>
-            </div>
+            <p style="text-align:center; grid-column: 1/-1; color:#888;">Cargando catálogo...</p>
         </div>
     </div>
 
     <script>
         let listaProductos = [];
-        let tallaSeleccionadaModal = "";
 
         async function cargarCatalogoFront() {
             try {
                 const respuesta = await fetch('/api/productos');
                 listaProductos = await respuesta.json();
-                
                 renderizarProductos(listaProductos);
                 renderizarTickerOfertas(listaProductos);
-
             } catch(err) {
-                console.error("Error cargando la tienda:", err);
-                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
+                console.error("Error:", err);
             }
         }
 
-        function renderizarTickerOfertas(productos) {
-            const contenedorTicker = document.getElementById('contenedor-ticker');
-            const tickerItems = document.getElementById('ticker-items');
-            
-            const ofertas = productos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
+        // --- LÓGICA DE INTERFAZ DEL PANEL DE FILTROS ---
+        function toggleSidebarFiltros() {
+            document.getElementById('filter-sidebar').classList.toggle('active');
+            document.getElementById('filter-overlay').classList.toggle('active');
+        }
 
-            if (ofertas.length === 0) {
-                contenedorTicker.style.display = 'none';
-                return;
-            }
+        function limpiarFiltros() {
+            document.getElementById('buscador').value = "";
+            document.getElementById('filtro-categoria').value = "";
+            document.getElementById('filtro-piedra').value = "";
+            document.getElementById('filtro-talla').value = "";
+            document.getElementById('filtro-precio').value = "10000";
+            document.getElementById('precio-val').innerText = "Sin límite";
+            aplicarFiltrosInteligentes();
+            toggleSidebarFiltros();
+        }
 
-            contenedorTicker.style.display = 'block';
-            tickerItems.innerHTML = ofertas.map(prod => {
-                const imgPrincipal = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : 'https://via.placeholder.com/50';
-                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
+        // --- EL CEREBRO DE LOS FILTROS ---
+        function aplicarFiltrosInteligentes() {
+            const txtBusqueda = document.getElementById('buscador').value.toLowerCase().trim();
+            const cat = document.getElementById('filtro-categoria').value.toLowerCase();
+            const piedra = document.getElementById('filtro-piedra').value.toLowerCase();
+            const tallaInput = document.getElementById('filtro-talla').value.toLowerCase().trim();
+            const precioMax = parseFloat(document.getElementById('filtro-precio').value);
+
+            const filtrados = listaProductos.filter(prod => {
+                const nombre = (prod.nombre || "").toLowerCase();
+                const codigo = (prod.codigo || "").toLowerCase();
+                const tallaBD = (prod.talla || "").toLowerCase();
                 
-                return `
-                    <div class="ticker-item" onclick="abrirModal(${prod.id})">
-                        <img src="${imgPrincipal}" alt="Oferta">
-                        🔥 ¡OFERTA! ${prod.nombre} - ${prod.descuento}% OFF 
-                        <span class="ticker-price">$${precioFinal.toFixed(2)} MXN</span>
-                    </div>
-                `;
-            }).join('');
-            
-            tickerItems.innerHTML += tickerItems.innerHTML;
+                // Calcular el precio real del producto (por si tiene descuento)
+                const precioReal = prod.descuento ? prod.precio * (1 - (prod.descuento / 100)) : parseFloat(prod.precio);
+
+                // 1. Coincidencia de Buscador (Nombre o código)
+                const matchBusqueda = nombre.includes(txtBusqueda) || codigo.includes(txtBusqueda);
+                
+                // 2. Coincidencia de Categoría y Piedra (Buscamos la palabra dentro del nombre)
+                const matchCat = cat === "" || nombre.includes(cat);
+                const matchPiedra = piedra === "" || nombre.includes(piedra);
+                
+                // 3. Coincidencia de Talla
+                const matchTalla = tallaInput === "" || tallaBD.includes(tallaInput);
+                
+                // 4. Coincidencia de Precio
+                // Si el slider está al máximo (10000), asumimos que el usuario no quiere límite.
+                const matchPrecio = precioMax >= 10000 ? true : precioReal <= precioMax;
+
+                return matchBusqueda && matchCat && matchPiedra && matchTalla && matchPrecio;
+            });
+
+            renderizarProductos(filtrados);
+
+            // Ocultar el Hero Banner si el usuario está filtrando cosas
+            const hayFiltros = txtBusqueda || cat || piedra || tallaInput || precioMax < 10000;
+            document.getElementById('banner-nuevos').style.display = hayFiltros ? "none" : "flex";
         }
 
         function renderizarProductos(productos) {
             const contenedor = document.getElementById('contenedor-tienda');
-            
             if(productos.length === 0) {
-                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888;'>No se encontraron joyas.</p>";
+                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888; font-size:18px;'>No encontramos joyas con estos filtros. Intenta modificarlos.</p>";
                 return;
             }
 
             contenedor.innerHTML = productos.map(prod => {
-                const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
-                const imgPrincipal = imgs[0];
-                
+                const imgPrincipal = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : 'https://via.placeholder.com/400';
                 let descuentoHTML = '';
                 let precioHTML = `<p class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</p>`;
                 
@@ -281,128 +268,35 @@
                     `;
                 }
 
-                let carruselHTML = '';
-                if(imgs.length > 1) {
-                    carruselHTML = `
-                        <div class="carousel">
-                            ${imgs.map(img => `<img src="${img}" class="thumb">`).join('')}
-                        </div>
-                    `;
-                }
-
                 return `
-                <div class="card" onclick="abrirModal(${prod.id})">
+                <div class="card" onclick="alert('Aquí se abre tu modal de compra para: ${prod.nombre}')">
                     ${descuentoHTML}
                     <img src="${imgPrincipal}" class="main-img" alt="${prod.nombre}">
-                    ${carruselHTML}
                     <div class="info">
                         <span class="codigo">${prod.codigo}</span>
                         <h3 class="nombre">${prod.nombre}</h3>
                         ${precioHTML}
-                        <button class="btn-comprar" onclick="event.stopPropagation(); abrirModal(${prod.id});">Ver Detalles</button>
+                        <button class="btn-comprar">Ver Detalles</button>
                     </div>
                 </div>
                 `;
             }).join('');
         }
 
-        function filtrarProductos() {
-            const textoBusqueda = document.getElementById('buscador').value.toLowerCase().trim();
-            const productosFiltrados = listaProductos.filter(prod => {
-                const nombreOk = prod.nombre ? prod.nombre.toLowerCase().includes(textoBusqueda) : false;
-                const codigoOk = prod.codigo ? prod.codigo.toLowerCase().includes(textoBusqueda) : false;
-                return nombreOk || codigoOk;
-            });
-            renderizarProductos(productosFiltrados);
-            
-            // Ocultar banner si el usuario está buscando para dar prioridad a los resultados
-            document.getElementById('banner-nuevos').style.display = textoBusqueda === "" ? "flex" : "none";
-        }
+        function renderizarTickerOfertas(productos) {
+            const contenedorTicker = document.getElementById('contenedor-ticker');
+            const tickerItems = document.getElementById('ticker-items');
+            const ofertas = productos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
+            if (ofertas.length === 0) return;
 
-        // --- FUNCIONES DEL MODAL Y SELECCIÓN DE TALLA ---
-        window.abrirModal = function(id) {
-            const prod = listaProductos.find(p => p.id === id);
-            if(!prod) return;
-            
-            tallaSeleccionadaModal = ""; // Resetear talla
-
-            const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
-
-            document.getElementById('modal-codigo').innerText = `Código: ${prod.codigo}`;
-            document.getElementById('modal-nombre').innerText = prod.nombre;
-            document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
-
-            // Lógica de Múltiples Tallas (separadas por comas)
-            const contenedorTalla = document.getElementById('modal-talla-container');
-            if(prod.talla && prod.talla.trim() !== "") {
-                const tallasArray = prod.talla.split(',').map(t => t.trim()).filter(t => t !== "");
-                
-                if (tallasArray.length > 0) {
-                    let botonesHTML = tallasArray.map(t => `
-                        <button class="talla-btn" onclick="seleccionarTalla(this, '${t}')">${t}</button>
-                    `).join('');
-                    
-                    contenedorTalla.innerHTML = `
-                        <p style="font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 8px;">Selecciona tu Talla:</p>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            ${botonesHTML}
-                        </div>
-                    `;
-                }
-            } else {
-                contenedorTalla.innerHTML = '';
-            }
-
-            const contenedorPrecio = document.getElementById('modal-precio-container');
-            if (prod.descuento && parseFloat(prod.descuento) > 0) {
-                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
-                contenedorPrecio.innerHTML = `
-                    <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
-                    <span class="precio" style="color: var(--red-sale); font-size:32px;">$${precioFinal.toFixed(2)} MXN</span>
-                `;
-            } else {
-                contenedorPrecio.innerHTML = `<span class="precio" style="font-size:32px;">$${parseFloat(prod.precio).toFixed(2)} MXN</span>`;
-            }
-
-            document.getElementById('modal-img-grande').src = imgs[0];
-            const contenedorMinis = document.getElementById('modal-minis-container');
-            if(imgs.length > 1) {
-                contenedorMinis.innerHTML = imgs.map((img, index) => `
-                    <img src="${img}" class="modal-thumb ${index === 0 ? 'active' : ''}" onclick="cambiarFotoModal('${img}', this)">
-                `).join('');
-                contenedorMinis.style.display = "flex";
-            } else {
-                contenedorMinis.style.display = "none";
-            }
-
-            document.getElementById('productModal').style.display = "flex";
-        }
-
-        window.seleccionarTalla = function(boton, talla) {
-            // Remover clase selected de todos los botones
-            const botones = document.querySelectorAll('.talla-btn');
-            botones.forEach(b => b.classList.remove('selected'));
-            
-            // Agregar al botón clickeado
-            boton.classList.add('selected');
-            tallaSeleccionadaModal = talla;
-        }
-
-        window.cambiarFotoModal = function(url, thumbElement) {
-            document.getElementById('modal-img-grande').src = url;
-            const todas = thumbElement.parentElement.querySelectorAll('.modal-thumb');
-            todas.forEach(t => t.classList.remove('active'));
-            thumbElement.classList.add('active');
-        }
-
-        window.cerrarModal = function() {
-            document.getElementById('productModal').style.display = "none";
-        }
-
-        window.cerrarModalAfuera = function(event) {
-            if (event.target === document.getElementById('productModal')) {
-                cerrarModal();
-            }
+            contenedorTicker.style.display = 'block';
+            tickerItems.innerHTML = ofertas.map(prod => `
+                <div class="ticker-item">
+                    <img src="${(prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : ''}">
+                    🔥 ${prod.nombre} - ${prod.descuento}% OFF 
+                </div>
+            `).join('');
+            tickerItems.innerHTML += tickerItems.innerHTML;
         }
 
         cargarCatalogoFront();
