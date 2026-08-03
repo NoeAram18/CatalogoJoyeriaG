@@ -1,261 +1,323 @@
-<script>
-        let listaProductos = [];
-        let tallaSeleccionadaModal = "";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gedalia ERP | Administración de Joyería</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #f4f7f6; --red-sale: #d9534f; }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; background: var(--bg); }
+        .sidebar { width: 280px; background: var(--black); height: 100vh; color: white; padding: 40px 20px; position: fixed; }
+        .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.3s;}
+        .btn-gold { background: var(--gold); color: white; }
+        .btn-gold:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-edit { background: #4a90e2; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; margin-right: 5px; border:none; cursor:pointer;}
+        .btn-danger { background: #ff4d4d; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; border:none; cursor:pointer;}
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        .img-input-group { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; }
+        .section { display: none; animation: fadeIn 0.3s; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .badge-desc { background: var(--red-sale); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px;}
+        .badge-talla { background: #eee; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; border: 1px solid #ddd;}
+        .campana-box { border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .campana-box h4 { margin-top: 0; color: var(--gold); }
+    </style>
+</head>
+<body>
 
-        // --- CARGA DE DATOS AL INICIAR ---
-        async function inicializarTienda() {
-            try {
-                // 1. Cargar Configuración de Campañas
-                const resCampanas = await fetch('/api/campanas');
-                const campanas = await resCampanas.json();
-                aplicarCampanas(campanas);
+<div class="sidebar">
+    <h2 style="color:var(--gold); letter-spacing:2px;">GEDALIA ERP</h2>
+    <div style="margin-top:40px;">
+        <p onclick="showSection('inventory')" style="cursor:pointer; padding:10px 0;">💎 Mi Inventario</p>
+        <p onclick="prepareNew()" style="cursor:pointer; padding:10px 0;">✨ Añadir Nueva Joya</p>
+        <p onclick="cargarCampanas()" style="cursor:pointer; padding:10px 0;">📢 Campañas Publicitarias</p>
+    </div>
+</div>
 
-                // 2. Cargar Catálogo de Joyas
-                const resProductos = await fetch('/api/productos');
-                listaProductos = await resProductos.json();
-                renderizarProductos(listaProductos);
-                renderizarTickerOfertas(listaProductos);
-            } catch(err) {
-                console.error("Error:", err);
-                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
-            }
-        }
+<div class="main">
+    <div id="inventory" class="section active">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center;">
+                <h3>Inventario de Plata</h3>
+                <input type="text" id="admin-search" placeholder="Buscar por código o nombre..." oninput="filtrarAdmin()" style="width:250px; margin:0;">
+            </div>
+            <table id="lista-prods"></table>
+        </div>
+    </div>
 
-        // --- INYECCIÓN DE CAMPAÑAS DINÁMICAS ---
-        function aplicarCampanas(data) {
-            // Lógica de Cortinilla (Splash Screen)
-            const splash = document.getElementById('splash-screen');
-            if (data.splashActivo) {
-                document.getElementById('splash-img').src = data.splashImg || "https://via.placeholder.com/250x250/0a0a0a/c5a059?text=G+E+D+A+L+I+A";
-                document.getElementById('splash-txt').innerText = data.splashTexto || "";
-                
-                // Desaparecer la cortinilla a los 2.5 segundos
-                setTimeout(() => {
-                    splash.classList.add('hidden');
-                    setTimeout(() => splash.remove(), 800); 
-                }, 2500);
-            } else {
-                splash.remove(); // Destruir cortinilla de inmediato si está apagada
-            }
-
-            // Inyección en Promo 1
-            document.getElementById('p1-bg').src = data.promo1Img || "https://via.placeholder.com/800";
-            document.getElementById('p1-badge').innerText = data.promo1Badge || "";
-            document.getElementById('p1-title').innerText = data.promo1Titulo || "";
-            document.getElementById('p1-sub').innerText = data.promo1Sub || "";
-            document.getElementById('p1-badge').style.display = data.promo1Badge ? "inline-block" : "none";
-
-            // Inyección en Promo 2
-            document.getElementById('p2-bg').src = data.promo2Img || "https://via.placeholder.com/800";
-            document.getElementById('p2-badge').innerText = data.promo2Badge || "";
-            document.getElementById('p2-title').innerText = data.promo2Titulo || "";
-            document.getElementById('p2-sub').innerText = data.promo2Sub || "";
-            document.getElementById('p2-badge').style.display = data.promo2Badge ? "inline-block" : "none";
-        }
-
-        // --- LÓGICA DEL PANEL DE FILTROS ---
-        function toggleSidebarFiltros() {
-            document.getElementById('filter-sidebar').classList.toggle('active');
-            document.getElementById('filter-overlay').classList.toggle('active');
-        }
-
-        function limpiarFiltros() {
-            document.getElementById('buscador').value = "";
-            document.getElementById('filtro-categoria').value = "";
-            document.getElementById('filtro-piedra').value = "";
-            document.getElementById('filtro-talla').value = "";
-            document.getElementById('filtro-precio').value = "10000";
-            document.getElementById('precio-val').innerText = "Sin límite";
-            aplicarFiltrosInteligentes();
-            toggleSidebarFiltros();
-        }
-
-        function aplicarFiltrosInteligentes() {
-            const txtBusqueda = document.getElementById('buscador').value.toLowerCase().trim();
-            const cat = document.getElementById('filtro-categoria').value.toLowerCase();
-            const piedra = document.getElementById('filtro-piedra').value.toLowerCase();
-            const tallaInput = document.getElementById('filtro-talla').value.toLowerCase().trim();
-            const precioMax = parseFloat(document.getElementById('filtro-precio').value);
-
-            const filtrados = listaProductos.filter(prod => {
-                const nombre = (prod.nombre || "").toLowerCase();
-                const codigo = (prod.codigo || "").toLowerCase();
-                const tallaBD = (prod.talla || "").toLowerCase();
-                
-                const precioReal = prod.descuento ? prod.precio * (1 - (prod.descuento / 100)) : parseFloat(prod.precio);
-                const matchBusqueda = nombre.includes(txtBusqueda) || codigo.includes(txtBusqueda);
-                const matchCat = cat === "" || nombre.includes(cat);
-                const matchPiedra = piedra === "" || nombre.includes(piedra);
-                const matchTalla = tallaInput === "" || tallaBD.includes(tallaInput);
-                const matchPrecio = precioMax >= 10000 ? true : precioReal <= precioMax;
-
-                return matchBusqueda && matchCat && matchPiedra && matchTalla && matchPrecio;
-            });
-
-            renderizarProductos(filtrados);
-
-            // Ocultar Banners y Promos si el usuario está usando los filtros para darle prioridad al catálogo
-            const hayFiltros = txtBusqueda || cat || piedra || tallaInput || precioMax < 10000;
-            document.getElementById('banner-nuevos').style.display = hayFiltros ? "none" : "flex";
-            document.getElementById('seccion-promos').style.display = hayFiltros ? "none" : "block";
-        }
-
-        function renderizarProductos(productos) {
-            const contenedor = document.getElementById('contenedor-tienda');
-            if(productos.length === 0) {
-                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888; font-size:18px;'>No encontramos joyas con estos filtros. Intenta modificarlos.</p>";
-                return;
-            }
-
-            contenedor.innerHTML = productos.map(prod => {
-                const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
-                const imgPrincipal = imgs[0];
-                let descuentoHTML = '';
-                let precioHTML = `<p class="precio">$${parseFloat(prod.precio).toFixed(2)} MXN</p>`;
-                
-                if (prod.descuento && parseFloat(prod.descuento) > 0) {
-                    const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
-                    descuentoHTML = `<span class="badge-descuento">-${prod.descuento}%</span>`;
-                    precioHTML = `
-                        <div class="precio-container">
-                            <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
-                            <span class="precio">$${precioFinal.toFixed(2)} MXN</span>
-                        </div>
-                    `;
-                }
-
-                let carruselHTML = '';
-                if(imgs.length > 1) {
-                    carruselHTML = `
-                        <div class="carousel">
-                            ${imgs.map(img => `<img src="${img}" class="thumb">`).join('')}
-                        </div>
-                    `;
-                }
-
-                return `
-                <div class="card" onclick="abrirModal(${prod.id})">
-                    ${descuentoHTML}
-                    <img src="${imgPrincipal}" class="main-img" alt="${prod.nombre}">
-                    ${carruselHTML}
-                    <div class="info">
-                        <span class="codigo">${prod.codigo}</span>
-                        <h3 class="nombre">${prod.nombre}</h3>
-                        ${precioHTML}
-                        <button class="btn-comprar" onclick="event.stopPropagation(); abrirModal(${prod.id});">Ver Detalles</button>
-                    </div>
+    <div id="form-section" class="section">
+        <div class="card">
+            <h3 id="form-title">Añadir Nueva Joya al Catálogo</h3>
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
+                <input type="text" id="codigo" placeholder="Código (ej. PLT-001)">
+                <input type="text" id="nombre" placeholder="Nombre descriptivo de la pieza">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+                <input type="number" id="precio" placeholder="Precio Base (MXN)" step="0.01">
+                <input type="number" id="stock" placeholder="Stock">
+                <input type="number" id="descuento" placeholder="Descuento % (Ej. 50)" min="0" max="100">
+                <div style="display:flex; flex-direction:column;">
+                    <input type="text" id="talla" placeholder="Tallas (Ej. 6, 7, Unitalla)">
+                    <small style="font-size:11px; color:#666; margin-top:-8px; margin-bottom:10px;">Separa con comas.</small>
                 </div>
-                `;
-            }).join('');
-        }
+            </div>
+            <div class="img-input-group">
+                <p style="margin-top: 0; font-size: 14px;"><strong>Fotografías de la Joya (Max 4):</strong></p>
+                <input type="file" id="foto1" accept="image/*"><input type="file" id="foto2" accept="image/*">
+                <input type="file" id="foto3" accept="image/*"><input type="file" id="foto4" accept="image/*">
+            </div>
+            <button id="btn-save" class="btn btn-gold" style="width:100%; padding: 15px;" onclick="guardarProducto()">GUARDAR JOYA</button>
+            <button class="btn" style="width:100%; margin-top:10px; background:#ddd;" onclick="showSection('inventory')">CANCELAR</button>
+        </div>
+    </div>
 
-        function renderizarTickerOfertas(productos) {
-            const contenedorTicker = document.getElementById('contenedor-ticker');
-            const tickerItems = document.getElementById('ticker-items');
-            const ofertas = productos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
+    <div id="campaigns-section" class="section">
+        <div class="card">
+            <h3>Gestor de Campañas Publicitarias</h3>
+            <p style="font-size: 14px; color: #666;">Controla lo que ven tus clientes al entrar a la página y en los recuadros de ofertas.</p>
             
-            if (ofertas.length === 0) {
-                contenedorTicker.style.display = 'none';
-                return;
-            }
+            <div class="campana-box">
+                <h4>1. Cortinilla de Entrada (Splash Screen)</h4>
+                <label style="font-size: 13px;">¿Activar Cortinilla?</label>
+                <select id="c-splashActivo">
+                    <option value="true">Sí, mostrar al inicio</option>
+                    <option value="false">No, desactivar</option>
+                </select>
+                <input type="text" id="c-splashTexto" placeholder="Texto de bienvenida (Ej. NUEVA COLECCIÓN)">
+                <div class="img-input-group">
+                    <label style="font-size: 13px;">Logo o GIF Animado de la Campaña:</label>
+                    <input type="file" id="c-splashImgFile" accept="image/*,video/gif">
+                    <input type="hidden" id="c-splashImgUrl">
+                </div>
+            </div>
 
-            contenedorTicker.style.display = 'block';
-            tickerItems.innerHTML = ofertas.map(prod => {
-                const imgPrincipal = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : 'https://via.placeholder.com/50';
-                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
+            <div class="campana-box">
+                <h4>2. Recuadro Promocional Izquierdo</h4>
+                <input type="text" id="c-promo1Badge" placeholder="Etiqueta (Ej. HOT SALE 🔥)">
+                <input type="text" id="c-promo1Titulo" placeholder="Título (Ej. Anillos de Compromiso)">
+                <input type="text" id="c-promo1Sub" placeholder="Subtítulo">
+                <div class="img-input-group">
+                    <label style="font-size: 13px;">Imagen de Fondo o GIF:</label>
+                    <input type="file" id="c-promo1ImgFile" accept="image/*,video/gif">
+                    <input type="hidden" id="c-promo1ImgUrl">
+                </div>
+            </div>
+
+            <div class="campana-box">
+                <h4>3. Recuadro Promocional Derecho</h4>
+                <input type="text" id="c-promo2Badge" placeholder="Etiqueta (Ej. NUEVA LLEGADA ✨)">
+                <input type="text" id="c-promo2Titulo" placeholder="Título (Ej. Colección Zafiro)">
+                <input type="text" id="c-promo2Sub" placeholder="Subtítulo">
+                <div class="img-input-group">
+                    <label style="font-size: 13px;">Imagen de Fondo o GIF:</label>
+                    <input type="file" id="c-promo2ImgFile" accept="image/*,video/gif">
+                    <input type="hidden" id="c-promo2ImgUrl">
+                </div>
+            </div>
+
+            <button id="btn-save-campana" class="btn btn-gold" style="width:100%; padding: 15px;" onclick="guardarCampanas()">PUBLICAR CAMPAÑAS EN LA TIENDA</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const CLOUD_NAME = "oudq7dcf"; 
+    const UPLOAD_PRESET = "gedalia_preset"; 
+
+    let productos = [];
+    let editandoId = null; 
+    let imagenesExistentes = []; 
+
+    // --- LÓGICA DE PRODUCTOS (MANTENIDA) ---
+    async function cargar() {
+        try {
+            const res = await fetch('/api/productos');
+            productos = await res.json();
+            renderInventory(productos);
+        } catch (error) { console.error(error); }
+    }
+
+    function renderInventory(lista) {
+        document.getElementById('lista-prods').innerHTML = `
+            <thead><tr><th>Foto</th><th>Código</th><th>Pieza</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+            <tbody>${lista.map(p => {
+                let tagsAdicionales = '';
+                if(p.descuento && parseFloat(p.descuento) > 0) tagsAdicionales += `<span class="badge-desc">-${p.descuento}%</span>`;
+                if(p.talla && p.talla.trim() !== '') tagsAdicionales += `<span class="badge-talla">T: ${p.talla}</span>`;
                 return `
-                    <div class="ticker-item" onclick="abrirModal(${prod.id})">
-                        <img src="${imgPrincipal}" alt="Oferta">
-                        🔥 ¡OFERTA! ${prod.nombre} - ${prod.descuento}% OFF 
-                        <span class="ticker-price">$${precioFinal.toFixed(2)} MXN</span>
-                    </div>
-                `;
-            }).join('');
+                <tr>
+                    <td><img src="${(p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://via.placeholder.com/50'}" class="thumb"></td>
+                    <td><b>${p.codigo}</b></td>
+                    <td>${p.nombre} ${tagsAdicionales}</td>
+                    <td>$${p.precio}</td>
+                    <td>${p.stock} pz</td>
+                    <td>
+                        <button class="btn-edit" onclick="iniciarEdicion(${p.id})">Editar</button>
+                        <button class="btn-danger" onclick="eliminarProducto(${p.id})">Borrar</button>
+                    </td>
+                </tr>`}).join('')}</tbody>
+        `;
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function prepareNew() {
+        editandoId = null; imagenesExistentes = [];
+        document.getElementById('form-title').innerText = "Añadir Nueva Joya al Catálogo";
+        ['codigo', 'nombre', 'precio', 'stock', 'descuento', 'talla', 'foto1', 'foto2', 'foto3', 'foto4'].forEach(id => document.getElementById(id).value = "");
+        showSection('form-section');
+    }
+
+    function iniciarEdicion(id) {
+        const prod = productos.find(p => p.id === id);
+        if(!prod) return;
+        editandoId = id; imagenesExistentes = prod.imagenes || [];
+        document.getElementById('form-title').innerText = `Editar Joya: ${prod.codigo}`;
+        document.getElementById('codigo').value = prod.codigo;
+        document.getElementById('nombre').value = prod.nombre;
+        document.getElementById('precio').value = prod.precio;
+        document.getElementById('stock').value = prod.stock;
+        document.getElementById('descuento').value = prod.descuento || "";
+        document.getElementById('talla').value = prod.talla || "";
+        ['foto1', 'foto2', 'foto3', 'foto4'].forEach(id => document.getElementById(id).value = "");
+        showSection('form-section');
+    }
+
+    async function subirImagenACloudinary(file) {
+        const formData = new FormData();
+        formData.append("file", file); formData.append("upload_preset", UPLOAD_PRESET);
+        try {
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
+            const datos = await res.json();
+            return datos.secure_url;
+        } catch (e) { return null; }
+    }
+
+    async function guardarProducto() {
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true; 
+        const codigo = document.getElementById('codigo').value.trim();
+        const nombre = document.getElementById('nombre').value.trim();
+        const precio = parseFloat(document.getElementById('precio').value);
+        const stock = parseInt(document.getElementById('stock').value);
+        const descuento = parseFloat(document.getElementById('descuento').value) || 0; 
+        const talla = document.getElementById('talla').value.trim(); 
+
+        if(!codigo || !nombre || isNaN(precio) || isNaN(stock)) {
+            alert("Llena los campos obligatorios."); btn.disabled = false; return;
+        }
+
+        const inputsFotos = [document.getElementById('foto1').files[0], document.getElementById('foto2').files[0], document.getElementById('foto3').files[0], document.getElementById('foto4').files[0]];
+        let urlsNuevas = [];
+        
+        btn.innerText = "⏳ SUBIENDO FOTOS...";
+        for (let archivo of inputsFotos) {
+            if (archivo) { const url = await subirImagenACloudinary(archivo); if (url) urlsNuevas.push(url); }
+        }
+
+        let imagenesFinales = (urlsNuevas.length > 0) ? urlsNuevas : imagenesExistentes;
+        btn.innerText = "💾 GUARDANDO...";
+
+        const payload = { codigo, nombre, precio, stock, descuento, talla, imagenes: imagenesFinales };
+
+        try {
+            let res = editandoId ? await fetch(`/api/productos/${editandoId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }) 
+                                 : await fetch('/api/productos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            if (res.ok) { alert("¡Guardado!"); cargar(); showSection('inventory'); } 
+            else alert("Error al guardar");
+        } catch (e) { alert("Error de servidor"); } 
+        finally { btn.disabled = false; btn.innerText = "GUARDAR JOYA"; }
+    }
+
+    async function eliminarProducto(id) {
+        if (confirm("¿Eliminar esta joya?")) {
+            await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+            cargar();
+        }
+    }
+
+    function filtrarAdmin() {
+        const q = document.getElementById('admin-search').value.toLowerCase();
+        renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
+    }
+
+    // --- NUEVA LÓGICA DE CAMPAÑAS ---
+    async function cargarCampanas() {
+        showSection('campaigns-section');
+        try {
+            const res = await fetch('/api/campanas');
+            const data = await res.json();
             
-            tickerItems.innerHTML += tickerItems.innerHTML;
-        }
-
-        // --- FUNCIONES DEL MODAL INTERACTIVO ---
-        window.abrirModal = function(id) {
-            const prod = listaProductos.find(p => p.id === id);
-            if(!prod) return;
+            document.getElementById('c-splashActivo').value = data.splashActivo ? "true" : "false";
+            document.getElementById('c-splashTexto').value = data.splashTexto || "";
+            document.getElementById('c-splashImgUrl').value = data.splashImg || "";
             
-            tallaSeleccionadaModal = ""; 
+            document.getElementById('c-promo1Badge').value = data.promo1Badge || "";
+            document.getElementById('c-promo1Titulo').value = data.promo1Titulo || "";
+            document.getElementById('c-promo1Sub').value = data.promo1Sub || "";
+            document.getElementById('c-promo1ImgUrl').value = data.promo1Img || "";
 
-            const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
+            document.getElementById('c-promo2Badge').value = data.promo2Badge || "";
+            document.getElementById('c-promo2Titulo').value = data.promo2Titulo || "";
+            document.getElementById('c-promo2Sub').value = data.promo2Sub || "";
+            document.getElementById('c-promo2ImgUrl').value = data.promo2Img || "";
+        } catch (e) { console.error("Error cargando campañas"); }
+    }
 
-            document.getElementById('modal-codigo').innerText = `Código: ${prod.codigo}`;
-            document.getElementById('modal-nombre').innerText = prod.nombre;
-            document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
+    async function guardarCampanas() {
+        const btn = document.getElementById('btn-save-campana');
+        btn.disabled = true;
+        btn.innerText = "⏳ SUBIENDO RECURSOS DE CAMPAÑA...";
 
-            const contenedorTalla = document.getElementById('modal-talla-container');
-            if(prod.talla && prod.talla.trim() !== "") {
-                const tallasArray = prod.talla.split(',').map(t => t.trim()).filter(t => t !== "");
-                
-                if (tallasArray.length > 0) {
-                    let botonesHTML = tallasArray.map(t => `
-                        <button class="talla-btn" onclick="seleccionarTalla(this, '${t}')">${t}</button>
-                    `).join('');
-                    
-                    contenedorTalla.innerHTML = `
-                        <p style="font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 8px;">Selecciona tu Talla:</p>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            ${botonesHTML}
-                        </div>
-                    `;
-                }
-            } else {
-                contenedorTalla.innerHTML = '';
-            }
+        // Subir imágenes si se seleccionaron nuevas
+        const fSplash = document.getElementById('c-splashImgFile').files[0];
+        if (fSplash) document.getElementById('c-splashImgUrl').value = await subirImagenACloudinary(fSplash);
+        
+        const fPromo1 = document.getElementById('c-promo1ImgFile').files[0];
+        if (fPromo1) document.getElementById('c-promo1ImgUrl').value = await subirImagenACloudinary(fPromo1);
 
-            const contenedorPrecio = document.getElementById('modal-precio-container');
-            if (prod.descuento && parseFloat(prod.descuento) > 0) {
-                const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
-                contenedorPrecio.innerHTML = `
-                    <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
-                    <span class="precio" style="color: var(--red-sale); font-size:32px;">$${precioFinal.toFixed(2)} MXN</span>
-                `;
-            } else {
-                contenedorPrecio.innerHTML = `<span class="precio" style="font-size:32px;">$${parseFloat(prod.precio).toFixed(2)} MXN</span>`;
-            }
+        const fPromo2 = document.getElementById('c-promo2ImgFile').files[0];
+        if (fPromo2) document.getElementById('c-promo2ImgUrl').value = await subirImagenACloudinary(fPromo2);
 
-            document.getElementById('modal-img-grande').src = imgs[0];
-            const contenedorMinis = document.getElementById('modal-minis-container');
-            if(imgs.length > 1) {
-                contenedorMinis.innerHTML = imgs.map((img, index) => `
-                    <img src="${img}" class="modal-thumb ${index === 0 ? 'active' : ''}" onclick="cambiarFotoModal('${img}', this)">
-                `).join('');
-                contenedorMinis.style.display = "flex";
-            } else {
-                contenedorMinis.style.display = "none";
-            }
+        const payload = {
+            splashActivo: document.getElementById('c-splashActivo').value === "true",
+            splashTexto: document.getElementById('c-splashTexto').value,
+            splashImg: document.getElementById('c-splashImgUrl').value,
+            
+            promo1Badge: document.getElementById('c-promo1Badge').value,
+            promo1Titulo: document.getElementById('c-promo1Titulo').value,
+            promo1Sub: document.getElementById('c-promo1Sub').value,
+            promo1Img: document.getElementById('c-promo1ImgUrl').value,
 
-            document.getElementById('productModal').style.display = "flex";
+            promo2Badge: document.getElementById('c-promo2Badge').value,
+            promo2Titulo: document.getElementById('c-promo2Titulo').value,
+            promo2Sub: document.getElementById('c-promo2Sub').value,
+            promo2Img: document.getElementById('c-promo2ImgUrl').value
+        };
+
+        try {
+            await fetch('/api/campanas', {
+                method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+            });
+            alert("¡Campañas publicadas en la tienda con éxito!");
+        } catch (e) {
+            alert("Error guardando campaña");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "PUBLICAR CAMPAÑAS EN LA TIENDA";
         }
+    }
 
-        window.seleccionarTalla = function(boton, talla) {
-            const botones = document.querySelectorAll('.talla-btn');
-            botones.forEach(b => b.classList.remove('selected'));
-            boton.classList.add('selected');
-            tallaSeleccionadaModal = talla;
-        }
-
-        window.cambiarFotoModal = function(url, thumbElement) {
-            document.getElementById('modal-img-grande').src = url;
-            const todas = thumbElement.parentElement.querySelectorAll('.modal-thumb');
-            todas.forEach(t => t.classList.remove('active'));
-            thumbElement.classList.add('active');
-        }
-
-        window.cerrarModal = function() {
-            document.getElementById('productModal').style.display = "none";
-        }
-
-        window.cerrarModalAfuera = function(event) {
-            if (event.target === document.getElementById('productModal')) {
-                cerrarModal();
-            }
-        }
-
-        inicializarTienda();
-    </script>
+    cargar();
+</script>
+</body>
+</html>
