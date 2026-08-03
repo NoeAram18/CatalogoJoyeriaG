@@ -18,10 +18,10 @@
         }
         .splash-screen.hidden { opacity: 0; visibility: hidden; }
         .splash-content { text-align: center; color: var(--gold); }
-        /* Aquí puedes poner un GIF animado o video corto para tu campaña */
-        .splash-content img { max-width: 250px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .splash-content img { max-width: 250px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: cover; }
         .splash-content h2 { font-weight: 300; letter-spacing: 4px; font-size: 20px; color: white; margin-top: 15px;}
 
+        /* --- HEADER --- */
         header { background: var(--black); color: var(--gold); padding: 30px 20px; text-align: center; letter-spacing: 3px; }
         header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         header p { color: white; font-size: 14px; margin: 5px 0 0 0; font-weight: 300; letter-spacing: 1px; }
@@ -68,7 +68,7 @@
         .btn-hero { background: var(--gold); color: var(--black); border: none; padding: 12px 30px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 30px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
         .btn-hero:hover { background: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
 
-        /* --- RECUADROS DE CAMPAÑAS (NUEVO) --- */
+        /* --- RECUADROS DE CAMPAÑAS (PROMO BOXES) --- */
         .promo-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
         .promo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .promo-box { position: relative; border-radius: 12px; overflow: hidden; height: 280px; display: flex; align-items: flex-end; padding: 30px; color: white; text-decoration: none; box-shadow: 0 10px 25px rgba(0,0,0,0.08); cursor: pointer; }
@@ -128,6 +128,7 @@
         .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 26px; color: var(--black); }
         .modal-details .codigo { display: block; margin-bottom: 15px; }
         
+        /* BOTONES DE TALLAS EN EL MODAL */
         .talla-btn { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .talla-btn:hover { border-color: var(--gold); color: var(--gold); }
         .talla-btn.selected { background: var(--gold); color: white; border-color: var(--gold); }
@@ -136,6 +137,7 @@
         .btn-cerrar-modal { position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #888; }
         .btn-cerrar-modal:hover { color: var(--black); }
 
+        /* --- ADAPTABILIDAD MÓVIL --- */
         @media (max-width: 768px) {
             .promo-grid { grid-template-columns: 1fr; }
             .hero-banner { padding: 40px 20px; margin: 10px; }
@@ -151,8 +153,8 @@
 
     <div class="splash-screen" id="splash-screen">
         <div class="splash-content">
-            <img src="https://via.placeholder.com/250x250/0a0a0a/c5a059?text=G+E+D+A+L+I+A" alt="Campaña Gedalia">
-            <h2>NUEVA COLECCIÓN</h2>
+            <img id="splash-img" src="" alt="Campaña Gedalia">
+            <h2 id="splash-txt"></h2>
             <p style="color: #888; font-size: 14px;">Preparando el catálogo...</p>
         </div>
     </div>
@@ -228,27 +230,24 @@
 
     <div class="promo-container" id="seccion-promos">
         <div class="promo-grid">
-            
             <div class="promo-box" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">
-                <img src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=800&auto=format&fit=crop" class="promo-bg" alt="Promoción 1">
+                <img id="p1-bg" src="" class="promo-bg" alt="Promoción 1">
                 <div class="promo-overlay"></div>
                 <div class="promo-content">
-                    <span class="promo-badge">HOT SALE 🔥</span>
-                    <h3 class="promo-title">Anillos de Compromiso</h3>
-                    <p class="promo-subtitle">Hasta 30% de descuento en piezas seleccionadas.</p>
+                    <span id="p1-badge" class="promo-badge"></span>
+                    <h3 id="p1-title" class="promo-title"></h3>
+                    <p id="p1-sub" class="promo-subtitle"></p>
                 </div>
             </div>
-
             <div class="promo-box" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">
-                <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800&auto=format&fit=crop" class="promo-bg" alt="Promoción 2">
+                <img id="p2-bg" src="" class="promo-bg" alt="Promoción 2">
                 <div class="promo-overlay"></div>
                 <div class="promo-content">
-                    <span class="promo-badge" style="background: white; color: var(--black);">NUEVA LLEGADA ✨</span>
-                    <h3 class="promo-title">Colección Zafiro Noche</h3>
-                    <p class="promo-subtitle">Elegancia pura para tus eventos de gala.</p>
+                    <span id="p2-badge" class="promo-badge" style="background: white; color: var(--black);"></span>
+                    <h3 id="p2-title" class="promo-title"></h3>
+                    <p id="p2-sub" class="promo-subtitle"></p>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -302,7 +301,7 @@
                 <h2 id="modal-nombre"></h2>
                 
                 <div class="precio-container" style="justify-content: flex-start; margin-top:0;" id="modal-precio-container">
-                </div>
+                    </div>
 
                 <div id="modal-talla-container" style="margin: 20px 0;"></div> 
                 
@@ -316,30 +315,58 @@
     </div>
 
     <script>
-        // --- CONTROL DE LA CORTINILLA (SPLASH SCREEN) ---
-        window.addEventListener('load', () => {
-            // Desaparece exactamente a los 2.5 segundos (2500ms) de haberse cargado la página
-            setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                splash.classList.add('hidden');
-                // Lo removemos del DOM tras la transición (800ms) para que no bloquee clics
-                setTimeout(() => splash.remove(), 800); 
-            }, 2500);
-        });
-
         let listaProductos = [];
         let tallaSeleccionadaModal = "";
 
-        async function cargarCatalogoFront() {
+        // --- CARGA DE DATOS AL INICIAR ---
+        async function inicializarTienda() {
             try {
-                const respuesta = await fetch('/api/productos');
-                listaProductos = await respuesta.json();
+                // 1. Cargar Configuración de Campañas
+                const resCampanas = await fetch('/api/campanas');
+                const campanas = await resCampanas.json();
+                aplicarCampanas(campanas);
+
+                // 2. Cargar Catálogo de Joyas
+                const resProductos = await fetch('/api/productos');
+                listaProductos = await resProductos.json();
                 renderizarProductos(listaProductos);
                 renderizarTickerOfertas(listaProductos);
             } catch(err) {
                 console.error("Error:", err);
                 document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
             }
+        }
+
+        // --- INYECCIÓN DE CAMPAÑAS DINÁMICAS ---
+        function aplicarCampanas(data) {
+            // Lógica de Cortinilla (Splash Screen)
+            const splash = document.getElementById('splash-screen');
+            if (data.splashActivo) {
+                document.getElementById('splash-img').src = data.splashImg || "https://via.placeholder.com/250x250/0a0a0a/c5a059?text=G+E+D+A+L+I+A";
+                document.getElementById('splash-txt').innerText = data.splashTexto || "";
+                
+                // Desaparecer la cortinilla a los 2.5 segundos
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                    setTimeout(() => splash.remove(), 800); 
+                }, 2500);
+            } else {
+                splash.remove(); // Destruir cortinilla de inmediato si está apagada
+            }
+
+            // Inyección en Promo 1
+            document.getElementById('p1-bg').src = data.promo1Img || "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=800";
+            document.getElementById('p1-badge').innerText = data.promo1Badge || "";
+            document.getElementById('p1-title').innerText = data.promo1Titulo || "";
+            document.getElementById('p1-sub').innerText = data.promo1Sub || "";
+            document.getElementById('p1-badge').style.display = data.promo1Badge ? "inline-block" : "none";
+
+            // Inyección en Promo 2
+            document.getElementById('p2-bg').src = data.promo2Img || "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800";
+            document.getElementById('p2-badge').innerText = data.promo2Badge || "";
+            document.getElementById('p2-title').innerText = data.promo2Titulo || "";
+            document.getElementById('p2-sub').innerText = data.promo2Sub || "";
+            document.getElementById('p2-badge').style.display = data.promo2Badge ? "inline-block" : "none";
         }
 
         // --- LÓGICA DEL PANEL DE FILTROS ---
@@ -389,6 +416,7 @@
             document.getElementById('seccion-promos').style.display = hayFiltros ? "none" : "block";
         }
 
+        // --- RENDERIZADO DEL CATÁLOGO ---
         function renderizarProductos(productos) {
             const contenedor = document.getElementById('contenedor-tienda');
             if(productos.length === 0) {
@@ -546,7 +574,8 @@
             }
         }
 
-        cargarCatalogoFront();
+        // --- ARRANQUE DE LA APLICACIÓN ---
+        inicializarTienda();
     </script>
 </body>
 </html>
