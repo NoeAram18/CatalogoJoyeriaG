@@ -9,6 +9,19 @@
         :root { --gold: #c5a059; --black: #0a0a0a; --bg: #fdfdfd; --gray-light: #f7f7f7; --red-sale: #d9534f; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; overflow-x: hidden; }
         
+        /* --- CORTINILLA DE ENTRADA (SPLASH SCREEN) --- */
+        .splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--black); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        .splash-screen.hidden { opacity: 0; visibility: hidden; }
+        .splash-content { text-align: center; color: var(--gold); }
+        /* Aquí puedes poner un GIF animado o video corto para tu campaña */
+        .splash-content img { max-width: 250px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .splash-content h2 { font-weight: 300; letter-spacing: 4px; font-size: 20px; color: white; margin-top: 15px;}
+
         header { background: var(--black); color: var(--gold); padding: 30px 20px; text-align: center; letter-spacing: 3px; }
         header h1 { margin: 0; font-size: 28px; font-weight: 600; }
         header p { color: white; font-size: 14px; margin: 5px 0 0 0; font-weight: 300; letter-spacing: 1px; }
@@ -23,13 +36,6 @@
         .ticker-item img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 12px; border: 2px solid white; }
         .ticker-price { margin-left: 10px; background: var(--black); color: var(--gold); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
-        /* --- HERO BANNER --- */
-        .hero-banner { max-width: 1200px; margin: 20px auto; background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.8)), url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop') center/cover; color: white; padding: 60px 20px; text-align: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .hero-banner h2 { color: var(--gold); font-size: 32px; letter-spacing: 2px; margin: 0 0 15px 0; font-weight: 600; }
-        .hero-banner p { font-size: 16px; font-weight: 300; max-width: 600px; margin: 0 0 25px 0; line-height: 1.6; }
-        .btn-hero { background: var(--gold); color: var(--black); border: none; padding: 12px 30px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 30px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        .btn-hero:hover { background: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
-
         /* --- BUSCADOR Y BOTÓN FILTRO --- */
         .search-container { max-width: 800px; margin: 30px auto 10px auto; padding: 0 20px; display: flex; gap: 10px; align-items: center; }
         .search-input { flex-grow: 1; padding: 15px 25px; font-size: 16px; font-family: 'Inter', sans-serif; border: 1px solid #ddd; border-radius: 30px; outline: none; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -40,24 +46,39 @@
         /* --- PANEL LATERAL DESLIZANTE (FILTROS) --- */
         .filter-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; opacity: 0; visibility: hidden; transition: 0.3s; }
         .filter-overlay.active { opacity: 1; visibility: visible; }
-        
         .filter-sidebar { position: fixed; top: 0; right: -350px; width: 300px; height: 100vh; background: white; z-index: 2000; box-shadow: -5px 0 20px rgba(0,0,0,0.15); transition: right 0.3s ease; display: flex; flex-direction: column; }
         .filter-sidebar.active { right: 0; }
-        
         .filter-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eee; }
         .filter-header h3 { margin: 0; font-size: 18px; color: var(--black); }
         .btn-cerrar-filtros { background: none; border: none; font-size: 24px; color: #888; cursor: pointer; }
-        
         .filter-body { padding: 20px; overflow-y: auto; flex-grow: 1; }
         .filter-group { margin-bottom: 25px; }
         .filter-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         .filter-group select, .filter-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; box-sizing: border-box; outline: none; }
         .filter-group select:focus, .filter-group input:focus { border-color: var(--gold); }
-        
         .filter-footer { padding: 20px; border-top: 1px solid #eee; background: #fafafa; }
         .btn-aplicar-filtros { width: 100%; background: var(--gold); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn-aplicar-filtros:hover { background: var(--black); }
         .btn-limpiar-filtros { width: 100%; background: transparent; color: #666; padding: 10px; border: none; margin-top: 10px; font-size: 13px; cursor: pointer; text-decoration: underline; }
+
+        /* --- HERO BANNER --- */
+        .hero-banner { max-width: 1200px; margin: 20px auto; background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.8)), url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop') center/cover; color: white; padding: 60px 20px; text-align: center; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .hero-banner h2 { color: var(--gold); font-size: 32px; letter-spacing: 2px; margin: 0 0 15px 0; font-weight: 600; }
+        .hero-banner p { font-size: 16px; font-weight: 300; max-width: 600px; margin: 0 0 25px 0; line-height: 1.6; }
+        .btn-hero { background: var(--gold); color: var(--black); border: none; padding: 12px 30px; font-size: 14px; font-weight: 600; letter-spacing: 1px; border-radius: 30px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .btn-hero:hover { background: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+
+        /* --- RECUADROS DE CAMPAÑAS (NUEVO) --- */
+        .promo-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .promo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .promo-box { position: relative; border-radius: 12px; overflow: hidden; height: 280px; display: flex; align-items: flex-end; padding: 30px; color: white; text-decoration: none; box-shadow: 0 10px 25px rgba(0,0,0,0.08); cursor: pointer; }
+        .promo-bg { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; z-index: 1; transition: transform 0.6s ease; }
+        .promo-box:hover .promo-bg { transform: scale(1.08); }
+        .promo-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index: 2; }
+        .promo-content { position: relative; z-index: 3; width: 100%; }
+        .promo-badge { background: var(--red-sale); padding: 5px 12px; font-size: 12px; font-weight: bold; border-radius: 20px; text-transform: uppercase; margin-bottom: 12px; display: inline-block; letter-spacing: 1px; }
+        .promo-title { font-size: 24px; font-weight: 600; margin: 0 0 10px 0; letter-spacing: 1px; }
+        .promo-subtitle { font-size: 14px; font-weight: 300; margin: 0; color: #ddd; }
 
         /* --- CATÁLOGO --- */
         .catalogo-container { max-width: 1200px; margin: 20px auto 60px auto; padding: 0 20px; }
@@ -75,7 +96,6 @@
         .precio-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 10px 0; }
         .precio { color: var(--gold); font-weight: 600; font-size: 22px; }
         .precio-original { color: #aaa; text-decoration: line-through; font-size: 16px; }
-        
         .btn-comprar { width: 100%; background: var(--black); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
         .btn-comprar:hover { background: var(--gold); }
 
@@ -108,7 +128,6 @@
         .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 26px; color: var(--black); }
         .modal-details .codigo { display: block; margin-bottom: 15px; }
         
-        /* BOTONES DE TALLAS EN EL MODAL */
         .talla-btn { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .talla-btn:hover { border-color: var(--gold); color: var(--gold); }
         .talla-btn.selected { background: var(--gold); color: white; border-color: var(--gold); }
@@ -118,6 +137,7 @@
         .btn-cerrar-modal:hover { color: var(--black); }
 
         @media (max-width: 768px) {
+            .promo-grid { grid-template-columns: 1fr; }
             .hero-banner { padding: 40px 20px; margin: 10px; }
             .hero-banner h2 { font-size: 24px; }
             .search-container { flex-direction: column; }
@@ -128,6 +148,14 @@
     </style>
 </head>
 <body>
+
+    <div class="splash-screen" id="splash-screen">
+        <div class="splash-content">
+            <img src="https://via.placeholder.com/250x250/0a0a0a/c5a059?text=G+E+D+A+L+I+A" alt="Campaña Gedalia">
+            <h2>NUEVA COLECCIÓN</h2>
+            <p style="color: #888; font-size: 14px;">Preparando el catálogo...</p>
+        </div>
+    </div>
 
     <div class="ticker-wrap" id="contenedor-ticker"><div class="ticker-move" id="ticker-items"></div></div>
 
@@ -198,6 +226,32 @@
         <button class="btn-hero" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">Explorar Colección</button>
     </div>
 
+    <div class="promo-container" id="seccion-promos">
+        <div class="promo-grid">
+            
+            <div class="promo-box" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">
+                <img src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=800&auto=format&fit=crop" class="promo-bg" alt="Promoción 1">
+                <div class="promo-overlay"></div>
+                <div class="promo-content">
+                    <span class="promo-badge">HOT SALE 🔥</span>
+                    <h3 class="promo-title">Anillos de Compromiso</h3>
+                    <p class="promo-subtitle">Hasta 30% de descuento en piezas seleccionadas.</p>
+                </div>
+            </div>
+
+            <div class="promo-box" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">
+                <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800&auto=format&fit=crop" class="promo-bg" alt="Promoción 2">
+                <div class="promo-overlay"></div>
+                <div class="promo-content">
+                    <span class="promo-badge" style="background: white; color: var(--black);">NUEVA LLEGADA ✨</span>
+                    <h3 class="promo-title">Colección Zafiro Noche</h3>
+                    <p class="promo-subtitle">Elegancia pura para tus eventos de gala.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <div class="catalogo-container">
         <div class="grid" id="contenedor-tienda">
             <p style="text-align:center; grid-column: 1/-1; color:#888;">Cargando catálogo...</p>
@@ -248,7 +302,7 @@
                 <h2 id="modal-nombre"></h2>
                 
                 <div class="precio-container" style="justify-content: flex-start; margin-top:0;" id="modal-precio-container">
-                    </div>
+                </div>
 
                 <div id="modal-talla-container" style="margin: 20px 0;"></div> 
                 
@@ -262,6 +316,17 @@
     </div>
 
     <script>
+        // --- CONTROL DE LA CORTINILLA (SPLASH SCREEN) ---
+        window.addEventListener('load', () => {
+            // Desaparece exactamente a los 2.5 segundos (2500ms) de haberse cargado la página
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.classList.add('hidden');
+                // Lo removemos del DOM tras la transición (800ms) para que no bloquee clics
+                setTimeout(() => splash.remove(), 800); 
+            }, 2500);
+        });
+
         let listaProductos = [];
         let tallaSeleccionadaModal = "";
 
@@ -318,8 +383,10 @@
 
             renderizarProductos(filtrados);
 
+            // Ocultar Banners y Promos si el usuario está usando los filtros para darle prioridad al catálogo
             const hayFiltros = txtBusqueda || cat || piedra || tallaInput || precioMax < 10000;
             document.getElementById('banner-nuevos').style.display = hayFiltros ? "none" : "flex";
+            document.getElementById('seccion-promos').style.display = hayFiltros ? "none" : "block";
         }
 
         function renderizarProductos(productos) {
@@ -402,7 +469,7 @@
             const prod = listaProductos.find(p => p.id === id);
             if(!prod) return;
             
-            tallaSeleccionadaModal = ""; // Resetear talla
+            tallaSeleccionadaModal = ""; 
 
             const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
 
@@ -410,7 +477,6 @@
             document.getElementById('modal-nombre').innerText = prod.nombre;
             document.getElementById('modal-stock').innerText = `Disponibles en inventario: ${prod.stock} piezas`;
 
-            // Lógica de Múltiples Tallas (separadas por comas)
             const contenedorTalla = document.getElementById('modal-talla-container');
             if(prod.talla && prod.talla.trim() !== "") {
                 const tallasArray = prod.talla.split(',').map(t => t.trim()).filter(t => t !== "");
