@@ -575,7 +575,47 @@
         }
 
         // --- ARRANQUE DE LA APLICACIÓN ---
-        inicializarTienda();
+        // --- CARGA DE DATOS AL INICIAR (VERSIÓN A PRUEBA DE FALLOS) ---
+        async function inicializarTienda() {
+            const splash = document.getElementById('splash-screen');
+
+            // BLOQUE 1: CARGAR CAMPAÑAS
+            try {
+                const resCampanas = await fetch('/api/campanas');
+                if (resCampanas.ok) {
+                    const campanas = await resCampanas.json();
+                    aplicarCampanas(campanas);
+                } else {
+                    throw new Error("El servidor no respondió con las campañas.");
+                }
+            } catch(err) {
+                console.warn("Aviso: No se pudieron cargar las campañas. Ocultando cortinilla de emergencia.", err);
+                // Si la conexión falla, quitamos la cortinilla a la fuerza a los 2 segundos para no bloquear la página
+                if (splash) {
+                    setTimeout(() => {
+                        splash.classList.add('hidden');
+                        setTimeout(() => splash.remove(), 800); 
+                    }, 2000);
+                }
+            }
+
+            // BLOQUE 2: CARGAR PRODUCTOS
+            try {
+                const resProductos = await fetch('/api/productos');
+                listaProductos = await resProductos.json();
+                renderizarProductos(listaProductos);
+                renderizarTickerOfertas(listaProductos);
+            } catch(err) {
+                console.error("Error al cargar productos:", err);
+                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Catálogo temporalmente no disponible.</p>";
+                
+                // Si incluso los productos fallan, debemos asegurarnos de quitar la cortinilla
+                if (splash && !splash.classList.contains('hidden')) {
+                    splash.classList.add('hidden');
+                    setTimeout(() => splash.remove(), 800);
+                }
+            }
+        }
     </script>
 </body>
 </html>
