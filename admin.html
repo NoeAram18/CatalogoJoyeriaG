@@ -27,6 +27,7 @@
         .badge-talla { background: #eee; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; border: 1px solid #ddd;}
         .campana-box { border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .campana-box h4 { margin-top: 0; color: var(--gold); }
+        .img-preview-box { height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; display: none; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -91,7 +92,9 @@
                 </select>
                 <input type="text" id="c-splashTexto" placeholder="Texto de bienvenida (Ej. NUEVA COLECCIÓN)">
                 <div class="img-input-group">
-                    <label style="font-size: 13px;">Logo o GIF Animado de la Campaña:</label>
+                    <label style="font-size: 13px; font-weight: 600;">Imagen/GIF Actual en Base de Datos:</label><br>
+                    <img id="c-splashImgPreview" class="img-preview-box" src="">
+                    <br><label style="font-size: 13px;">Subir nueva imagen/GIF (Opcional):</label>
                     <input type="file" id="c-splashImgFile" accept="image/*,video/gif">
                     <input type="hidden" id="c-splashImgUrl">
                 </div>
@@ -103,7 +106,9 @@
                 <input type="text" id="c-promo1Titulo" placeholder="Título (Ej. Anillos de Compromiso)">
                 <input type="text" id="c-promo1Sub" placeholder="Subtítulo">
                 <div class="img-input-group">
-                    <label style="font-size: 13px;">Imagen de Fondo o GIF:</label>
+                    <label style="font-size: 13px; font-weight: 600;">Imagen/GIF Actual en Base de Datos:</label><br>
+                    <img id="c-promo1ImgPreview" class="img-preview-box" src="">
+                    <br><label style="font-size: 13px;">Subir nueva imagen/GIF (Opcional):</label>
                     <input type="file" id="c-promo1ImgFile" accept="image/*,video/gif">
                     <input type="hidden" id="c-promo1ImgUrl">
                 </div>
@@ -115,7 +120,9 @@
                 <input type="text" id="c-promo2Titulo" placeholder="Título (Ej. Colección Zafiro)">
                 <input type="text" id="c-promo2Sub" placeholder="Subtítulo">
                 <div class="img-input-group">
-                    <label style="font-size: 13px;">Imagen de Fondo o GIF:</label>
+                    <label style="font-size: 13px; font-weight: 600;">Imagen/GIF Actual en Base de Datos:</label><br>
+                    <img id="c-promo2ImgPreview" class="img-preview-box" src="">
+                    <br><label style="font-size: 13px;">Subir nueva imagen/GIF (Opcional):</label>
                     <input type="file" id="c-promo2ImgFile" accept="image/*,video/gif">
                     <input type="hidden" id="c-promo2ImgUrl">
                 </div>
@@ -198,7 +205,7 @@
         try {
             const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
             const datos = await res.json();
-            return datos.secure_url;
+            return datos.secure_url || null; 
         } catch (e) { return null; }
     }
 
@@ -250,7 +257,7 @@
         renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
     }
 
-    // --- NUEVA LÓGICA DE CAMPAÑAS ---
+    // --- LÓGICA RECONSTRUIDA DE CAMPAÑAS ---
     async function cargarCampanas() {
         showSection('campaigns-section');
         try {
@@ -260,57 +267,96 @@
             document.getElementById('c-splashActivo').value = data.splashActivo ? "true" : "false";
             document.getElementById('c-splashTexto').value = data.splashTexto || "";
             document.getElementById('c-splashImgUrl').value = data.splashImg || "";
+            if (data.splashImg) {
+                document.getElementById('c-splashImgPreview').src = data.splashImg;
+                document.getElementById('c-splashImgPreview').style.display = "block";
+            }
             
             document.getElementById('c-promo1Badge').value = data.promo1Badge || "";
             document.getElementById('c-promo1Titulo').value = data.promo1Titulo || "";
             document.getElementById('c-promo1Sub').value = data.promo1Sub || "";
             document.getElementById('c-promo1ImgUrl').value = data.promo1Img || "";
+            if (data.promo1Img) {
+                document.getElementById('c-promo1ImgPreview').src = data.promo1Img;
+                document.getElementById('c-promo1ImgPreview').style.display = "block";
+            }
 
             document.getElementById('c-promo2Badge').value = data.promo2Badge || "";
             document.getElementById('c-promo2Titulo').value = data.promo2Titulo || "";
             document.getElementById('c-promo2Sub').value = data.promo2Sub || "";
             document.getElementById('c-promo2ImgUrl').value = data.promo2Img || "";
+            if (data.promo2Img) {
+                document.getElementById('c-promo2ImgPreview').src = data.promo2Img;
+                document.getElementById('c-promo2ImgPreview').style.display = "block";
+            }
         } catch (e) { console.error("Error cargando campañas"); }
     }
 
     async function guardarCampanas() {
         const btn = document.getElementById('btn-save-campana');
         btn.disabled = true;
-        btn.innerText = "⏳ SUBIENDO RECURSOS DE CAMPAÑA...";
-
-        // Subir imágenes si se seleccionaron nuevas
-        const fSplash = document.getElementById('c-splashImgFile').files[0];
-        if (fSplash) document.getElementById('c-splashImgUrl').value = await subirImagenACloudinary(fSplash);
-        
-        const fPromo1 = document.getElementById('c-promo1ImgFile').files[0];
-        if (fPromo1) document.getElementById('c-promo1ImgUrl').value = await subirImagenACloudinary(fPromo1);
-
-        const fPromo2 = document.getElementById('c-promo2ImgFile').files[0];
-        if (fPromo2) document.getElementById('c-promo2ImgUrl').value = await subirImagenACloudinary(fPromo2);
-
-        const payload = {
-            splashActivo: document.getElementById('c-splashActivo').value === "true",
-            splashTexto: document.getElementById('c-splashTexto').value,
-            splashImg: document.getElementById('c-splashImgUrl').value,
-            
-            promo1Badge: document.getElementById('c-promo1Badge').value,
-            promo1Titulo: document.getElementById('c-promo1Titulo').value,
-            promo1Sub: document.getElementById('c-promo1Sub').value,
-            promo1Img: document.getElementById('c-promo1ImgUrl').value,
-
-            promo2Badge: document.getElementById('c-promo2Badge').value,
-            promo2Titulo: document.getElementById('c-promo2Titulo').value,
-            promo2Sub: document.getElementById('c-promo2Sub').value,
-            promo2Img: document.getElementById('c-promo2ImgUrl').value
-        };
+        btn.innerText = "⏳ SUBIENDO RECURSOS DE CAMPAÑA A CLOUDINARY...";
 
         try {
-            await fetch('/api/campanas', {
+            // Subida estricta: Si Cloudinary devuelve null, detenemos el proceso.
+            const fSplash = document.getElementById('c-splashImgFile').files[0];
+            if (fSplash) {
+                const url = await subirImagenACloudinary(fSplash);
+                if (url) document.getElementById('c-splashImgUrl').value = url;
+                else throw new Error("Fallo al subir la imagen de la cortinilla. Verifica el tamaño o conexión.");
+            }
+            
+            const fPromo1 = document.getElementById('c-promo1ImgFile').files[0];
+            if (fPromo1) {
+                const url = await subirImagenACloudinary(fPromo1);
+                if (url) document.getElementById('c-promo1ImgUrl').value = url;
+                else throw new Error("Fallo al subir la imagen de la Promoción 1.");
+            }
+
+            const fPromo2 = document.getElementById('c-promo2ImgFile').files[0];
+            if (fPromo2) {
+                const url = await subirImagenACloudinary(fPromo2);
+                if (url) document.getElementById('c-promo2ImgUrl').value = url;
+                else throw new Error("Fallo al subir la imagen de la Promoción 2.");
+            }
+
+            btn.innerText = "💾 GUARDANDO EN BASE DE DATOS...";
+
+            const payload = {
+                splashActivo: document.getElementById('c-splashActivo').value === "true",
+                splashTexto: document.getElementById('c-splashTexto').value,
+                splashImg: document.getElementById('c-splashImgUrl').value,
+                
+                promo1Badge: document.getElementById('c-promo1Badge').value,
+                promo1Titulo: document.getElementById('c-promo1Titulo').value,
+                promo1Sub: document.getElementById('c-promo1Sub').value,
+                promo1Img: document.getElementById('c-promo1ImgUrl').value,
+
+                promo2Badge: document.getElementById('c-promo2Badge').value,
+                promo2Titulo: document.getElementById('c-promo2Titulo').value,
+                promo2Sub: document.getElementById('c-promo2Sub').value,
+                promo2Img: document.getElementById('c-promo2ImgUrl').value
+            };
+
+            const response = await fetch('/api/campanas', {
                 method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
             });
+
+            if (!response.ok) throw new Error("Error del servidor al guardar en la base de datos.");
+
             alert("¡Campañas publicadas en la tienda con éxito!");
+            
+            // Limpiamos los inputs para no volver a subir los archivos por accidente
+            document.getElementById('c-splashImgFile').value = "";
+            document.getElementById('c-promo1ImgFile').value = "";
+            document.getElementById('c-promo2ImgFile').value = "";
+            
+            // Recargamos visualmente las nuevas imágenes en el administrador
+            cargarCampanas();
+
         } catch (e) {
-            alert("Error guardando campaña");
+            console.error(e);
+            alert("⚠️ " + e.message);
         } finally {
             btn.disabled = false;
             btn.innerText = "PUBLICAR CAMPAÑAS EN LA TIENDA";
