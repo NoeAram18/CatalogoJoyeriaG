@@ -29,7 +29,7 @@ const pool = new Pool({
 // 2. Inicializar la Base de Datos (Automatizada)
 async function inicializarBD() {
     try {
-        // Crear tabla base si no existe
+        // Crear tabla base de productos si no existe
         await pool.query(`
             CREATE TABLE IF NOT EXISTS productos (
                 id SERIAL PRIMARY KEY,
@@ -57,6 +57,17 @@ async function inicializarBD() {
             await pool.query(`ALTER TABLE productos ADD COLUMN talla VARCHAR(50) DEFAULT '';`);
             console.log('Columna de talla agregada automáticamente con éxito 📏');
         } catch (e) { /* Ignorar si ya existe */ }
+
+        // AUTOMATIZACIÓN: Crear tabla de configuración para campañas si no existe
+        try {
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS configuracion (
+                    clave VARCHAR(50) PRIMARY KEY,
+                    valor TEXT
+                );
+            `);
+            console.log('Tabla de configuración de campañas lista ⚙️');
+        } catch (e) { /* Ignorar si ya existe */ }
         
         console.log('Gedalia ERP Online - Conectado a Aiven con éxito 💎');
     } catch (error) {
@@ -65,7 +76,7 @@ async function inicializarBD() {
 }
 inicializarBD();
 
-// 3. RUTA API: Obtener todo el inventario (Ya incluye automáticamente descuento y talla gracias al SELECT *)
+// 3. RUTA API: Obtener todo el inventario
 app.get('/api/productos', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM productos ORDER BY id DESC');
@@ -75,7 +86,7 @@ app.get('/api/productos', async (req, res) => {
     }
 });
 
-// 4. RUTA API: Crear un nuevo producto (Actualizada con descuento y talla)
+// 4. RUTA API: Crear un nuevo producto
 app.post('/api/productos', async (req, res) => {
     const { codigo, nombre, precio, stock, imagenes, descuento, talla } = req.body;
     try {
@@ -90,7 +101,7 @@ app.post('/api/productos', async (req, res) => {
     }
 });
 
-// 5. RUTA API: ACTUALIZAR/EDITAR una joya existente (Actualizada con descuento y talla)
+// 5. RUTA API: ACTUALIZAR/EDITAR una joya existente
 app.put('/api/productos/:id', async (req, res) => {
     const { id } = req.params;
     const { codigo, nombre, precio, stock, imagenes, descuento, talla } = req.body;
@@ -119,6 +130,40 @@ app.delete('/api/productos/:id', async (req, res) => {
         await pool.query('DELETE FROM productos WHERE id = $1', [id]);
         res.json({ message: 'Joya eliminada correctamente' });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- RUTAS API PARA CAMPAÑAS (Nuevas) ---
+
+// Obtener campañas
+app.get('/api/campanas', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT valor FROM configuracion WHERE clave = 'campanas'");
+        if (result.rows.length === 0) {
+            return res.json({});
+        }
+        res.json(JSON.parse(result.rows[0].valor || '{}'));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Guardar o Actualizar campañas (Con UPSERT para evitar errores si no existe la fila)
+app.put('/api/campanas', async (req, res) => {
+    try {
+        const valorJSON = JSON.stringify(req.body);
+        const result = await pool.query(`
+            INSERT INTO configuracion (clave, valor)
+            VALUES ('campanas', $1)
+            ON CONFLICT (clave)
+            DO UPDATE SET valor = EXCLUDED.valor
+            RETURNING valor;
+        `, [valorJSON]);
+        
+        res.json(JSON.parse(result.rows[0].valor));
+    } catch (err) {
+        console.error("Error guardando campañas en BD:", err);
         res.status(500).json({ error: err.message });
     }
 });
