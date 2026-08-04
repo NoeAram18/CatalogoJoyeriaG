@@ -128,7 +128,6 @@
         .modal-details h2 { margin: 0 0 5px 0; font-weight: 500; font-size: 26px; color: var(--black); }
         .modal-details .codigo { display: block; margin-bottom: 15px; }
         
-        /* BOTONES DE TALLAS EN EL MODAL */
         .talla-btn { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .talla-btn:hover { border-color: var(--gold); color: var(--gold); }
         .talla-btn.selected { background: var(--gold); color: white; border-color: var(--gold); }
@@ -153,8 +152,8 @@
 
     <div class="splash-screen" id="splash-screen">
         <div class="splash-content">
-            <img id="splash-img" src="" alt="Campaña Gedalia">
-            <h2 id="splash-txt"></h2>
+            <img id="splash-img" src="https://via.placeholder.com/250x250/0a0a0a/c5a059?text=G+E+D+A+L+I+A" alt="Campaña Gedalia">
+            <h2 id="splash-txt">NUEVA COLECCIÓN</h2>
             <p style="color: #888; font-size: 14px;">Preparando el catálogo...</p>
         </div>
     </div>
@@ -231,21 +230,21 @@
     <div class="promo-container" id="seccion-promos">
         <div class="promo-grid">
             <div class="promo-box" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">
-                <img id="p1-bg" src="" class="promo-bg" alt="Promoción 1">
+                <img id="p1-bg" src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=800" class="promo-bg" alt="Promoción 1">
                 <div class="promo-overlay"></div>
                 <div class="promo-content">
-                    <span id="p1-badge" class="promo-badge"></span>
-                    <h3 id="p1-title" class="promo-title"></h3>
-                    <p id="p1-sub" class="promo-subtitle"></p>
+                    <span id="p1-badge" class="promo-badge">HOT SALE 🔥</span>
+                    <h3 id="p1-title" class="promo-title">Anillos de Compromiso</h3>
+                    <p id="p1-sub" class="promo-subtitle">Hasta 30% de descuento</p>
                 </div>
             </div>
             <div class="promo-box" onclick="document.getElementById('contenedor-tienda').scrollIntoView({behavior: 'smooth'})">
-                <img id="p2-bg" src="" class="promo-bg" alt="Promoción 2">
+                <img id="p2-bg" src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800" class="promo-bg" alt="Promoción 2">
                 <div class="promo-overlay"></div>
                 <div class="promo-content">
-                    <span id="p2-badge" class="promo-badge" style="background: white; color: var(--black);"></span>
-                    <h3 id="p2-title" class="promo-title"></h3>
-                    <p id="p2-sub" class="promo-subtitle"></p>
+                    <span id="p2-badge" class="promo-badge" style="background: white; color: var(--black);">NUEVA LLEGADA ✨</span>
+                    <h3 id="p2-title" class="promo-title">Colección Zafiro Noche</h3>
+                    <p id="p2-sub" class="promo-subtitle">Elegancia pura para tus eventos.</p>
                 </div>
             </div>
         </div>
@@ -253,7 +252,7 @@
 
     <div class="catalogo-container">
         <div class="grid" id="contenedor-tienda">
-            <p style="text-align:center; grid-column: 1/-1; color:#888;">Cargando catálogo...</p>
+            <p style="text-align:center; grid-column: 1/-1; color:#888;">Cargando catálogo de joyas...</p>
         </div>
     </div>
 
@@ -300,8 +299,7 @@
                 <span id="modal-codigo" class="codigo"></span>
                 <h2 id="modal-nombre"></h2>
                 
-                <div class="precio-container" style="justify-content: flex-start; margin-top:0;" id="modal-precio-container">
-                    </div>
+                <div class="precio-container" style="justify-content: flex-start; margin-top:0;" id="modal-precio-container"></div>
 
                 <div id="modal-talla-container" style="margin: 20px 0;"></div> 
                 
@@ -318,55 +316,73 @@
         let listaProductos = [];
         let tallaSeleccionadaModal = "";
 
-        // --- CARGA DE DATOS AL INICIAR ---
-        async function inicializarTienda() {
-            try {
-                // 1. Cargar Configuración de Campañas
-                const resCampanas = await fetch('/api/campanas');
-                const campanas = await resCampanas.json();
-                aplicarCampanas(campanas);
+        // --- SEGURO DE VIDA PARA LA CORTINILLA (Mata la cortinilla a los 3 segundos pase lo que pase) ---
+        function quitarCortinilla() {
+            const splash = document.getElementById('splash-screen');
+            if (splash && !splash.classList.contains('hidden')) {
+                splash.classList.add('hidden');
+                setTimeout(() => { if (splash.parentNode) splash.remove(); }, 800);
+            }
+        }
+        window.addEventListener('load', () => {
+            setTimeout(quitarCortinilla, 3000); 
+        });
 
-                // 2. Cargar Catálogo de Joyas
-                const resProductos = await fetch('/api/productos');
-                listaProductos = await resProductos.json();
-                renderizarProductos(listaProductos);
-                renderizarTickerOfertas(listaProductos);
+        // --- CARGA DE DATOS PRINCIPAL ---
+        async function inicializarTienda() {
+            // Intentar cargar campañas visuales
+            try {
+                const resCampanas = await fetch('/api/campanas');
+                if (resCampanas.ok) {
+                    const campanas = await resCampanas.json();
+                    aplicarCampanas(campanas);
+                }
             } catch(err) {
-                console.error("Error:", err);
-                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Ocurrió un error al cargar el catálogo.</p>";
+                console.warn("No se pudieron cargar campañas personalizadas, usando valores por defecto.", err);
+            }
+
+            // Intentar cargar el catálogo
+            try {
+                const resProductos = await fetch('/api/productos');
+                if (resProductos.ok) {
+                    listaProductos = await resProductos.json();
+                    renderizarProductos(listaProductos);
+                    renderizarTickerOfertas(listaProductos);
+                } else {
+                    throw new Error("Respuesta no OK del catálogo.");
+                }
+            } catch(err) {
+                console.error("Error al cargar productos:", err);
+                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>El catálogo no está disponible en este momento. Por favor recarga la página.</p>";
             }
         }
 
-        // --- INYECCIÓN DE CAMPAÑAS DINÁMICAS ---
+        // --- APLICACIÓN DE CAMPAÑAS ---
         function aplicarCampanas(data) {
-            // Lógica de Cortinilla (Splash Screen)
-            const splash = document.getElementById('splash-screen');
             if (data.splashActivo) {
-                document.getElementById('splash-img').src = data.splashImg || "https://via.placeholder.com/250x250/0a0a0a/c5a059?text=G+E+D+A+L+I+A";
-                document.getElementById('splash-txt').innerText = data.splashTexto || "";
-                
-                // Desaparecer la cortinilla a los 2.5 segundos
-                setTimeout(() => {
-                    splash.classList.add('hidden');
-                    setTimeout(() => splash.remove(), 800); 
-                }, 2500);
+                const splashImg = document.getElementById('splash-img');
+                const splashTxt = document.getElementById('splash-txt');
+                if(splashImg && data.splashImg) splashImg.src = data.splashImg;
+                if(splashTxt && data.splashTexto) splashTxt.innerText = data.splashTexto;
             } else {
-                splash.remove(); // Destruir cortinilla de inmediato si está apagada
+                quitarCortinilla(); // Si el admin lo apagó, se quita al instante
             }
 
-            // Inyección en Promo 1
-            document.getElementById('p1-bg').src = data.promo1Img || "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=800";
-            document.getElementById('p1-badge').innerText = data.promo1Badge || "";
-            document.getElementById('p1-title').innerText = data.promo1Titulo || "";
-            document.getElementById('p1-sub').innerText = data.promo1Sub || "";
-            document.getElementById('p1-badge').style.display = data.promo1Badge ? "inline-block" : "none";
+            if(document.getElementById('p1-bg') && data.promo1Img) document.getElementById('p1-bg').src = data.promo1Img;
+            if(document.getElementById('p1-badge')) {
+                document.getElementById('p1-badge').innerText = data.promo1Badge || "";
+                document.getElementById('p1-badge').style.display = data.promo1Badge ? "inline-block" : "none";
+            }
+            if(document.getElementById('p1-title')) document.getElementById('p1-title').innerText = data.promo1Titulo || "";
+            if(document.getElementById('p1-sub')) document.getElementById('p1-sub').innerText = data.promo1Sub || "";
 
-            // Inyección en Promo 2
-            document.getElementById('p2-bg').src = data.promo2Img || "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800";
-            document.getElementById('p2-badge').innerText = data.promo2Badge || "";
-            document.getElementById('p2-title').innerText = data.promo2Titulo || "";
-            document.getElementById('p2-sub').innerText = data.promo2Sub || "";
-            document.getElementById('p2-badge').style.display = data.promo2Badge ? "inline-block" : "none";
+            if(document.getElementById('p2-bg') && data.promo2Img) document.getElementById('p2-bg').src = data.promo2Img;
+            if(document.getElementById('p2-badge')) {
+                document.getElementById('p2-badge').innerText = data.promo2Badge || "";
+                document.getElementById('p2-badge').style.display = data.promo2Badge ? "inline-block" : "none";
+            }
+            if(document.getElementById('p2-title')) document.getElementById('p2-title').innerText = data.promo2Titulo || "";
+            if(document.getElementById('p2-sub')) document.getElementById('p2-sub').innerText = data.promo2Sub || "";
         }
 
         // --- LÓGICA DEL PANEL DE FILTROS ---
@@ -410,7 +426,7 @@
 
             renderizarProductos(filtrados);
 
-            // Ocultar Banners y Promos si el usuario está usando los filtros para darle prioridad al catálogo
+            // Ocultar Banners y Promos si el usuario busca algo para priorizar productos
             const hayFiltros = txtBusqueda || cat || piedra || tallaInput || precioMax < 10000;
             document.getElementById('banner-nuevos').style.display = hayFiltros ? "none" : "flex";
             document.getElementById('seccion-promos').style.display = hayFiltros ? "none" : "block";
@@ -420,7 +436,7 @@
         function renderizarProductos(productos) {
             const contenedor = document.getElementById('contenedor-tienda');
             if(productos.length === 0) {
-                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888; font-size:18px;'>No encontramos joyas con estos filtros. Intenta modificarlos.</p>";
+                contenedor.innerHTML = "<p style='text-align:center; grid-column: 1/-1; color:#888; font-size:18px;'>No encontramos joyas con estos filtros.</p>";
                 return;
             }
 
@@ -508,18 +524,9 @@
             const contenedorTalla = document.getElementById('modal-talla-container');
             if(prod.talla && prod.talla.trim() !== "") {
                 const tallasArray = prod.talla.split(',').map(t => t.trim()).filter(t => t !== "");
-                
                 if (tallasArray.length > 0) {
-                    let botonesHTML = tallasArray.map(t => `
-                        <button class="talla-btn" onclick="seleccionarTalla(this, '${t}')">${t}</button>
-                    `).join('');
-                    
-                    contenedorTalla.innerHTML = `
-                        <p style="font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 8px;">Selecciona tu Talla:</p>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            ${botonesHTML}
-                        </div>
-                    `;
+                    let botonesHTML = tallasArray.map(t => `<button class="talla-btn" onclick="seleccionarTalla(this, '${t}')">${t}</button>`).join('');
+                    contenedorTalla.innerHTML = `<p style="font-size: 13px; font-weight: 600; color: var(--black); margin-bottom: 8px;">Selecciona tu Talla:</p><div style="display: flex; gap: 10px; flex-wrap: wrap;">${botonesHTML}</div>`;
                 }
             } else {
                 contenedorTalla.innerHTML = '';
@@ -528,10 +535,7 @@
             const contenedorPrecio = document.getElementById('modal-precio-container');
             if (prod.descuento && parseFloat(prod.descuento) > 0) {
                 const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
-                contenedorPrecio.innerHTML = `
-                    <span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span>
-                    <span class="precio" style="color: var(--red-sale); font-size:32px;">$${precioFinal.toFixed(2)} MXN</span>
-                `;
+                contenedorPrecio.innerHTML = `<span class="precio-original">$${parseFloat(prod.precio).toFixed(2)}</span><span class="precio" style="color: var(--red-sale); font-size:32px;">$${precioFinal.toFixed(2)} MXN</span>`;
             } else {
                 contenedorPrecio.innerHTML = `<span class="precio" style="font-size:32px;">$${parseFloat(prod.precio).toFixed(2)} MXN</span>`;
             }
@@ -539,9 +543,7 @@
             document.getElementById('modal-img-grande').src = imgs[0];
             const contenedorMinis = document.getElementById('modal-minis-container');
             if(imgs.length > 1) {
-                contenedorMinis.innerHTML = imgs.map((img, index) => `
-                    <img src="${img}" class="modal-thumb ${index === 0 ? 'active' : ''}" onclick="cambiarFotoModal('${img}', this)">
-                `).join('');
+                contenedorMinis.innerHTML = imgs.map((img, index) => `<img src="${img}" class="modal-thumb ${index === 0 ? 'active' : ''}" onclick="cambiarFotoModal('${img}', this)">`).join('');
                 contenedorMinis.style.display = "flex";
             } else {
                 contenedorMinis.style.display = "none";
@@ -575,47 +577,7 @@
         }
 
         // --- ARRANQUE DE LA APLICACIÓN ---
-        // --- CARGA DE DATOS AL INICIAR (VERSIÓN A PRUEBA DE FALLOS) ---
-        async function inicializarTienda() {
-            const splash = document.getElementById('splash-screen');
-
-            // BLOQUE 1: CARGAR CAMPAÑAS
-            try {
-                const resCampanas = await fetch('/api/campanas');
-                if (resCampanas.ok) {
-                    const campanas = await resCampanas.json();
-                    aplicarCampanas(campanas);
-                } else {
-                    throw new Error("El servidor no respondió con las campañas.");
-                }
-            } catch(err) {
-                console.warn("Aviso: No se pudieron cargar las campañas. Ocultando cortinilla de emergencia.", err);
-                // Si la conexión falla, quitamos la cortinilla a la fuerza a los 2 segundos para no bloquear la página
-                if (splash) {
-                    setTimeout(() => {
-                        splash.classList.add('hidden');
-                        setTimeout(() => splash.remove(), 800); 
-                    }, 2000);
-                }
-            }
-
-            // BLOQUE 2: CARGAR PRODUCTOS
-            try {
-                const resProductos = await fetch('/api/productos');
-                listaProductos = await resProductos.json();
-                renderizarProductos(listaProductos);
-                renderizarTickerOfertas(listaProductos);
-            } catch(err) {
-                console.error("Error al cargar productos:", err);
-                document.getElementById('contenedor-tienda').innerHTML = "<p style='color:red; text-align:center; grid-column: 1/-1;'>Catálogo temporalmente no disponible.</p>";
-                
-                // Si incluso los productos fallan, debemos asegurarnos de quitar la cortinilla
-                if (splash && !splash.classList.contains('hidden')) {
-                    splash.classList.add('hidden');
-                    setTimeout(() => splash.remove(), 800);
-                }
-            }
-        }
+        inicializarTienda();
     </script>
 </body>
 </html>
