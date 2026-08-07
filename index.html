@@ -346,6 +346,7 @@
                 const resProductos = await fetch('/api/productos');
                 if (resProductos.ok) {
                     listaProductos = await resProductos.json();
+                    listaProductos = todosLosProductos.filter(p => p.publicado === true && p.stock > 0);
                     renderizarProductos(listaProductos);
                     renderizarTickerOfertas(listaProductos);
                 } else {
