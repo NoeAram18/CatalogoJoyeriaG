@@ -43,6 +43,8 @@
         .btn-edit { background: var(--blue); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; border:none; cursor:pointer;}
         .btn-danger { background: var(--red-sale); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; border:none; cursor:pointer;}
         .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+        .btn-print { background: #f0fdf4; border: 1px solid var(--green); color: var(--green); padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; transition: 0.2s;}
+        .btn-print:hover { background: var(--green); color: white; }
         
         /* Tables */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -383,6 +385,18 @@
                 </div>
             </div>
 
+            <div style="border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="margin-top:0; color:var(--gold);">3. Recuadro Promocional Derecho</h4>
+                <input type="text" id="c-promo2Badge" placeholder="Etiqueta (Ej. NUEVA LLEGADA ✨)">
+                <input type="text" id="c-promo2Titulo" placeholder="Título (Ej. Colección Zafiro y Plata)">
+                <input type="text" id="c-promo2Sub" placeholder="Subtítulo">
+                <div class="img-input-group">
+                    <img id="c-promo2ImgPreview" class="img-preview-box" src="">
+                    <input type="file" id="c-promo2ImgFile" accept="image/*,video/gif">
+                    <input type="hidden" id="c-promo2ImgUrl">
+                </div>
+            </div>
+
             <button id="btn-save-campana" class="btn btn-gold" style="width:100%; padding: 15px;" onclick="guardarCampanas()">PUBLICAR CAMPAÑAS EN LA TIENDA</button>
         </div>
     </div>
@@ -412,7 +426,7 @@
     let productos = [];
     let editandoId = null; 
     let imagenesExistentes = []; 
-    let historialLotes = []; // Memoria de sesión para exportar a Excel
+    let historialLotes = []; 
 
     // --- NAVEGACIÓN ---
     function showSection(id, element) {
@@ -421,7 +435,6 @@
         document.getElementById(id).classList.add('active');
         if(element) element.classList.add('active-nav');
 
-        // Si entra a Recepción, asegurar que el código esté generado
         if(id === 'mass-reception' && document.getElementById('lote-codigo').value === '') {
             sugerirCodigoLote();
             generarQRPreview("PREVIEW", 0, 0);
@@ -438,14 +451,24 @@
         } catch (error) { console.error("Error cargando productos:", error); }
     }
 
+    // AÑADIDO: Columna "Etiqueta POS" con botón para imprimir desde el inventario.
     function renderInventory(lista) {
         document.getElementById('lista-prods').innerHTML = `
             <thead>
-                <tr><th>Foto</th><th>Código</th><th>Joya / Pieza</th><th>Precio</th><th>Stock Global</th><th>Gramos</th><th>Acciones</th></tr>
+                <tr>
+                    <th>Foto</th>
+                    <th>Código</th>
+                    <th>Joya / Pieza</th>
+                    <th>Precio</th>
+                    <th>Stock Global</th>
+                    <th>Gramos</th>
+                    <th>Acciones</th>
+                    <th>Etiqueta POS</th>
+                </tr>
             </thead>
             <tbody>${lista.map(p => {
-                let tags = p.publicado ? `<span class="badge badge-web">Web+POS</span>` : `<span class="badge badge-pos">Solo POS</span>`;
-                if(p.descuento > 0) tags += `<span class="badge badge-desc">-${p.descuento}%</span>`;
+                let tags = p.publicado ? '<span class="badge badge-web">Web+POS</span>' : '<span class="badge badge-pos">Solo POS</span>';
+                if(p.descuento > 0) tags += '<span class="badge badge-desc">-${p.descuento}%</span>';
                 return `
                 <tr>
                     <td><img src="${(p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://via.placeholder.com/50'}" class="thumb"></td>
@@ -458,6 +481,9 @@
                         <button class="btn-edit" onclick="iniciarEdicion(${p.id})">Editar</button>
                         <button class="btn-danger" onclick="eliminarProducto(${p.id})">Borrar</button>
                     </td>
+                    <td>
+                        <button class="btn-print" onclick="imprimirEtiquetaDesdeInventario(${p.id})">🖨️ Imprimir QR</button>
+                    </td>
                 </tr>`}).join('')}</tbody>
         `;
     }
@@ -465,6 +491,20 @@
     function filtrarAdmin() {
         const q = document.getElementById('admin-search').value.toLowerCase();
         renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
+    }
+
+    // NUEVO: Función para imprimir etiqueta de un artículo existente en la tabla de inventario
+    function imprimirEtiquetaDesdeInventario(id) {
+        const prod = productos.find(p => p.id === id);
+        if(!prod) return;
+        
+        // Reciclamos el visualizador de la sección Masiva, lo llenamos con los datos correctos
+        generarQRPreview(prod.codigo, prod.precio, prod.gramos || 0);
+        
+        // Damos un milisegundo de margen para que la librería QRcode renderice la imagen antes de abrir la ventana de impresión
+        setTimeout(() => {
+            imprimirEtiquetaActual();
+        }, 150);
     }
 
     // --- AUTOGENERADOR DE SKU (INDIVIDUAL) ---
@@ -628,21 +668,18 @@
         try {
             const res = await fetch('/api/productos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
             if(res.ok) {
-                // Agregar al historial de la sesión
                 const hora = new Date().toLocaleTimeString();
                 historialLotes.push({ ...payload, hora });
                 actualizarHistorialUI();
 
-                // Generar QR en pantalla
                 generarQRPreview(codigo, precio, gramos);
 
-                // Limpiar formulario para el siguiente lote
                 document.getElementById('lote-nombre').value = "";
                 document.getElementById('lote-cantidad').value = "";
                 document.getElementById('lote-foto').value = "";
-                sugerirCodigoLote(true); // Preparar siguiente código
+                sugerirCodigoLote(true); 
                 
-                cargar(); // Actualizar inventario global de fondo
+                cargar(); 
                 alert(`¡Lote de ${cantidad} piezas dado de alta! Etiqueta lista para imprimir.`);
             }
         } catch(e) { alert("Error de conexión al procesar lote masivo."); }
@@ -693,16 +730,13 @@
         if(historialLotes.length === 0) return alert("No hay ingresos en la sesión actual para exportar.");
         
         let csvContent = "data:text/csv;charset=utf-8,";
-        // Cabeceras
         csvContent += "Hora de Ingreso,SKU / Codigo,Nombre,Cantidad Ingresada,Precio Unitario,Gramos,Publicado Web\n";
         
-        // Datos
         historialLotes.forEach(l => {
             const row = `"${l.hora}","${l.codigo}","${l.nombre}",${l.stock},${l.precio},${l.gramos},${l.publicado ? 'SI' : 'NO'}`;
             csvContent += row + "\n";
         });
 
-        // Forzar descarga
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -714,7 +748,6 @@
 
     // --- MONITORES Y CAMPAÑAS ---
     async function actualizarMonitorVivo() {
-        // Simulación visual en base a funciones que irán en backend
         document.getElementById('stat-web-sales').innerText = "$0.00 MXN";
         document.getElementById('stat-s1-sales').innerText = "$0.00 MXN";
     }
@@ -745,7 +778,6 @@
         } catch (e) { console.error("Error cargando métricas"); }
     }
 
-    // Inicializar
     cargar();
 </script>
 </body>
