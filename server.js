@@ -81,13 +81,25 @@ app.delete('/api/productos/:id', async (req, res) => {
 
 // --- NUEVO: RUTAS DE PUNTO DE VENTA Y MÉTRICAS ---
 
-// Buscar producto exacto por lector de código de barras/QR
+// Buscar producto exacto por lector de código de barras/QR (Mejorado)
 app.get('/api/pos/producto/:codigo', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM productos WHERE codigo = $1', [req.params.codigo]);
-        if (result.rows.length === 0) return res.status(404).json({ error: 'No encontrado' });
+        // Convertimos la búsqueda a mayúsculas y limpiamos espacios
+        const codigoBuscado = req.params.codigo.trim().toUpperCase();
+        
+        // Usamos UPPER() en SQL para asegurar coincidencia exacta sin importar mayúsculas
+        const result = await pool.query(
+            'SELECT * FROM productos WHERE UPPER(codigo) = $1 AND stock > 0', 
+            [codigoBuscado]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'No encontrado o sin stock físico disponible' });
+        }
         res.json(result.rows[0]);
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
 });
 
 // Registrar venta en sucursal (Reduce stock, aumenta ventas)
