@@ -513,7 +513,7 @@
         window.abrirModal = function(id) {
             const prod = listaProductos.find(p => p.id === id);
             if(!prod) return;
-            
+            fetch(`/api/productos/${id}/vista`, { method: 'PUT' }).catch(e => console.error("Error sumando vista"));
             tallaSeleccionadaModal = ""; 
 
             const imgs = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes : ['https://via.placeholder.com/400?text=Imagen+No+Disponible'];
