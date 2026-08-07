@@ -75,6 +75,7 @@
         .qr-preview-box { border: 2px dashed #ccc; padding: 15px; border-radius: 10px; text-align: center; background: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; }
         .sticker-print { background: white; border: 1px solid #000; padding: 10px; width: 180px; text-align: center; font-size: 10px; font-family: monospace; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .sticker-print img { max-width: 100px; height: 100px; margin: 5px auto; }
+        .history-box { margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
         
         /* Grid de Integraciones API */
         .api-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
@@ -83,6 +84,9 @@
 
         .img-input-group { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; }
         .img-preview-box { height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; display: none; margin-bottom: 10px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: start;}
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; align-items: start;}
+        .code-generator-box { background: #fff8eb; padding: 15px; border-radius: 8px; border: 1px solid var(--gold); margin-bottom: 15px;}
     </style>
 </head>
 <body>
@@ -98,8 +102,11 @@
         <div class="nav-item" onclick="showSection('inventory', this)">
             💎 Inventario Central y Stock
         </div>
+        <div class="nav-item" onclick="prepareNew(this)">
+            ✨ Añadir Joya Individual
+        </div>
         <div class="nav-item" onclick="showSection('mass-reception', this)">
-            📥 Recepción Masiva y QR POS
+            📥 Recepción Lotes y QR POS
         </div>
         <div class="nav-item" onclick="showSection('transfers-section', this)">
             🚚 Traspasos entre Sucursales
@@ -144,24 +151,7 @@
                     <div class="branch-stat">$0.00 MXN</div>
                     <small style="color:#888;">Asignación de stock reservada</small>
                 </div>
-
-                <div class="branch-card">
-                    <span class="status-dot dot-offline"></span> <small style="color:#666;">PENDIENTE HABILITAR</small>
-                    <h4>🏬 Sucursal 3 (Próxima Apertura)</h4>
-                    <div class="branch-stat">$0.00 MXN</div>
-                    <small style="color:#888;">Asignación de stock reservada</small>
-                </div>
             </div>
-
-            <h4>Últimas Transacciones Registradas en el Sistema Central</h4>
-            <table>
-                <thead>
-                    <tr><th>Hora</th><th>Origen/Sucursal</th><th>Folio Ticket / Pedido</th><th>Monto Total</th><th>Método de Pago</th><th>Estatus</th></tr>
-                </thead>
-                <tbody id="tabla-operaciones-vivo">
-                    <tr><td colspan="6" style="text-align:center; color:#999;">Esperando flujo de operaciones en vivo de las sucursales...</td></tr>
-                </tbody>
-            </table>
         </div>
     </div>
 
@@ -169,10 +159,7 @@
         <div class="card">
             <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center; flex-wrap:wrap; gap:10px;">
                 <h3>Inventario Maestro Omnicanal</h3>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="admin-search" placeholder="Buscar por código, nombre o QR..." oninput="filtrarAdmin()" style="width:250px; margin:0;">
-                    <button class="btn btn-gold" onclick="prepareNew()">+ Nueva Joya Individual</button>
-                </div>
+                <input type="text" id="admin-search" placeholder="Buscar por código o nombre..." oninput="filtrarAdmin()" style="width:250px; margin:0;">
             </div>
             <table id="lista-prods"></table>
         </div>
@@ -182,74 +169,107 @@
         <div class="card">
             <h3 id="form-title">Editar o Añadir Joya al Catálogo</h3>
             
-            <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
-                <input type="text" id="codigo" placeholder="Código Único (Ej. PLT-001)">
-                <input type="text" id="nombre" placeholder="Nombre descriptivo (Ej. Anillo Plata .925 Zirconia)">
+            <div class="code-generator-box">
+                <p style="margin:0 0 10px 0; font-weight:600; font-size:13px; color:var(--gold-dark);">1. Generación de SKU Único</p>
+                <div class="form-row-3">
+                    <select id="f-tipo" onchange="sugerirCodigo()">
+                        <option value="AN">Anillo</option>
+                        <option value="C">Collar / Cadena</option>
+                        <option value="AR">Arete</option>
+                        <option value="ARRA">Arracada</option>
+                        <option value="P">Pulsera</option>
+                        <option value="D">Dije</option>
+                        <option value="O">Otros</option>
+                    </select>
+                    <select id="f-piedras" onchange="sugerirCodigo()">
+                        <option value="SP">Sin Piedra (Plata Lisa)</option>
+                        <option value="P">Con Piedras / Circonias</option>
+                    </select>
+                    <input type="text" id="f-talla" placeholder="Talla (Ej. 7)" oninput="sugerirCodigo()">
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="text" id="codigo" placeholder="SKU Autogenerado" style="margin:0; font-weight:bold; color:var(--black); text-transform: uppercase;">
+                    <button class="btn btn-gold" style="width:auto; padding:12px 15px;" onclick="sugerirCodigo(true)">Generar Random</button>
+                </div>
             </div>
             
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
-                <input type="number" id="precio" placeholder="Precio Público (MXN)" step="0.01">
-                <input type="number" id="stock" placeholder="Stock Físico Total">
-                <input type="number" id="gramos" placeholder="Peso Aprox. (Gramos)" step="0.1">
+            <div class="form-row">
+                <input type="text" id="nombre" placeholder="Nombre Comercial (Ej. Anillo Solitario Plata)">
                 <select id="publicado">
                     <option value="true">🌐 Visibilidad: Web + POS</option>
                     <option value="false">🏪 Visibilidad: Exclusivo POS Sucursal</option>
                 </select>
             </div>
+            
+            <div class="form-row-3">
+                <input type="number" id="precio" placeholder="Precio Público (MXN)" step="0.01">
+                <input type="number" id="stock" placeholder="Stock Físico Total">
+                <input type="number" id="gramos" placeholder="Peso Aprox. (Gramos)" step="0.1">
+            </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="form-row-3">
                 <input type="number" id="descuento" placeholder="Descuento % (Ej. 10)" min="0" max="100">
-                <input type="text" id="talla" placeholder="Tallas disponibles (Ej. 6, 7, Unitalla)">
             </div>
 
             <div class="img-input-group">
-                <p style="margin-top: 0; font-size: 13px;"><strong>Fotografías de Joyería para Web y POS (Cloudinary CDN):</strong></p>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <input type="file" id="foto1" accept="image/*">
-                    <input type="file" id="foto2" accept="image/*">
-                    <input type="file" id="foto3" accept="image/*">
-                    <input type="file" id="foto4" accept="image/*">
-                </div>
+                <p style="margin-top: 0; font-size: 13px;"><strong>2. Fotografías (Selecciona hasta 4 imágenes a la vez):</strong></p>
+                <input type="file" id="fotos-joya" accept="image/*" multiple>
             </div>
             
             <button id="btn-save" class="btn btn-gold" style="width:100%; padding: 15px;" onclick="guardarProducto()">GUARDAR EN BASE DE DATOS CENTRAL</button>
-            <button class="btn" style="width:100%; margin-top:10px; background:#e0e0e0;" onclick="showSection('inventory', document.querySelector('.nav-item:nth-child(2)'))">CANCELAR</button>
+            <button class="btn" style="width:100%; margin-top:10px; background:#e0e0e0; color:#333;" onclick="showSection('inventory', document.querySelector('.nav-item:nth-child(2)'))">CANCELAR</button>
         </div>
     </div>
 
     <div id="mass-reception" class="section">
         <div class="card">
-            <h3>Recepción Masiva de Lotes y Generador de Etiquetas QR</h3>
-            <p style="font-size:13px; color:#666;">Ingresa joyería de plata en grandes volúmenes para registrar en el ERP y emitir etiquetas escaneables directamente en las pistolas de Gedali POS.</p>
+            <h3>Recepción Masiva de Lotes y Emisión de QR POS</h3>
+            <p style="font-size:13px; color:#666;">Ingresa joyería en volumen. El sistema autogenerará el SKU mediante categorías y habilitará la descarga en Excel para tu registro contable.</p>
 
             <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
                 <div>
-                    <h4>1. Datos de Lote de Plata Recepcionado</h4>
+                    <div class="code-generator-box">
+                        <p style="margin:0 0 10px 0; font-weight:600; font-size:13px; color:var(--gold-dark);">1. Clasificación del Lote (Auto-SKU)</p>
+                        <div class="form-row-3">
+                            <select id="l-tipo" onchange="sugerirCodigoLote()">
+                                <option value="AN">Anillo</option><option value="C">Collar / Cadena</option>
+                                <option value="AR">Arete</option><option value="ARRA">Arracada</option>
+                                <option value="P">Pulsera</option><option value="D">Dije</option><option value="O">Otros</option>
+                            </select>
+                            <select id="l-piedras" onchange="sugerirCodigoLote()">
+                                <option value="SP">Sin Piedra</option><option value="P">Con Piedras</option>
+                            </select>
+                            <input type="text" id="l-talla" placeholder="Talla (Opcional)" oninput="sugerirCodigoLote()">
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+                            <input type="text" id="lote-codigo" placeholder="SKU Autogenerado" readonly style="background:#eee; font-weight:bold; margin:0; text-transform:uppercase;">
+                            <button class="btn btn-gold" style="width:auto; padding:12px 15px;" onclick="sugerirCodigoLote(true)">Forzar Random</button>
+                        </div>
+                    </div>
+
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <input type="text" id="lote-codigo-prefix" placeholder="Prefijo / Modelo (Ej. AYL-AR-001)">
-                        <input type="text" id="lote-nombre" placeholder="Categoría (Ej. Arete Arete Broquel Plata)">
+                        <input type="text" id="lote-nombre" placeholder="Categoría Comercial (Ej. Broqueles Plata)">
                         <input type="number" id="lote-precio" placeholder="Precio Venta Unidad ($ MXN)">
-                        <input type="number" id="lote-cantidad" placeholder="Cantidad de Piezas en Lote">
+                        <input type="number" id="lote-cantidad" placeholder="Cantidad Total Ingresada (Pz)">
                         <input type="number" id="lote-gramos-unitario" placeholder="Peso Unitario (Gramos)">
-                        <select id="lote-sucursal-destino">
-                            <option value="matriz">Destino: Sucursal 1 (Matriz CDMX)</option>
-                            <option value="web">Destino: Almacén Central Web</option>
-                            <option value="sucursal2">Destino: Sucursal 2</option>
+                        <select id="lote-publicado">
+                            <option value="true">🌐 Visibilidad: Web + POS</option>
+                            <option value="false">🏪 Visibilidad: Exclusivo POS</option>
                         </select>
                     </div>
 
                     <div class="img-input-group">
-                        <label style="font-size:12px; font-weight:600;">Fotografía Genérica del Modelo (Cloudinary):</label>
-                        <input type="file" id="lote-foto" accept="image/*">
+                        <label style="font-size:12px; font-weight:600;">Fotografías del Lote (Puedes elegir múltiples):</label>
+                        <input type="file" id="lote-foto" accept="image/*" multiple>
                     </div>
 
-                    <button class="btn btn-gold" style="width:100%; padding:14px;" onclick="procesarLoteMasivo()">
-                        ⚙️ PROCESAR LOTE Y CREAR ETIQUETAS QR
+                    <button class="btn btn-gold" id="btn-save-lote" style="width:100%; padding:14px;" onclick="procesarLoteMasivo()">
+                        ⚙️ REGISTRAR EN BD Y GENERAR ETIQUETA
                     </button>
                 </div>
 
                 <div>
-                    <h4>2. Vista Previa Etiqueta QR POS</h4>
+                    <h4 style="margin-top:0;">Vista Previa Etiqueta QR</h4>
                     <div class="qr-preview-box">
                         <div id="sticker-container" class="sticker-print">
                             <b style="letter-spacing:1px; display:block;">GEDALIA JOYERÍA</b>
@@ -257,9 +277,24 @@
                             <span id="qr-code-text" style="font-weight:bold; display:block; margin-top:3px;">PLT-000-PREVIEW</span>
                             <span id="qr-price-text">$0.00 MXN</span> | <span id="qr-weight-text">0.0g</span>
                         </div>
-                        <button class="btn btn-outline" style="margin-top:15px; font-size:12px;" onclick="imprimirEtiqueta()">🖨️ Imprimir Etiqueta de Prueba</button>
+                        <button class="btn btn-outline" style="margin-top:15px; font-size:12px; width:100%;" onclick="imprimirEtiquetaActual()">🖨️ Imprimir Etiqueta Niimbot</button>
                     </div>
                 </div>
+            </div>
+
+            <div class="history-box">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h4 style="margin:0;">Registro de Ingresos (Sesión Actual)</h4>
+                    <button class="btn btn-green" onclick="descargarExcelHistorial()">⬇️ Exportar a Excel (.CSV)</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Hora</th><th>SKU</th><th>Descripción</th><th>Cant.</th><th>Precio</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody id="tabla-historial-lotes">
+                        <tr><td colspan="6" style="text-align:center; color:#999;">No hay ingresos registrados en esta sesión.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -281,48 +316,37 @@
                     <option value="sucursal3">Sucursal 3</option>
                     <option value="matriz">Sucursal 1 (Matriz CDMX)</option>
                 </select>
-                <input type="text" id="traspaso-codigo" placeholder="Código de la Pieza (Ej. PLT-001)">
+                <input type="text" id="traspaso-codigo" placeholder="Código de la Pieza (Ej. AN-P-7-1234)">
             </div>
             
             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
                 <input type="number" id="traspaso-cantidad" placeholder="Cantidad de piezas a transferir">
-                <button class="btn btn-gold" onclick="ejecutarTraspaso()">🚚 GENERAR ORDEN DE TRASPASO Y ACTUALIZAR STOCK</button>
+                <button class="btn btn-gold" onclick="alert('Módulo en desarrollo para Fase 2.')">🚚 GENERAR ORDEN DE TRASPASO</button>
             </div>
         </div>
     </div>
 
     <div id="api-hub" class="section">
         <div class="card">
-            <h3>Hub Central de Conectores API (Producción Futura y Actual)</h3>
-            <p style="font-size:13px; color:#666;">Llaves y configuraciones de servicios para paquetería, procesamiento de pagos y timbrado de facturación fiscal SAT.</p>
-
+            <h3>Hub Central de Conectores API (Producción Futura)</h3>
             <div class="api-grid">
                 <div class="api-box">
                     <h4>📦 Conector de Envíos y Logística</h4>
-                    <small style="color:#666;">Integración para cotizar y emitir guías automatizadas (FedEx, DHL, Estafeta, Skydropx, 99minutos).</small>
                     <input type="text" id="api-ship-key" placeholder="API Key / Token Envíos" style="margin-top:10px;">
-                    <select id="api-ship-provider">
-                        <option value="skydropx">Skydropx API</option>
-                        <option value="dhl">DHL Express Direct API</option>
-                        <option value="fedex">FedEx Web Services</option>
-                    </select>
-                    <button class="btn btn-outline" style="width:100%; font-size:12px;" onclick="guardarApi('envios')">Guardar Credenciales de Envíos</button>
+                    <select id="api-ship-provider"><option value="skydropx">Skydropx API</option></select>
+                    <button class="btn btn-outline" style="width:100%; font-size:12px;">Guardar Credenciales</button>
                 </div>
-
                 <div class="api-box">
-                    <h4>💳 Pasarelas de Cobro (E-Commerce y POS)</h4>
-                    <small style="color:#666;">Procesamiento de tarjetas de crédito/débito en línea y sincronización con terminales físicas Clip / Mercado Pago POS.</small>
+                    <h4>💳 Pasarelas de Cobro Web</h4>
                     <input type="text" id="api-pay-public" placeholder="Stripe / MP Public Key" style="margin-top:10px;">
                     <input type="password" id="api-pay-secret" placeholder="Stripe / MP Secret Key">
-                    <button class="btn btn-outline" style="width:100%; font-size:12px;" onclick="guardarApi('pagos')">Guardar Pasarelas de Pago</button>
+                    <button class="btn btn-outline" style="width:100%; font-size:12px;">Guardar Pasarelas de Pago</button>
                 </div>
-
                 <div class="api-box">
-                    <h4>🧾 Facturación Electrónica SAT (CFDI 4.0)</h4>
-                    <small style="color:#666;">Emisión automatizada de facturas globales y tickets para clientes desde la web o Gedali POS.</small>
-                    <input type="text" id="api-sat-rfc" placeholder="RFC Emisor (Ej. GEO123456XXX)" style="margin-top:10px;">
-                    <input type="password" id="api-sat-token" placeholder="API Key Facturapi / PAC Finkok">
-                    <button class="btn btn-outline" style="width:100%; font-size:12px;" onclick="guardarApi('sat')">Guardar Parámetros CFDI 4.0</button>
+                    <h4>🧾 Facturación SAT (CFDI 4.0)</h4>
+                    <input type="text" id="api-sat-rfc" placeholder="RFC Emisor" style="margin-top:10px;">
+                    <input type="password" id="api-sat-token" placeholder="API Key Facturapi">
+                    <button class="btn btn-outline" style="width:100%; font-size:12px;">Guardar Parámetros CFDI 4.0</button>
                 </div>
             </div>
         </div>
@@ -331,7 +355,6 @@
     <div id="campaigns-section" class="section">
         <div class="card">
             <h3>Gestor de Campañas Publicitarias y Banners</h3>
-            <p style="font-size: 14px; color: #666;">Controla lo que ven tus clientes al entrar a la página e ecommerce y pantallas secundarias del POS.</p>
             
             <div style="border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h4 style="margin-top:0; color:var(--gold);">1. Cortinilla de Entrada (Splash Screen)</h4>
@@ -340,11 +363,9 @@
                     <option value="true">Sí, mostrar al inicio</option>
                     <option value="false">No, desactivar</option>
                 </select>
-                <input type="text" id="c-splashTexto" placeholder="Texto de bienvenida (Ej. NUEVA COLECCIÓN DE PLATA .925)">
+                <input type="text" id="c-splashTexto" placeholder="Texto de bienvenida">
                 <div class="img-input-group">
-                    <label style="font-size: 13px; font-weight: 600;">Imagen/GIF Actual en Base de Datos:</label><br>
                     <img id="c-splashImgPreview" class="img-preview-box" src="">
-                    <br><label style="font-size: 13px;">Subir nueva imagen/GIF a Cloudinary:</label>
                     <input type="file" id="c-splashImgFile" accept="image/*,video/gif">
                     <input type="hidden" id="c-splashImgUrl">
                 </div>
@@ -353,24 +374,12 @@
             <div style="border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h4 style="margin-top:0; color:var(--gold);">2. Recuadro Promocional Izquierdo</h4>
                 <input type="text" id="c-promo1Badge" placeholder="Etiqueta (Ej. HOT SALE 🔥)">
-                <input type="text" id="c-promo1Titulo" placeholder="Título (Ej. Anillos de Compromiso)">
+                <input type="text" id="c-promo1Titulo" placeholder="Título">
                 <input type="text" id="c-promo1Sub" placeholder="Subtítulo">
                 <div class="img-input-group">
                     <img id="c-promo1ImgPreview" class="img-preview-box" src="">
                     <input type="file" id="c-promo1ImgFile" accept="image/*,video/gif">
                     <input type="hidden" id="c-promo1ImgUrl">
-                </div>
-            </div>
-
-            <div style="border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="margin-top:0; color:var(--gold);">3. Recuadro Promocional Derecho</h4>
-                <input type="text" id="c-promo2Badge" placeholder="Etiqueta (Ej. NUEVA LLEGADA ✨)">
-                <input type="text" id="c-promo2Titulo" placeholder="Título (Ej. Colección Zafiro y Plata)">
-                <input type="text" id="c-promo2Sub" placeholder="Subtítulo">
-                <div class="img-input-group">
-                    <img id="c-promo2ImgPreview" class="img-preview-box" src="">
-                    <input type="file" id="c-promo2ImgFile" accept="image/*,video/gif">
-                    <input type="hidden" id="c-promo2ImgUrl">
                 </div>
             </div>
 
@@ -381,7 +390,6 @@
     <div id="metrics-section" class="section">
         <div class="card">
             <h3>Métricas de Desempeño Omnicanal</h3>
-            <p style="font-size: 14px; color: #666;">Analiza el comportamiento de ventas y vistas tanto en línea como en tiendas físicas.</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                 <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
                     <h4 style="margin-top: 0; color: #4a90e2; border-bottom: 2px solid #4a90e2; padding-bottom: 10px;">👁️ Top 5: Joyas Más Vistas (Online)</h4>
@@ -404,54 +412,47 @@
     let productos = [];
     let editandoId = null; 
     let imagenesExistentes = []; 
-    let qrGenerator = null;
+    let historialLotes = []; // Memoria de sesión para exportar a Excel
 
-    // --- NAVEGACIÓN ENTRE SECCIONES DEL ERP ---
+    // --- NAVEGACIÓN ---
     function showSection(id, element) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
         document.getElementById(id).classList.add('active');
         if(element) element.classList.add('active-nav');
+
+        // Si entra a Recepción, asegurar que el código esté generado
+        if(id === 'mass-reception' && document.getElementById('lote-codigo').value === '') {
+            sugerirCodigoLote();
+            generarQRPreview("PREVIEW", 0, 0);
+        }
     }
 
-    // --- CARGA E INVENTARIO ---
+    // --- INVENTARIO CENTRAL ---
     async function cargar() {
         try {
             const res = await fetch('/api/productos');
             productos = await res.json();
             renderInventory(productos);
             actualizarMonitorVivo();
-        } catch (error) { 
-            console.error("Error al cargar productos del ERP:", error); 
-        }
+        } catch (error) { console.error("Error cargando productos:", error); }
     }
 
     function renderInventory(lista) {
         document.getElementById('lista-prods').innerHTML = `
             <thead>
-                <tr>
-                    <th>Foto</th>
-                    <th>Código</th>
-                    <th>Joya / Pieza</th>
-                    <th>Precio Base</th>
-                    <th>Stock Global</th>
-                    <th>Gramos</th>
-                    <th>Acciones</th>
-                </tr>
+                <tr><th>Foto</th><th>Código</th><th>Joya / Pieza</th><th>Precio</th><th>Stock Global</th><th>Gramos</th><th>Acciones</th></tr>
             </thead>
             <tbody>${lista.map(p => {
-                let tagsAdicionales = '';
-                if(p.publicado) tagsAdicionales += `<span class="badge badge-web">Web+POS</span>`;
-                else tagsAdicionales += `<span class="badge badge-pos">Solo POS</span>`;
-                if(p.descuento && parseFloat(p.descuento) > 0) tagsAdicionales += `<span class="badge badge-desc">-${p.descuento}%</span>`;
-                
+                let tags = p.publicado ? `<span class="badge badge-web">Web+POS</span>` : `<span class="badge badge-pos">Solo POS</span>`;
+                if(p.descuento > 0) tags += `<span class="badge badge-desc">-${p.descuento}%</span>`;
                 return `
                 <tr>
                     <td><img src="${(p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://via.placeholder.com/50'}" class="thumb"></td>
                     <td><b>${p.codigo}</b></td>
-                    <td>${p.nombre} ${tagsAdicionales}</td>
-                    <td>$${parseFloat(p.precio).toFixed(2)} MXN</td>
-                    <td><b>${p.stock} pz</b></td>
+                    <td>${p.nombre} ${tags}</td>
+                    <td>$${parseFloat(p.precio).toFixed(2)}</td>
+                    <td><b>${p.stock}</b></td>
                     <td>${p.gramos ? p.gramos + 'g' : 'N/A'}</td>
                     <td>
                         <button class="btn-edit" onclick="iniciarEdicion(${p.id})">Editar</button>
@@ -463,21 +464,34 @@
 
     function filtrarAdmin() {
         const q = document.getElementById('admin-search').value.toLowerCase();
-        renderInventory(productos.filter(p => 
-            p.nombre.toLowerCase().includes(q) || 
-            p.codigo.toLowerCase().includes(q)
-        ));
+        renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
     }
 
-    // --- EDICIÓN E INGRESO INDIVIDUAL ---
-    function prepareNew() {
+    // --- AUTOGENERADOR DE SKU (INDIVIDUAL) ---
+    function sugerirCodigo(forzarRandom = false) {
+        const tipo = document.getElementById('f-tipo').value;
+        const piedras = document.getElementById('f-piedras').value;
+        const talla = document.getElementById('f-talla').value.trim();
+        let codigoFinal = `${tipo}-${piedras}`;
+        if(talla !== "") codigoFinal += `-${talla}`;
+        
+        if(forzarRandom) {
+            codigoFinal += `-${Math.floor(1000 + Math.random() * 9000)}`;
+            document.getElementById('codigo').value = codigoFinal.toUpperCase();
+        } else if (document.getElementById('codigo').value === "") {
+            document.getElementById('codigo').value = codigoFinal.toUpperCase();
+        }
+    }
+
+    function prepareNew(element) {
         editandoId = null; imagenesExistentes = [];
-        document.getElementById('form-title').innerText = "Añadir Nueva Joya al Catálogo Central";
-        ['codigo', 'nombre', 'precio', 'stock', 'gramos', 'descuento', 'talla', 'foto1', 'foto2', 'foto3', 'foto4'].forEach(id => {
+        document.getElementById('form-title').innerText = "Añadir Nueva Joya Individual";
+        ['codigo', 'nombre', 'precio', 'stock', 'gramos', 'descuento', 'f-talla', 'fotos-joya'].forEach(id => {
             const el = document.getElementById(id); if(el) el.value = "";
         });
         document.getElementById('publicado').value = "true";
-        showSection('form-section');
+        showSection('form-section', element);
+        sugerirCodigo(true);
     }
 
     function iniciarEdicion(id) {
@@ -491,8 +505,9 @@
         document.getElementById('stock').value = prod.stock;
         document.getElementById('gramos').value = prod.gramos || "";
         document.getElementById('descuento').value = prod.descuento || "";
-        document.getElementById('talla').value = prod.talla || "";
+        document.getElementById('f-talla').value = prod.talla || "";
         document.getElementById('publicado').value = prod.publicado ? "true" : "false";
+        document.getElementById('fotos-joya').value = "";
         showSection('form-section');
     }
 
@@ -510,152 +525,213 @@
     async function guardarProducto() {
         const btn = document.getElementById('btn-save');
         btn.disabled = true; 
-        const codigo = document.getElementById('codigo').value.trim();
+        
+        const codigo = document.getElementById('codigo').value.trim().toUpperCase();
         const nombre = document.getElementById('nombre').value.trim();
         const precio = parseFloat(document.getElementById('precio').value);
         const stock = parseInt(document.getElementById('stock').value);
         const gramos = parseFloat(document.getElementById('gramos').value) || 0;
         const descuento = parseFloat(document.getElementById('descuento').value) || 0; 
-        const talla = document.getElementById('talla').value.trim(); 
+        const talla = document.getElementById('f-talla').value.trim(); 
         const publicado = document.getElementById('publicado').value === "true";
 
         if(!codigo || !nombre || isNaN(precio) || isNaN(stock)) {
             alert("Favor de completar los campos obligatorios."); btn.disabled = false; return;
         }
 
-        const inputsFotos = [document.getElementById('foto1').files[0], document.getElementById('foto2').files[0], document.getElementById('foto3').files[0], document.getElementById('foto4').files[0]];
+        const fileInput = document.getElementById('fotos-joya');
         let urlsNuevas = [];
         
-        btn.innerText = "⏳ SUBIENDO IMÁGENES A CLOUDINARY...";
-        for (let archivo of inputsFotos) {
-            if (archivo) { const url = await subirImagenACloudinary(archivo); if (url) urlsNuevas.push(url); }
+        if (fileInput.files.length > 0) {
+            btn.innerText = "⏳ SUBIENDO IMÁGENES...";
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const url = await subirImagenACloudinary(fileInput.files[i]); 
+                if (url) urlsNuevas.push(url);
+            }
         }
 
         let imagenesFinales = (urlsNuevas.length > 0) ? urlsNuevas : imagenesExistentes;
-        btn.innerText = "💾 SINCRONIZANDO CON ERP CENTRAL...";
+        btn.innerText = "💾 SINCRONIZANDO...";
 
         const payload = { codigo, nombre, precio, stock, gramos, descuento, talla, publicado, imagenes: imagenesFinales };
 
         try {
             let res = editandoId ? await fetch(`/api/productos/${editandoId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }) 
                                  : await fetch('/api/productos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-            if (res.ok) { alert("¡Joya guardada e integrada al inventario omnicanal!"); cargar(); showSection('inventory', document.querySelector('.nav-item:nth-child(2)')); } 
-            else alert("Error al registrar producto en el servidor.");
-        } catch (e) { alert("Error de red con el servidor central."); } 
+            if (res.ok) { alert("¡Guardado!"); cargar(); showSection('inventory', document.querySelector('.nav-item:nth-child(2)')); } 
+            else alert("Error al registrar en BD.");
+        } catch (e) { alert("Error de red."); } 
         finally { btn.disabled = false; btn.innerText = "GUARDAR EN BASE DE DATOS CENTRAL"; }
     }
 
     async function eliminarProducto(id) {
-        if (confirm("¿Estás seguro de eliminar esta pieza del inventario maestro?")) {
+        if (confirm("¿Eliminar esta pieza permanentemente?")) {
             await fetch(`/api/productos/${id}`, { method: 'DELETE' });
             cargar();
         }
     }
 
-    // --- RECEPCIÓN MASIVA Y GENERACIÓN DE CÓDIGOS QR PARA GEDALI POS ---
+    // --- RECEPCIÓN MASIVA, CREADOR QR Y EXCEL ---
+    function sugerirCodigoLote(forzarRandom = false) {
+        const tipo = document.getElementById('l-tipo').value;
+        const piedras = document.getElementById('l-piedras').value;
+        const talla = document.getElementById('l-talla').value.trim();
+        
+        let codigoFinal = `${tipo}-${piedras}`;
+        if(talla !== "") codigoFinal += `-${talla}`;
+        
+        if(forzarRandom || document.getElementById('lote-codigo').value === "") {
+            codigoFinal += `-${Math.floor(1000 + Math.random() * 9000)}`;
+            document.getElementById('lote-codigo').value = codigoFinal.toUpperCase();
+        }
+    }
+
     async function procesarLoteMasivo() {
-        const prefix = document.getElementById('lote-codigo-prefix').value.trim();
+        const btn = document.getElementById('btn-save-lote');
+        btn.disabled = true;
+        btn.innerText = "PROCESANDO LOTE...";
+
+        const codigo = document.getElementById('lote-codigo').value.trim().toUpperCase();
         const nombre = document.getElementById('lote-nombre').value.trim();
         const precio = parseFloat(document.getElementById('lote-precio').value);
         const cantidad = parseInt(document.getElementById('lote-cantidad').value);
         const gramos = parseFloat(document.getElementById('lote-gramos-unitario').value) || 0;
-        const foto = document.getElementById('lote-foto').files[0];
+        const publicado = document.getElementById('lote-publicado').value === "true";
+        const fileInput = document.getElementById('lote-foto');
 
-        if(!prefix || !nombre || isNaN(precio) || isNaN(cantidad)) {
-            alert("Completa la información clave del lote (Prefijo, Nombre, Precio y Cantidad).");
+        if(!codigo || !nombre || isNaN(precio) || isNaN(cantidad)) {
+            alert("Completa todos los datos de ingreso (Código, Nombre, Precio, Cantidad).");
+            btn.disabled = false; btn.innerText = "⚙️ REGISTRAR EN BD Y GENERAR ETIQUETA";
             return;
         }
 
-        let fotoUrl = "https://via.placeholder.com/150";
-        if(foto) {
-            const uploaded = await subirImagenACloudinary(foto);
-            if(uploaded) fotoUrl = uploaded;
+        let urls = [];
+        if(fileInput.files.length > 0) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const url = await subirImagenACloudinary(fileInput.files[i]); 
+                if (url) urls.push(url);
+            }
         }
 
-        // Generar producto consolidado para el ERP
-        const payload = {
-            codigo: prefix,
-            nombre: `${nombre} (Lote ${cantidad} pz)`,
-            precio: precio,
-            stock: cantidad,
-            gramos: gramos,
-            publicado: true,
-            imagenes: [fotoUrl]
+        const payload = { 
+            codigo: codigo, 
+            nombre: nombre, 
+            precio: precio, 
+            stock: cantidad, 
+            gramos: gramos, 
+            publicado: publicado, 
+            descuento: 0,
+            talla: document.getElementById('l-talla').value.trim(),
+            imagenes: urls 
         };
 
         try {
-            const res = await fetch('/api/productos', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-
+            const res = await fetch('/api/productos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
             if(res.ok) {
-                alert(`¡Lote de ${cantidad} piezas de ${nombre} dado de alta con éxito!`);
-                generarQRPreview(prefix, precio, gramos);
-                cargar();
+                // Agregar al historial de la sesión
+                const hora = new Date().toLocaleTimeString();
+                historialLotes.push({ ...payload, hora });
+                actualizarHistorialUI();
+
+                // Generar QR en pantalla
+                generarQRPreview(codigo, precio, gramos);
+
+                // Limpiar formulario para el siguiente lote
+                document.getElementById('lote-nombre').value = "";
+                document.getElementById('lote-cantidad').value = "";
+                document.getElementById('lote-foto').value = "";
+                sugerirCodigoLote(true); // Preparar siguiente código
+                
+                cargar(); // Actualizar inventario global de fondo
+                alert(`¡Lote de ${cantidad} piezas dado de alta! Etiqueta lista para imprimir.`);
             }
-        } catch(e) { alert("Error al procesar lote masivo."); }
+        } catch(e) { alert("Error de conexión al procesar lote masivo."); }
+        finally { btn.disabled = false; btn.innerText = "⚙️ REGISTRAR EN BD Y GENERAR ETIQUETA"; }
     }
 
     function generarQRPreview(codigo, precio, gramos) {
         document.getElementById('qrcode-box').innerHTML = "";
-        new QRCode(document.getElementById('qrcode-box'), {
-            text: codigo,
-            width: 90,
-            height: 90
-        });
+        new QRCode(document.getElementById('qrcode-box'), { text: codigo, width: 90, height: 90 });
         document.getElementById('qr-code-text').innerText = codigo;
-        document.getElementById('qr-price-text').innerText = `$${precio.toFixed(2)} MXN`;
+        document.getElementById('qr-price-text').innerText = `$${parseFloat(precio).toFixed(2)} MXN`;
         document.getElementById('qr-weight-text').innerText = `${gramos}g`;
     }
 
-    function imprimirEtiqueta() {
+    function imprimirEtiquetaActual() {
         const contenido = document.getElementById('sticker-container').outerHTML;
         const ventana = window.open('', '', 'height=400,width=400');
-        ventana.document.write('html<body>' + contenido + '</body></html>');
+        ventana.document.write('<html><head><style>body{margin:0;display:flex;justify-content:center;align-items:center;}.sticker-print{text-align:center;font-family:monospace;font-size:10px;}img{width:120px;height:120px;margin:5px auto;}</style></head><body>' + contenido + '</body></html>');
         ventana.document.close();
         ventana.print();
     }
 
-    // --- TRASPASOS ENTRE SUCURSALES ---
-    async function ejecutarTraspaso() {
-        const origen = document.getElementById('traspaso-origen').value;
-        const destino = document.getElementById('traspaso-destino').value;
-        const codigo = document.getElementById('traspaso-codigo').value.trim();
-        const cantidad = parseInt(document.getElementById('traspaso-cantidad').value);
+    function reimprimirDeHistorial(index) {
+        const item = historialLotes[index];
+        generarQRPreview(item.codigo, item.precio, item.gramos);
+        imprimirEtiquetaActual();
+    }
 
-        if(!origen || !destino || !codigo || isNaN(cantidad)) {
-            alert("Ingresa todos los campos para ejecutar la orden de traspaso.");
+    function actualizarHistorialUI() {
+        const tbody = document.getElementById('tabla-historial-lotes');
+        if(historialLotes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No hay ingresos registrados en esta sesión.</td></tr>';
             return;
         }
-
-        alert(`Orden de traspaso generada: ${cantidad} piezas de ${codigo} movidas de [${origen.toUpperCase()}] hacia [${destino.toUpperCase()}].`);
+        tbody.innerHTML = historialLotes.map((item, index) => `
+            <tr>
+                <td>${item.hora}</td>
+                <td><b>${item.codigo}</b></td>
+                <td>${item.nombre}</td>
+                <td>${item.stock} pz</td>
+                <td>$${item.precio.toFixed(2)}</td>
+                <td><button class="btn-edit" onclick="reimprimirDeHistorial(${index})">Reimprimir QR</button></td>
+            </tr>
+        `).join('');
     }
 
-    // --- HUB DE APIS DE PRODUCCIÓN ---
-    function guardarApi(tipo) {
-        alert(`Parámetros y llaves de conector API para [${tipo.toUpperCase()}] almacenadas correctamente en las variables de entorno de Render/Aiven.`);
+    function descargarExcelHistorial() {
+        if(historialLotes.length === 0) return alert("No hay ingresos en la sesión actual para exportar.");
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        // Cabeceras
+        csvContent += "Hora de Ingreso,SKU / Codigo,Nombre,Cantidad Ingresada,Precio Unitario,Gramos,Publicado Web\n";
+        
+        // Datos
+        historialLotes.forEach(l => {
+            const row = `"${l.hora}","${l.codigo}","${l.nombre}",${l.stock},${l.precio},${l.gramos},${l.publicado ? 'SI' : 'NO'}`;
+            csvContent += row + "\n";
+        });
+
+        // Forzar descarga
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Ingresos_Mercancia_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    // --- MONITOR EN VIVO Y MÉTRICAS ---
+    // --- MONITORES Y CAMPAÑAS ---
     async function actualizarMonitorVivo() {
+        // Simulación visual en base a funciones que irán en backend
+        document.getElementById('stat-web-sales').innerText = "$0.00 MXN";
+        document.getElementById('stat-s1-sales').innerText = "$0.00 MXN";
+    }
+
+    async function cargarCampanas() {
         try {
-            const res = await fetch('/api/operaciones/vivo');
-            if(res.ok) {
-                const data = await res.json();
-                document.getElementById('stat-web-sales').innerText = `$${data.webSales || '0.00'} MXN`;
-                document.getElementById('stat-web-orders').innerText = data.webOrders || 0;
-                document.getElementById('stat-s1-sales').innerText = `$${data.s1Sales || '0.00'} MXN`;
-                document.getElementById('stat-s1-tickets').innerText = data.s1Tickets || 0;
-            }
-        } catch(e) {
-            // Datos demo si el endpoint aún no está conectado en server.js
-            document.getElementById('stat-web-sales').innerText = "$12,450.00 MXN";
-            document.getElementById('stat-web-orders').innerText = "5";
-            document.getElementById('stat-s1-sales').innerText = "$18,900.00 MXN";
-            document.getElementById('stat-s1-tickets').innerText = "14";
-        }
+            const res = await fetch('/api/campanas');
+            const data = await res.json();
+            document.getElementById('c-splashActivo').value = data.splashActivo ? "true" : "false";
+            document.getElementById('c-splashTexto').value = data.splashTexto || "";
+            if (data.splashImg) { document.getElementById('c-splashImgPreview').src = data.splashImg; document.getElementById('c-splashImgPreview').style.display = "block"; }
+            // Promo 1
+            document.getElementById('c-promo1Badge').value = data.promo1Badge || "";
+            document.getElementById('c-promo1Titulo').value = data.promo1Titulo || "";
+            document.getElementById('c-promo1Sub').value = data.promo1Sub || "";
+            if (data.promo1Img) { document.getElementById('c-promo1ImgPreview').src = data.promo1Img; document.getElementById('c-promo1ImgPreview').style.display = "block"; }
+        } catch (e) { console.error("Error cargando campañas"); }
     }
 
     async function cargarMetricas() {
@@ -663,100 +739,14 @@
             const res = await fetch('/api/metricas');
             if(res.ok) {
                 const data = await res.json();
-                document.getElementById('lista-mas-vistas').innerHTML = data.masVistos.length > 0 
-                    ? data.masVistos.map(p => `<li><b>${p.nombre}</b> - ${p.vistas} clics</li>`).join('') 
-                    : "<li>Sin registros de tráfico online aún.</li>";
-                document.getElementById('lista-mas-vendidas').innerHTML = data.masVendidos.length > 0 
-                    ? data.masVendidos.map(p => `<li><b>${p.nombre}</b> - ${p.ventas} un. vendidas</li>`).join('') 
-                    : "<li>Sin registros de ventas POS aún.</li>";
+                document.getElementById('lista-mas-vistas').innerHTML = data.masVistos.length > 0 ? data.masVistos.map(p => `<li><b>${p.nombre}</b> - ${p.vistas} clics</li>`).join('') : "<li>Sin datos.</li>";
+                document.getElementById('lista-mas-vendidas').innerHTML = data.masVendidos.length > 0 ? data.masVendidos.map(p => `<li><b>${p.nombre}</b> - ${p.ventas} un. vendidas</li>`).join('') : "<li>Sin datos.</li>";
             }
-        } catch (e) { console.error("Error cargando métricas", e); }
+        } catch (e) { console.error("Error cargando métricas"); }
     }
 
-    // --- LÓGICA DE CAMPAÑAS PUBLICITARIAS ---
-    async function cargarCampanas() {
-        try {
-            const res = await fetch('/api/campanas');
-            const data = await res.json();
-            
-            document.getElementById('c-splashActivo').value = data.splashActivo ? "true" : "false";
-            document.getElementById('c-splashTexto').value = data.splashTexto || "";
-            document.getElementById('c-splashImgUrl').value = data.splashImg || "";
-            if (data.splashImg) {
-                document.getElementById('c-splashImgPreview').src = data.splashImg;
-                document.getElementById('c-splashImgPreview').style.display = "block";
-            }
-            
-            document.getElementById('c-promo1Badge').value = data.promo1Badge || "";
-            document.getElementById('c-promo1Titulo').value = data.promo1Titulo || "";
-            document.getElementById('c-promo1Sub').value = data.promo1Sub || "";
-            document.getElementById('c-promo1ImgUrl').value = data.promo1Img || "";
-            if (data.promo1Img) {
-                document.getElementById('c-promo1ImgPreview').src = data.promo1Img;
-                document.getElementById('c-promo1ImgPreview').style.display = "block";
-            }
-
-            document.getElementById('c-promo2Badge').value = data.promo2Badge || "";
-            document.getElementById('c-promo2Titulo').value = data.promo2Titulo || "";
-            document.getElementById('c-promo2Sub').value = data.promo2Sub || "";
-            document.getElementById('c-promo2ImgUrl').value = data.promo2Img || "";
-            if (data.promo2Img) {
-                document.getElementById('c-promo2ImgPreview').src = data.promo2Img;
-                document.getElementById('c-promo2ImgPreview').style.display = "block";
-            }
-        } catch (e) { console.error("Error cargando campañas"); }
-    }
-
-    async function guardarCampanas() {
-        const btn = document.getElementById('btn-save-campana');
-        btn.disabled = true;
-        btn.innerText = "⏳ SUBIENDO RECURSOS DE CAMPAÑA A CLOUDINARY...";
-
-        try {
-            const fSplash = document.getElementById('c-splashImgFile').files[0];
-            if (fSplash) {
-                const url = await subirImagenACloudinary(fSplash);
-                if (url) document.getElementById('c-splashImgUrl').value = url;
-            }
-            const fPromo1 = document.getElementById('c-promo1ImgFile').files[0];
-            if (fPromo1) {
-                const url = await subirImagenACloudinary(fPromo1);
-                if (url) document.getElementById('c-promo1ImgUrl').value = url;
-            }
-            const fPromo2 = document.getElementById('c-promo2ImgFile').files[0];
-            if (fPromo2) {
-                const url = await subirImagenACloudinary(fPromo2);
-                if (url) document.getElementById('c-promo2ImgUrl').value = url;
-            }
-
-            btn.innerText = "💾 PUBLICANDO...";
-            const payload = {
-                splashActivo: document.getElementById('c-splashActivo').value === "true",
-                splashTexto: document.getElementById('c-splashTexto').value,
-                splashImg: document.getElementById('c-splashImgUrl').value,
-                promo1Badge: document.getElementById('c-promo1Badge').value,
-                promo1Titulo: document.getElementById('c-promo1Titulo').value,
-                promo1Sub: document.getElementById('c-promo1Sub').value,
-                promo1Img: document.getElementById('c-promo1ImgUrl').value,
-                promo2Badge: document.getElementById('c-promo2Badge').value,
-                promo2Titulo: document.getElementById('c-promo2Titulo').value,
-                promo2Sub: document.getElementById('c-promo2Sub').value,
-                promo2Img: document.getElementById('c-promo2ImgUrl').value
-            };
-
-            await fetch('/api/campanas', {
-                method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
-            });
-
-            alert("¡Campañas promocionales actualizadas en la web y POS!");
-            cargarCampanas();
-        } catch (e) { alert("⚠️ Error: " + e.message); } 
-        finally { btn.disabled = false; btn.innerText = "PUBLICAR CAMPAÑAS EN LA TIENDA"; }
-    }
-
-    // Inicialización al cargar la página
+    // Inicializar
     cargar();
-    generarQRPreview("PLT-001-DEMO", 450, 3.5);
 </script>
 </body>
 </html>
