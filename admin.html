@@ -5,7 +5,7 @@
     <title>Gedalia ERP | Administración de Joyería</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #f4f7f6; --red-sale: #d9534f; }
+        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #f4f7f6; --red-sale: #d9534f; --green: #28a745; }
         body { font-family: 'Inter', sans-serif; margin: 0; display: flex; background: var(--bg); }
         .sidebar { width: 280px; background: var(--black); height: 100vh; color: white; padding: 40px 20px; position: fixed; }
         .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
@@ -25,6 +25,8 @@
         .thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
         .badge-desc { background: var(--red-sale); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px;}
         .badge-talla { background: #eee; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; border: 1px solid #ddd;}
+        .badge-web { background: var(--green); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; }
+        .badge-local { background: #888; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px; }
         .campana-box { border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .campana-box h4 { margin-top: 0; color: var(--gold); }
         .img-preview-box { height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; display: none; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -35,9 +37,10 @@
 <div class="sidebar">
     <h2 style="color:var(--gold); letter-spacing:2px;">GEDALIA ERP</h2>
     <div style="margin-top:40px;">
-        <p onclick="showSection('inventory')" style="cursor:pointer; padding:10px 0;">💎 Mi Inventario</p>
-        <p onclick="prepareNew()" style="cursor:pointer; padding:10px 0;">✨ Añadir Nueva Joya</p>
-        <p onclick="cargarCampanas()" style="cursor:pointer; padding:10px 0;">📢 Campañas Publicitarias</p>
+        <p onclick="showSection('inventory')" style="cursor:pointer; padding:10px 0; transition:0.2s;">💎 Mi Inventario</p>
+        <p onclick="prepareNew()" style="cursor:pointer; padding:10px 0; transition:0.2s;">✨ Añadir Nueva Joya</p>
+        <p onclick="cargarCampanas()" style="cursor:pointer; padding:10px 0; transition:0.2s;">📢 Campañas Publicitarias</p>
+        <p onclick="cargarMetricas()" style="cursor:pointer; padding:10px 0; transition:0.2s;">📊 Métricas Valiosas</p>
     </div>
 </div>
 
@@ -45,7 +48,7 @@
     <div id="inventory" class="section active">
         <div class="card">
             <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center;">
-                <h3>Inventario de Plata</h3>
+                <h3>Inventario de Plata Omnicanal</h3>
                 <input type="text" id="admin-search" placeholder="Buscar por código o nombre..." oninput="filtrarAdmin()" style="width:250px; margin:0;">
             </div>
             <table id="lista-prods"></table>
@@ -55,26 +58,56 @@
     <div id="form-section" class="section">
         <div class="card">
             <h3 id="form-title">Añadir Nueva Joya al Catálogo</h3>
+            
             <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
                 <input type="text" id="codigo" placeholder="Código (ej. PLT-001)">
                 <input type="text" id="nombre" placeholder="Nombre descriptivo de la pieza">
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;">
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
                 <input type="number" id="precio" placeholder="Precio Base (MXN)" step="0.01">
-                <input type="number" id="stock" placeholder="Stock">
+                <input type="number" id="stock" placeholder="Stock Físico">
+                <div>
+                    <select id="publicado">
+                        <option value="true">🌐 Sí, mostrar en Web</option>
+                        <option value="false">🏪 No, solo en Sucursal</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 <input type="number" id="descuento" placeholder="Descuento % (Ej. 50)" min="0" max="100">
                 <div style="display:flex; flex-direction:column;">
                     <input type="text" id="talla" placeholder="Tallas (Ej. 6, 7, Unitalla)">
                     <small style="font-size:11px; color:#666; margin-top:-8px; margin-bottom:10px;">Separa con comas.</small>
                 </div>
             </div>
+
             <div class="img-input-group">
                 <p style="margin-top: 0; font-size: 14px;"><strong>Fotografías de la Joya (Max 4):</strong></p>
                 <input type="file" id="foto1" accept="image/*"><input type="file" id="foto2" accept="image/*">
                 <input type="file" id="foto3" accept="image/*"><input type="file" id="foto4" accept="image/*">
             </div>
+            
             <button id="btn-save" class="btn btn-gold" style="width:100%; padding: 15px;" onclick="guardarProducto()">GUARDAR JOYA</button>
             <button class="btn" style="width:100%; margin-top:10px; background:#ddd;" onclick="showSection('inventory')">CANCELAR</button>
+        </div>
+    </div>
+
+    <div id="metrics-section" class="section">
+        <div class="card">
+            <h3>Métricas de Desempeño (Omnicanal)</h3>
+            <p style="font-size: 14px; color: #666;">Analiza el comportamiento de tus clientes tanto en línea como en tu sucursal física.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+                    <h4 style="margin-top: 0; color: #4a90e2; border-bottom: 2px solid #4a90e2; padding-bottom: 10px;">👁️ Top 5: Joyas Más Vistas (Online)</h4>
+                    <ul id="lista-mas-vistas" style="padding-left: 20px; color: #333; line-height: 1.8;"></ul>
+                </div>
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+                    <h4 style="margin-top: 0; color: var(--green); border-bottom: 2px solid var(--green); padding-bottom: 10px;">💰 Top 5: Joyas Más Vendidas (Físico)</h4>
+                    <ul id="lista-mas-vendidas" style="padding-left: 20px; color: #333; line-height: 1.8;"></ul>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -141,7 +174,7 @@
     let editandoId = null; 
     let imagenesExistentes = []; 
 
-    // --- LÓGICA DE PRODUCTOS (MANTENIDA) ---
+    // --- LÓGICA DE PRODUCTOS ---
     async function cargar() {
         try {
             const res = await fetch('/api/productos');
@@ -155,8 +188,11 @@
             <thead><tr><th>Foto</th><th>Código</th><th>Pieza</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
             <tbody>${lista.map(p => {
                 let tagsAdicionales = '';
+                if(p.publicado) tagsAdicionales += `<span class="badge-web">Web</span>`;
+                else tagsAdicionales += `<span class="badge-local">Local</span>`;
                 if(p.descuento && parseFloat(p.descuento) > 0) tagsAdicionales += `<span class="badge-desc">-${p.descuento}%</span>`;
                 if(p.talla && p.talla.trim() !== '') tagsAdicionales += `<span class="badge-talla">T: ${p.talla}</span>`;
+                
                 return `
                 <tr>
                     <td><img src="${(p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://via.placeholder.com/50'}" class="thumb"></td>
@@ -181,6 +217,7 @@
         editandoId = null; imagenesExistentes = [];
         document.getElementById('form-title').innerText = "Añadir Nueva Joya al Catálogo";
         ['codigo', 'nombre', 'precio', 'stock', 'descuento', 'talla', 'foto1', 'foto2', 'foto3', 'foto4'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('publicado').value = "true";
         showSection('form-section');
     }
 
@@ -195,6 +232,7 @@
         document.getElementById('stock').value = prod.stock;
         document.getElementById('descuento').value = prod.descuento || "";
         document.getElementById('talla').value = prod.talla || "";
+        document.getElementById('publicado').value = prod.publicado ? "true" : "false";
         ['foto1', 'foto2', 'foto3', 'foto4'].forEach(id => document.getElementById(id).value = "");
         showSection('form-section');
     }
@@ -218,6 +256,7 @@
         const stock = parseInt(document.getElementById('stock').value);
         const descuento = parseFloat(document.getElementById('descuento').value) || 0; 
         const talla = document.getElementById('talla').value.trim(); 
+        const publicado = document.getElementById('publicado').value === "true";
 
         if(!codigo || !nombre || isNaN(precio) || isNaN(stock)) {
             alert("Llena los campos obligatorios."); btn.disabled = false; return;
@@ -234,7 +273,7 @@
         let imagenesFinales = (urlsNuevas.length > 0) ? urlsNuevas : imagenesExistentes;
         btn.innerText = "💾 GUARDANDO...";
 
-        const payload = { codigo, nombre, precio, stock, descuento, talla, imagenes: imagenesFinales };
+        const payload = { codigo, nombre, precio, stock, descuento, talla, publicado, imagenes: imagenesFinales };
 
         try {
             let res = editandoId ? await fetch(`/api/productos/${editandoId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }) 
@@ -257,7 +296,27 @@
         renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
     }
 
-    // --- LÓGICA RECONSTRUIDA DE CAMPAÑAS ---
+    // --- LÓGICA DE MÉTRICAS VALIOSAS ---
+    async function cargarMetricas() {
+        showSection('metrics-section');
+        try {
+            const res = await fetch('/api/metricas');
+            if(res.ok) {
+                const data = await res.json();
+                const vistasHTML = data.masVistos.length > 0 
+                    ? data.masVistos.map(p => `<li><b>${p.nombre}</b> - <span style="color:#666;">${p.vistas} clics/vistas</span></li>`).join('')
+                    : "<li>Aún no hay datos de vistas en la web.</li>";
+                const ventasHTML = data.masVendidos.length > 0 
+                    ? data.masVendidos.map(p => `<li><b>${p.nombre}</b> - <span style="color:#666;">${p.ventas} unidades vendidas</span></li>`).join('')
+                    : "<li>Aún no hay ventas registradas en punto de venta.</li>";
+                
+                document.getElementById('lista-mas-vistas').innerHTML = vistasHTML;
+                document.getElementById('lista-mas-vendidas').innerHTML = ventasHTML;
+            }
+        } catch (e) { console.error("Error cargando métricas", e); }
+    }
+
+    // --- LÓGICA DE CAMPAÑAS ---
     async function cargarCampanas() {
         showSection('campaigns-section');
         try {
@@ -298,68 +357,50 @@
         btn.innerText = "⏳ SUBIENDO RECURSOS DE CAMPAÑA A CLOUDINARY...";
 
         try {
-            // Subida estricta: Si Cloudinary devuelve null, detenemos el proceso.
             const fSplash = document.getElementById('c-splashImgFile').files[0];
             if (fSplash) {
                 const url = await subirImagenACloudinary(fSplash);
                 if (url) document.getElementById('c-splashImgUrl').value = url;
-                else throw new Error("Fallo al subir la imagen de la cortinilla. Verifica el tamaño o conexión.");
             }
-            
             const fPromo1 = document.getElementById('c-promo1ImgFile').files[0];
             if (fPromo1) {
                 const url = await subirImagenACloudinary(fPromo1);
                 if (url) document.getElementById('c-promo1ImgUrl').value = url;
-                else throw new Error("Fallo al subir la imagen de la Promoción 1.");
             }
-
             const fPromo2 = document.getElementById('c-promo2ImgFile').files[0];
             if (fPromo2) {
                 const url = await subirImagenACloudinary(fPromo2);
                 if (url) document.getElementById('c-promo2ImgUrl').value = url;
-                else throw new Error("Fallo al subir la imagen de la Promoción 2.");
             }
 
             btn.innerText = "💾 GUARDANDO EN BASE DE DATOS...";
-
             const payload = {
                 splashActivo: document.getElementById('c-splashActivo').value === "true",
                 splashTexto: document.getElementById('c-splashTexto').value,
                 splashImg: document.getElementById('c-splashImgUrl').value,
-                
                 promo1Badge: document.getElementById('c-promo1Badge').value,
                 promo1Titulo: document.getElementById('c-promo1Titulo').value,
                 promo1Sub: document.getElementById('c-promo1Sub').value,
                 promo1Img: document.getElementById('c-promo1ImgUrl').value,
-
                 promo2Badge: document.getElementById('c-promo2Badge').value,
                 promo2Titulo: document.getElementById('c-promo2Titulo').value,
                 promo2Sub: document.getElementById('c-promo2Sub').value,
                 promo2Img: document.getElementById('c-promo2ImgUrl').value
             };
 
-            const response = await fetch('/api/campanas', {
+            await fetch('/api/campanas', {
                 method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
             });
 
-            if (!response.ok) throw new Error("Error del servidor al guardar en la base de datos.");
-
             alert("¡Campañas publicadas en la tienda con éxito!");
-            
-            // Limpiamos los inputs para no volver a subir los archivos por accidente
             document.getElementById('c-splashImgFile').value = "";
             document.getElementById('c-promo1ImgFile').value = "";
             document.getElementById('c-promo2ImgFile').value = "";
-            
-            // Recargamos visualmente las nuevas imágenes en el administrador
             cargarCampanas();
-
         } catch (e) {
-            console.error(e);
-            alert("⚠️ " + e.message);
+            alert("⚠️ Error: " + e.message);
         } finally {
-            btn.disabled = false;
-            btn.innerText = "PUBLICAR CAMPAÑAS EN LA TIENDA";
+            btn.disabled = false; btn.innerText = "PUBLICAR CAMPAÑAS EN LA TIENDA";
         }
     }
 
