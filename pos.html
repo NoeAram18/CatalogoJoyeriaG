@@ -1,1 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gedalia POS | Sucursal Física</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --gold: #c5a059; --black: #0a0a0a; --bg: #f4f7f6; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
+        .sidebar { width: 250px; background: var(--black); height: 100vh; color: white; padding: 30px 20px; position: fixed; }
+        .main { margin-left: 250px; padding: 40px; width: calc(100% - 250px); box-sizing: border-box; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .btn { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; width: 100%; background: var(--black); color: white; margin-top: 10px; }
+        .btn:hover { background: var(--gold); }
+        .btn-green { background: #28a745; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; font-family: 'Inter'; }
+        .section { display: none; }
+        .active { display: block; }
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        /* Estilos del Ticket de Venta y Etiqueta Niimbot */
+        .ticket-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        #etiqueta-imprimible { display: none; width: 40mm; height: 20mm; background: white; padding: 2mm; box-sizing: border-box; text-align: center; flex-direction: column; justify-content: center; align-items: center; }
+        #etiqueta-imprimible h5 { margin: 0; font-size: 8px; font-weight: bold; }
+        #etiqueta-imprimible p { margin: 0; font-size: 7px; }
+        #qr-code { margin-top: 2px; }
+        #qr-code img { width: 12mm; height: 12mm; }
 
+        @media print {
+            body * { visibility: hidden; }
+            #etiqueta-imprimible, #etiqueta-imprimible * { visibility: visible; }
+            #etiqueta-imprimible { display: flex; position: absolute; left: 0; top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 style="color:var(--gold);">GEDALIA POS</h2>
+    <div style="margin-top:40px;">
+        <p onclick="showSection('recepcion')" style="cursor:pointer; padding:10px 0;">📦 1. Recepción y Etiquetas</p>
+        <p onclick="showSection('caja')" style="cursor:pointer; padding:10px 0;">🛒 2. Caja (Escanear QR)</p>
+    </div>
+</div>
+
+<div class="main">
+    <div id="recepcion" class="section active">
+        <div class="card">
+            <h3>Ingreso de Nueva Mercancía</h3>
+            <div class="grid-form">
+                <div>
+                    <label>Categoría</label>
+                    <select id="r-tipo">
+                        <option value="AN">Anillo</option><option value="C">Collar</option>
+                        <option value="AR">Arete</option><option value="ARRA">Arracada</option>
+                        <option value="P">Pulsera</option><option value="O">Otros</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Piedras</label>
+                    <select id="r-piedras"><option value="P">Con Piedras</option><option value="SP">Sin Piedras</option></select>
+                </div>
+                <div><label>Talla (Opcional)</label><input type="text" id="r-talla" placeholder="Ej. 7"></div>
+                <div><label>Cantidad (Stock)</label><input type="number" id="r-stock" value="1"></div>
+                <div><label>Precio Base (MXN)</label><input type="number" id="r-precio"></div>
+                <div>
+                    <label>¿Publicar en tienda online?</label>
+                    <select id="r-publicado"><option value="true">Sí, mostrar en Web</option><option value="false">No, solo sucursal</option></select>
+                </div>
+            </div>
+            <label>Fotos (Cámara o Archivo - Max 4):</label>
+            <input type="file" id="r-foto" accept="image/*" multiple>
+            
+            <button class="btn" id="btn-registrar" onclick="registrarMercancia()">REGISTRAR Y GENERAR QR</button>
+
+            <div id="area-impresion" style="display:none; margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px; text-align: center;">
+                <h4 style="color: green;">¡Mercancía guardada en la Base de Datos!</h4>
+                <p>Código SKU Generado: <strong id="sku-generado"></strong></p>
+                <button class="btn btn-green" onclick="imprimirEtiquetaNiimbot()">🖨️ IMPRIMIR ETIQUETA PARA NIIMBOT B1</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="caja" class="section">
+        <div class="card">
+            <h3>Punto de Venta - Gedalia</h3>
+            <p style="font-size: 13px; color: #666;">Conecta tu lector USB o escanea el QR de la etiqueta.</p>
+            <input type="text" id="lector-qr" placeholder="Escanea el código QR aquí..." autofocus onkeypress="handleScan(event)" style="border: 2px solid var(--gold); padding: 15px; font-size: 18px;">
+            
+            <div id="carrito-compras" style="margin-top: 20px;"></div>
+            <h2 style="text-align: right;">Total: $<span id="total-venta">0.00</span></h2>
+            
+            <button class="btn btn-green" onclick="completarVenta()">💰 COMPLETAR VENTA E IMPRIMIR TICKET</button>
+        </div>
+    </div>
+</div>
+
+<div id="etiqueta-imprimible">
+    <h5>GEDALIA 925</h5>
+    <div id="qr-code"></div>
+    <p id="niimbot-sku"></p>
+    <p id="niimbot-precio"></p>
+</div>
+
+<script>
+    const CLOUD_NAME = "oudq7dcf"; 
+    const UPLOAD_PRESET = "gedalia_preset"; 
+    let carrito = [];
+    let total = 0;
+
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'caja') document.getElementById('lector-qr').focus();
+    }
+
+    // 1. GENERADOR INTELIGENTE DE SKU Y REGISTRO
+    async function registrarMercancia() {
+        const btn = document.getElementById('btn-registrar');
+        btn.disabled = true; btn.innerText = "PROCESANDO...";
+
+        const tipo = document.getElementById('r-tipo').value;
+        const piedras = document.getElementById('r-piedras').value;
+        const talla = document.getElementById('r-talla').value.trim();
+        const stock = document.getElementById('r-stock').value;
+        const precio = document.getElementById('r-precio').value;
+        const publicado = document.getElementById('r-publicado').value === "true";
+
+        // Generar SKU Único (Ej: AN-P-7-4091)
+        const rand = Math.floor(1000 + Math.random() * 9000); 
+        const tallaPart = talla ? `-${talla}` : '';
+        const sku = `${tipo}-${piedras}${tallaPart}-${rand}`;
+
+        // Lógica de subir a Cloudinary (simplificada para 1 foto en este ejemplo)
+        let urls = [];
+        const fileInput = document.getElementById('r-foto');
+        if(fileInput.files.length > 0) {
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]); formData.append("upload_preset", UPLOAD_PRESET);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
+            const data = await res.json();
+            if(data.secure_url) urls.push(data.secure_url);
+        }
+
+        const payload = { codigo: sku, nombre: `Joya ${sku}`, precio: precio, stock: stock, descuento: 0, talla: talla, publicado: publicado, imagenes: urls };
+
+        try {
+            await fetch('/api/productos', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            
+            // Preparar Etiqueta Niimbot
+            document.getElementById('sku-generado').innerText = sku;
+            document.getElementById('niimbot-sku').innerText = sku;
+            document.getElementById('niimbot-precio').innerText = `$${precio} MXN`;
+            
+            // Generar el gráfico QR
+            document.getElementById('qr-code').innerHTML = "";
+            new QRCode(document.getElementById("qr-code"), { text: sku, width: 45, height: 45 });
+
+            document.getElementById('area-impresion').style.display = 'block';
+        } catch (e) { alert("Error guardando."); }
+        finally { btn.disabled = false; btn.innerText = "REGISTRAR Y GENERAR QR"; }
+    }
+
+    function imprimirEtiquetaNiimbot() {
+        window.print(); // El navegador mostrará el diálogo. Asegúrate de seleccionar la Niimbot B1 y tamaño 40x20.
+    }
+
+    // 2. PUNTO DE VENTA (CAJA)
+    async function handleScan(e) {
+        if (e.key === 'Enter') {
+            const sku = document.getElementById('lector-qr').value.trim();
+            document.getElementById('lector-qr').value = ''; // Limpiar para el siguiente escaneo
+            
+            try {
+                const res = await fetch(`/api/pos/producto/${sku}`);
+                if (!res.ok) throw new Error();
+                const prod = await res.json();
+                
+                carrito.push(prod);
+                total += parseFloat(prod.precio);
+                actualizarCarrito();
+            } catch (err) { alert("Código no encontrado o sin stock."); }
+        }
+    }
+
+    function actualizarCarrito() {
+        const container = document.getElementById('carrito-compras');
+        container.innerHTML = carrito.map(p => `
+            <div class="ticket-item">
+                <span>${p.nombre} (${p.codigo})</span>
+                <strong>$${p.precio}</strong>
+            </div>
+        `).join('');
+        document.getElementById('total-venta').innerText = total.toFixed(2);
+    }
+
+    async function completarVenta() {
+        if(carrito.length === 0) return alert("El carrito está vacío");
+        
+        try {
+            await fetch('/api/pos/vender', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ carrito })
+            });
+            
+            // Generar un Ticket (Abre en ventana nueva para impresora térmica 58mm)
+            const ticketWindow = window.open('', '_blank', 'width=300,height=500');
+            ticketWindow.document.write(`
+                <html style="text-align:center; font-family: monospace;">
+                <body>
+                    <h2>GEDALIA 925</h2>
+                    <p>Ticket de Compra</p>
+                    <hr>
+                    ${carrito.map(p => `<div style="display:flex; justify-content:space-between;"><span>${p.codigo}</span><span>$${p.precio}</span></div>`).join('')}
+                    <hr>
+                    <h3>Total: $${total.toFixed(2)}</h3>
+                    <p>¡Gracias por tu compra!</p>
+                </body></html>
+            `);
+            ticketWindow.print();
+            
+            // Reiniciar caja
+            carrito = []; total = 0; actualizarCarrito();
+        } catch (e) { alert("Error al registrar venta."); }
+    }
+</script>
+</body>
+</html>
