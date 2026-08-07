@@ -329,7 +329,7 @@
         });
 
         // --- CARGA DE DATOS PRINCIPAL ---
-        async function inicializarTienda() {
+          async function inicializarTienda() {
             // Intentar cargar campañas visuales
             try {
                 const resCampanas = await fetch('/api/campanas');
@@ -338,15 +338,22 @@
                     aplicarCampanas(campanas);
                 }
             } catch(err) {
-                console.warn("No se pudieron cargar campañas personalizadas, usando valores por defecto.", err);
+                console.warn("No se pudieron cargar campañas personalizadas.", err);
             }
 
             // Intentar cargar el catálogo
             try {
                 const resProductos = await fetch('/api/productos');
                 if (resProductos.ok) {
-                    listaProductos = await resProductos.json();
-                    listaProductos = todosLosProductos.filter(p => p.publicado === true && p.stock > 0);
+                    const todosLosProductos = await resProductos.json();
+                    
+                    // FILTRO BLINDADO: Convierte los datos a su tipo correcto
+                    listaProductos = todosLosProductos.filter(p => {
+                        const estaPublicado = (p.publicado === true || String(p.publicado).toLowerCase() === 'true');
+                        const hayStock = parseInt(p.stock) > 0;
+                        return estaPublicado && hayStock;
+                    });
+                    
                     renderizarProductos(listaProductos);
                     renderizarTickerOfertas(listaProductos);
                 } else {
