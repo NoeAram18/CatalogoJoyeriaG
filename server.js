@@ -1,16 +1,65 @@
 const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
+const nodemailer = require('nodemailer'); // NUEVO: Librería de correos
 
 const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
+
+// --- CONFIGURACIÓN DE CORREO ELECTRÓNICO ---
+// Asegúrate de configurar EMAIL_USER y EMAIL_PASS en las Environment Variables de Render
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // O el proveedor que utilices
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS // Si usas Gmail, debes generar una "Contraseña de Aplicación"
+    }
+});
+
+async function enviarCorreoNotificacion(origen, detalles, total, metodoPago) {
+    if (!process.env.EMAIL_USER) return console.warn("No hay credenciales de correo configuradas.");
+    
+    const mailOptions = {
+        from: `"Gedalia ERP" <${process.env.EMAIL_USER}>`,
+        to: process.env.EMAIL_USER, // Te envía el correo a ti mismo
+        subject: `💰 Nueva Venta Registrada (${origen}) - Gedalia 925`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #c5a059; text-align: center;">Nueva Venta Confirmada</h2>
+                <p><strong>Origen:</strong> ${origen}</p>
+                <p><strong>Fecha y Hora:</strong> ${new Date().toLocaleString('es-MX', {timeZone: 'America/Mexico_City'})}</p>
+                <p><strong>Método de Pago:</strong> ${metodoPago}</p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Detalles de la compra:</h3>
+                <ul style="list-style: none; padding: 0;">
+                    ${detalles.map(i => `
+                        <li style="margin-bottom: 10px; background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                            <strong>${i.cantidad}x ${i.codigo}</strong> - ${i.nombre} <br>
+                            <span style="color: #888;">Precio unitario: $${parseFloat(i.precio).toFixed(2)}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <h2 style="text-align: right; color: #0a0a0a;">Total: $${parseFloat(total).toFixed(2)} MXN</h2>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Correo de venta enviado con éxito (${origen}).`);
+    } catch (error) {
+        console.error("Error al enviar el correo de venta:", error);
+    }
+}
 
 // --- RUTAS DE NAVEGACIÓN ---
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/pos', (req, res) => res.sendFile(path.join(__dirname, 'pos.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
+// --- BASE DE DATOS ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -18,46 +67,21 @@ const pool = new Pool({
 
 async function inicializarBD() {
     try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS productos (
-                id SERIAL PRIMARY KEY, codigo VARCHAR(50) UNIQUE,
-                nombre VARCHAR(255), precio DECIMAL(10, 2), stock INTEGER
-            );
-        `);
-
-        try { await pool.query(`ALTER TABLE productos ADD COLUMN imagenes TEXT[];`); } catch (e) {}
-        try { await pool.query(`ALTER TABLE productos ADD COLUMN descuento INT DEFAULT 0;`); } catch (e) {}
-        try { await pool.query(`ALTER TABLE productos ADD COLUMN talla VARCHAR(50) DEFAULT '';`); } catch (e) {}
-        try { await pool.query(`ALTER TABLE productos ADD COLUMN publicado BOOLEAN DEFAULT false;`); } catch (e) {}
-        try { await pool.query(`ALTER TABLE productos ADD COLUMN vistas INT DEFAULT 0;`); } catch (e) {}
-        try { await pool.query(`ALTER TABLE productos ADD COLUMN ventas INT DEFAULT 0;`); } catch (e) {}
-        try { await pool.query(`ALTER TABLE productos ADD COLUMN gramos DECIMAL(10,2) DEFAULT 0;`); } catch (e) {}
-
-        // NUEVO: normaliza códigos ya existentes (mayúsculas, sin espacios) para que dejen de
-        // fallar las búsquedas del POS por diferencias de mayúsculas/minúsculas o espacios.
-        try { await pool.query(`UPDATE productos SET codigo = UPPER(TRIM(codigo)) WHERE codigo IS NOT NULL;`); } catch (e) {}
-
+        await pool.query(`CREATE TABLE IF NOT EXISTS productos (id SERIAL PRIMARY KEY, codigo VARCHAR(50) UNIQUE, nombre VARCHAR(255), precio DECIMAL(10, 2), stock INTEGER);`);
+        try { await pool.query(`ALTER TABLE productos ADD COLUMN imagenes TEXT[];`); } catch(e){}
+        try { await pool.query(`ALTER TABLE productos ADD COLUMN descuento INT DEFAULT 0;`); } catch(e){}
+        try { await pool.query(`ALTER TABLE productos ADD COLUMN talla VARCHAR(50) DEFAULT '';`); } catch(e){}
+        try { await pool.query(`ALTER TABLE productos ADD COLUMN gramos DECIMAL(10, 2) DEFAULT 0;`); } catch(e){}
+        try { await pool.query(`ALTER TABLE productos ADD COLUMN publicado BOOLEAN DEFAULT false;`); } catch(e){}
+        try { await pool.query(`ALTER TABLE productos ADD COLUMN vistas INT DEFAULT 0;`); } catch(e){}
+        try { await pool.query(`ALTER TABLE productos ADD COLUMN ventas INT DEFAULT 0;`); } catch(e){}
         await pool.query(`CREATE TABLE IF NOT EXISTS configuracion (clave VARCHAR(50) PRIMARY KEY, valor TEXT);`);
-
-        // NUEVO: historial real de ventas. Antes las ventas del POS solo vivían en la memoria
-        // del navegador y se perdían al recargar; el admin nunca las veía.
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS ventas (
-                id SERIAL PRIMARY KEY,
-                fecha TIMESTAMP DEFAULT NOW(),
-                sucursal VARCHAR(100) DEFAULT 'Sucursal 1 (Matriz CDMX)',
-                metodo_pago VARCHAR(50),
-                total DECIMAL(10,2),
-                items JSONB
-            );
-        `);
-
         console.log('Gedalia ERP Omnicanal - Conectado a Aiven con éxito 💎');
-    } catch (error) { console.error(error); }
+    } catch (error) { console.error('Error BD:', error); }
 }
 inicializarBD();
 
-// --- RUTAS API: PRODUCTOS ---
+// --- RUTAS API CATALOGO ---
 app.get('/api/productos', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM productos ORDER BY id DESC');
@@ -66,158 +90,94 @@ app.get('/api/productos', async (req, res) => {
 });
 
 app.post('/api/productos', async (req, res) => {
-    let { codigo, nombre, precio, stock, imagenes, descuento, talla, publicado, gramos } = req.body;
-    if (!codigo || !codigo.trim()) return res.status(400).json({ error: 'El código es obligatorio.' });
-    codigo = codigo.trim().toUpperCase(); // NUEVO: normaliza siempre a MAYÚSCULAS sin espacios
+    const { codigo, nombre, precio, stock, imagenes, descuento, talla, publicado, gramos } = req.body;
     try {
         const result = await pool.query(
-            `INSERT INTO productos (codigo, nombre, precio, stock, imagenes, descuento, talla, publicado, gramos) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+            `INSERT INTO productos (codigo, nombre, precio, stock, imagenes, descuento, talla, publicado, gramos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
             [codigo, nombre, precio, stock, imagenes || [], descuento || 0, talla || '', publicado || false, gramos || 0]
         );
         res.status(201).json(result.rows[0]);
-    } catch (err) {
-        if (err.code === '23505') {
-            // NUEVO: antes esto tronaba con un error 500 crudo; ahora se explica el motivo real
-            return res.status(409).json({ error: `Ya existe un producto con el código ${codigo}. Genera otro código.` });
-        }
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put('/api/productos/:id', async (req, res) => {
     const { id } = req.params;
-    let { codigo, nombre, precio, stock, imagenes, descuento, talla, publicado, gramos } = req.body;
-    if (codigo) codigo = codigo.trim().toUpperCase();
+    const { codigo, nombre, precio, stock, imagenes, descuento, talla, publicado, gramos } = req.body;
     try {
         const result = await pool.query(
             `UPDATE productos SET codigo = $1, nombre = $2, precio = $3, stock = $4, imagenes = $5, descuento = $6, talla = $7, publicado = $8, gramos = $9 WHERE id = $10 RETURNING *`,
             [codigo, nombre, precio, stock, imagenes || [], descuento || 0, talla || '', publicado || false, gramos || 0, id]
         );
         res.json(result.rows[0]);
-    } catch (err) {
-        if (err.code === '23505') {
-            return res.status(409).json({ error: `Ya existe un producto con el código ${codigo}.` });
-        }
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.delete('/api/productos/:id', async (req, res) => {
-    try { await pool.query('DELETE FROM productos WHERE id = $1', [req.params.id]); res.json({ message: 'OK' }); } 
-    catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// NUEVO: permite a Admin verificar en vivo si un código autogenerado ya existe antes de guardarlo
-app.get('/api/productos/verificar-codigo/:codigo', async (req, res) => {
-    try {
-        const codigo = req.params.codigo.trim().toUpperCase();
-        const result = await pool.query('SELECT id FROM productos WHERE codigo = $1', [codigo]);
-        res.json({ disponible: result.rows.length === 0 });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- RUTAS DE PUNTO DE VENTA Y MÉTRICAS ---
+app.delete('/api/productos/:id', async (req, res) => {
+    try { await pool.query('DELETE FROM productos WHERE id = $1', [req.params.id]); res.json({ message: 'OK' }); } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
-// Buscar producto exacto por lector de código de barras/QR
-// CORREGIDO: esta ruta era sensible a mayúsculas/minúsculas y a espacios, por lo que
-// productos dados de alta correctamente no se encontraban al escanear en el POS.
+// --- NUEVA RUTA: VENTA EN LÍNEA VÍA WHATSAPP ---
+app.post('/api/web/vender', async (req, res) => {
+    const { id, codigo, nombre, precio, talla } = req.body;
+    try {
+        // Disminuir stock y aumentar venta (Solo si hay stock > 0)
+        const updateRes = await pool.query('UPDATE productos SET stock = stock - 1, ventas = ventas + 1 WHERE id = $1 AND stock > 0 RETURNING *', [id]);
+        
+        if(updateRes.rows.length === 0) {
+            return res.status(400).json({ error: 'Lo sentimos, este producto se acaba de agotar.' });
+        }
+
+        // Armar detalles para el correo
+        const nombreFinal = talla ? `${nombre} (Talla: ${talla})` : nombre;
+        const detallesVenta = [{ cantidad: 1, codigo, nombre: nombreFinal, precio }];
+        
+        // Disparar correo de notificación
+        await enviarCorreoNotificacion('Página Web (WhatsApp)', detallesVenta, precio, 'Pendiente de cobro en WhatsApp');
+
+        res.json({ message: 'Venta web reservada con éxito' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- RUTA: PUNTO DE VENTA FISICO ---
 app.get('/api/pos/producto/:codigo', async (req, res) => {
     try {
-        const codigo = req.params.codigo.trim().toUpperCase();
-        const result = await pool.query('SELECT * FROM productos WHERE UPPER(TRIM(codigo)) = $1', [codigo]);
+        const result = await pool.query('SELECT * FROM productos WHERE UPPER(codigo) = $1 AND stock > 0', [req.params.codigo.trim().toUpperCase()]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'No encontrado' });
         res.json(result.rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Registrar venta en sucursal (reduce stock, aumenta ventas y ahora persiste el ticket en BD)
 app.post('/api/pos/vender', async (req, res) => {
-    const { carrito, total, metodoPago, sucursal } = req.body;
-    if (!carrito || carrito.length === 0) return res.status(400).json({ error: 'Carrito vacío' });
-
-    const client = await pool.connect();
+    const { carrito, total, metodoPago } = req.body;
     try {
-        await client.query('BEGIN');
         for (let item of carrito) {
-            const cantidad = item.cantidad || 1;
-            const upd = await client.query(
-                'UPDATE productos SET stock = stock - $1, ventas = ventas + $1 WHERE id = $2 AND stock >= $1 RETURNING id',
-                [cantidad, item.id]
-            );
-            if (upd.rows.length === 0) {
-                throw new Error(`Sin stock suficiente para el producto ${item.codigo || item.id}`);
-            }
+            await pool.query('UPDATE productos SET stock = stock - $1, ventas = ventas + $1 WHERE codigo = $2 AND stock >= $1', [item.cantidad, item.codigo]);
         }
-        // NUEVO: guarda la venta en BD para que el admin y el corte de caja tengan datos reales
-        await client.query(
-            'INSERT INTO ventas (sucursal, metodo_pago, total, items) VALUES ($1, $2, $3, $4)',
-            [sucursal || 'Sucursal 1 (Matriz CDMX)', metodoPago || 'Efectivo', total || 0, JSON.stringify(carrito)]
-        );
-        await client.query('COMMIT');
+        
+        // Disparar correo de notificación
+        await enviarCorreoNotificacion('Sucursal POS', carrito, total, metodoPago);
+        
         res.json({ message: 'Venta registrada con éxito' });
-    } catch (err) {
-        await client.query('ROLLBACK');
-        res.status(400).json({ error: err.message });
-    } finally {
-        client.release();
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Registrar vista desde la página web
 app.put('/api/productos/:id/vista', async (req, res) => {
-    try {
-        await pool.query('UPDATE productos SET vistas = vistas + 1 WHERE id = $1', [req.params.id]);
-        res.json({ message: 'Vista sumada' });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    try { await pool.query('UPDATE productos SET vistas = vistas + 1 WHERE id = $1', [req.params.id]); res.json({ message: 'OK' }); } catch (e) {}
 });
 
-// Obtener datos valiosos (Dashboard)
-app.get('/api/metricas', async (req, res) => {
-    try {
-        const masVistos = await pool.query('SELECT nombre, vistas FROM productos ORDER BY vistas DESC LIMIT 5');
-        const masVendidos = await pool.query('SELECT nombre, ventas FROM productos ORDER BY ventas DESC LIMIT 5');
-        res.json({ masVistos: masVistos.rows, masVendidos: masVendidos.rows });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// NUEVO: esta ruta no existía. admin.html ya la llamaba para el "Monitor en Tiempo Real"
-// pero al no existir, siempre mostraba números de ejemplo (falsos).
-app.get('/api/operaciones/vivo', async (req, res) => {
-    try {
-        const r = await pool.query(`
-            SELECT sucursal, metodo_pago, SUM(total)::numeric AS total, COUNT(*)::int AS cuenta
-            FROM ventas
-            WHERE fecha >= CURRENT_DATE
-            GROUP BY sucursal, metodo_pago
-        `);
-        let webSales = 0, webOrders = 0, s1Sales = 0, s1Tickets = 0;
-        for (const row of r.rows) {
-            const total = parseFloat(row.total);
-            if (row.sucursal === 'Web') { webSales += total; webOrders += row.cuenta; }
-            else { s1Sales += total; s1Tickets += row.cuenta; }
-        }
-        res.json({
-            webSales: webSales.toFixed(2), webOrders,
-            s1Sales: s1Sales.toFixed(2), s1Tickets
-        });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// NUEVO: alimenta la tabla "Últimas Transacciones" del monitor en vivo, que nunca se llenaba
-app.get('/api/ventas/recientes', async (req, res) => {
-    try {
-        const r = await pool.query('SELECT * FROM ventas ORDER BY fecha DESC LIMIT 30');
-        res.json(r.rows);
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// --- RUTAS DE CAMPAÑAS (MANTENIDAS) ---
+// --- RUTAS DE CAMPAÑAS Y METRICAS ---
 app.get('/api/campanas', async (req, res) => {
     try { const r = await pool.query("SELECT valor FROM configuracion WHERE clave='campanas'"); res.json(r.rows.length ? JSON.parse(r.rows[0].valor) : {}); } catch (e) { res.status(500).json({error:e.message}); }
 });
 app.put('/api/campanas', async (req, res) => {
     try { const r = await pool.query("INSERT INTO configuracion (clave, valor) VALUES ('campanas', $1) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor RETURNING valor", [JSON.stringify(req.body)]); res.json(JSON.parse(r.rows[0].valor)); } catch (e) { res.status(500).json({error:e.message}); }
 });
+app.get('/api/metricas', async (req, res) => {
+    try {
+        const v = await pool.query('SELECT nombre, vistas FROM productos ORDER BY vistas DESC LIMIT 5');
+        const s = await pool.query('SELECT nombre, ventas FROM productos ORDER BY ventas DESC LIMIT 5');
+        res.json({ masVistos: v.rows, masVendidos: s.rows });
+    } catch (e) { res.status(500).json({error:e.message}); }
+});
 
-app.listen(process.env.PORT || 10000, () => console.log(`Servidor ERP Omnicanal corriendo`));
+app.listen(process.env.PORT || 10000, () => console.log(`Servidor de Gedalia corriendo`));
