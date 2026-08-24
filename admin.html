@@ -90,10 +90,9 @@
         
         /* Grid de Integraciones API */
         .api-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .api-box { background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 12px; }
+        .api-box { background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 12px; margin-bottom:15px; }
         
         .img-input-group { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; }
-        .img-preview-box { height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; display: none; margin-bottom: 10px; }
         
         /* Ocultar elementos al imprimir etiqueta térmica */
         @media print {
@@ -119,7 +118,7 @@
         <div class="nav-item" onclick="cargarVentas(); showSection('sales-section', this)">💸 Registro de Ventas</div>
         <div class="nav-item" onclick="showSection('transfers-section', this)">🚚 Traspasos entre Sucursales</div>
         <div class="nav-item" onclick="showSection('api-hub', this)">🔌 Hub de APIs (Envíos/SAT)</div>
-        <div class="nav-item" onclick="cargarCampanas(); showSection('campaigns-section', this)">📢 Campañas Publicitarias</div>
+        <div class="nav-item" onclick="cargarCampanas(); showSection('campaigns-section', this)">📢 Gestión de Publicidad</div>
         <div class="nav-item" onclick="cargarMetricas(); showSection('metrics-section', this)">📊 Métricas Omnicanal</div>
     </div>
 </div>
@@ -298,30 +297,74 @@
     </div>
     <div id="api-hub" class="section"><div class="card"><h3>Hub Central de Conectores API</h3><p>Módulo de configuración de pasarelas de pago y envíos.</p></div></div>
     
-    <!-- NUEVA SECCIÓN RESTAURADA: CAMPAÑAS PUBLICITARIAS -->
+    <!-- SECCIÓN DE PUBLICIDAD RENOVADA (MULTIMEDIA) -->
     <div id="campaigns-section" class="section">
         <div class="card">
-            <h3>📢 Gestión de Campañas Publicitarias</h3>
-            <p style="font-size:13px; color:#666; margin-bottom:20px;">Configura el banner promocional que aparecerá en la página web para tus clientes.</p>
+            <h3>📢 Gestión de Publicidad y Banners (Página Principal)</h3>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">Configura la cinta promocional, la cortinilla de inicio (Hero) y las 2 publicaciones principales. El sistema soporta imágenes, GIFs y videos cortos.</p>
+            
             <form id="formCampanas">
-                <div style="margin-bottom:15px;">
-                    <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Texto del Banner Promocional:</label>
-                    <input type="text" id="campanaTexto" placeholder="Ej: 20% OFF en toda la tienda este fin de semana" required>
+                <!-- 1. Cinta Promocional Superior -->
+                <div class="api-box">
+                    <h4 style="margin-top:0; color:var(--gold-dark);">1. Cinta Promocional Superior</h4>
+                    <div style="margin-bottom:15px;">
+                        <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Texto de la Cinta:</label>
+                        <input type="text" id="campanaTexto" placeholder="Ej: 20% OFF en toda la tienda este fin de semana" required>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Estado General:</label>
+                            <select id="campanaActiva">
+                                <option value="true">Activa (Visible en la tienda)</option>
+                                <option value="false">Inactiva</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Descuento Aplicable (%):</label>
+                            <input type="number" id="campanaDescuento" min="0" max="100" placeholder="Ej: 15">
+                        </div>
+                    </div>
                 </div>
+
+                <!-- 2. Cortinilla de Inicio -->
+                <div class="api-box">
+                    <h4 style="margin-top:0; color:var(--gold-dark);">2. Cortinilla de Inicio (Banner Principal)</h4>
+                    <div class="img-input-group">
+                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">Subir Archivo (Imagen, GIF o Video corto):</label>
+                        <input type="file" id="media-cortinilla" accept="image/*,video/*">
+                        <input type="hidden" id="url-cortinilla">
+                        <div id="preview-cortinilla" style="margin-top:10px; max-width:100%; height:auto; display:none; text-align:center;"></div>
+                    </div>
+                </div>
+
+                <!-- 3 y 4. Publicaciones 1 y 2 -->
                 <div class="form-row">
-                    <div>
-                        <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Estado de la Campaña:</label>
-                        <select id="campanaActiva">
-                            <option value="true">Activa (Visible en la tienda)</option>
-                            <option value="false">Inactiva</option>
-                        </select>
+                    <div class="api-box">
+                        <h4 style="margin-top:0; color:var(--gold-dark);">3. Publicación Destacada 1</h4>
+                        <div class="img-input-group">
+                            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">Subir Archivo (Img/GIF/Video):</label>
+                            <input type="file" id="media-pub1" accept="image/*,video/*">
+                            <input type="hidden" id="url-pub1">
+                            <div id="preview-pub1" style="margin-top:10px; max-width:100%; height:auto; display:none; text-align:center;"></div>
+                        </div>
+                        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">Enlace de destino:</label>
+                        <input type="text" id="link-pub1" placeholder="Ej: /categoria/anillos">
                     </div>
-                    <div>
-                        <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Descuento General Aplicable (%):</label>
-                        <input type="number" id="campanaDescuento" min="0" max="100" placeholder="Ej: 15">
+
+                    <div class="api-box">
+                        <h4 style="margin-top:0; color:var(--gold-dark);">4. Publicación Destacada 2</h4>
+                        <div class="img-input-group">
+                            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">Subir Archivo (Img/GIF/Video):</label>
+                            <input type="file" id="media-pub2" accept="image/*,video/*">
+                            <input type="hidden" id="url-pub2">
+                            <div id="preview-pub2" style="margin-top:10px; max-width:100%; height:auto; display:none; text-align:center;"></div>
+                        </div>
+                        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">Enlace de destino:</label>
+                        <input type="text" id="link-pub2" placeholder="Ej: /categoria/collares">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-gold" style="width:100%; padding:15px; margin-top:15px; font-size:16px;">🚀 GUARDAR CONFIGURACIÓN DE CAMPAÑA</button>
+
+                <button type="submit" class="btn btn-gold" style="width:100%; padding:15px; margin-top:15px; font-size:16px;">🚀 ACTUALIZAR WEB (GUARDAR PUBLICIDAD)</button>
             </form>
         </div>
     </div>
@@ -412,10 +455,10 @@
                 ventasHistorial = await res.json();
                 renderVentas(ventasHistorial);
             } else {
-                document.getElementById('tbody-ventas').innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Aún no hay ventas registradas o falta crear el endpoint /api/ventas.</td></tr>';
+                document.getElementById('tbody-ventas').innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Aún no hay ventas registradas.</td></tr>';
             }
         } catch (error) {
-            document.getElementById('tbody-ventas').innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--red-sale);">Error conectando con la base de datos de ventas.</td></tr>';
+            document.getElementById('tbody-ventas').innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--red-sale);">Error conectando con base de datos.</td></tr>';
         }
     }
 
@@ -459,9 +502,7 @@
 
     function exportarVentasExcel() {
         if(ventasHistorial.length === 0) return alert("No hay datos de ventas para exportar.");
-        
         let csvContent = "\uFEFFFecha,Origen,Codigo SKU,Articulo,Talla,Cantidad,Tipo de Pago,Costo Unitario,Precio Venta Unitario,Ganancia Bruta Total,Ganancia Neta Calculada\n";
-        
         ventasHistorial.forEach(v => {
             const fechaF = new Date(v.fecha_hora).toLocaleString('es-MX').replace(/,/g, '');
             const costo = parseFloat(v.costo || 0);
@@ -470,19 +511,15 @@
             const bruta = (precio - costo) * cant;
             let tarifa = (v.tipo_pago && v.tipo_pago.toLowerCase().includes('terminal')) ? ((precio * cant) * 0.035) : 0;
             const neta = bruta - tarifa;
-
             const row = `"${fechaF}","${v.origen}","${v.codigo}","${v.nombre_articulo}","${v.talla || ''}",${cant},"${v.tipo_pago}",${costo.toFixed(2)},${precio.toFixed(2)},${bruta.toFixed(2)},${neta.toFixed(2)}`;
             csvContent += row + "\n";
         });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", `Reporte_Ventas_Gedalia_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Reporte_Ventas_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
     // --- MÓDULO DE RECEPCIÓN (AUTO-SKU Y ETIQUETAS) ---
@@ -545,6 +582,7 @@
         showSection('reception-section');
     }
 
+    // Subida nativa de imágenes
     async function subirImagenACloudinary(file) {
         const formData = new FormData();
         formData.append("file", file); 
@@ -571,7 +609,7 @@
         const publicado = document.getElementById('publicado').value === "true";
 
         if(!codigo || !nombre || isNaN(precio) || isNaN(stock) || costo === 0) {
-            alert("⚠️ Faltan datos (Código, Nombre, Costo, Precio o Stock). El Costo es vital para calcular tus ganancias."); 
+            alert("⚠️ Faltan datos (Código, Nombre, Costo, Precio o Stock)."); 
             btn.disabled = false; return;
         }
 
@@ -592,32 +630,20 @@
         const payload = { codigo, nombre, costo, precio, stock, gramos, descuento, talla, publicado, imagenes: imagenesFinales };
 
         try {
-            let res;
-            if (editandoId) {
-                res = await fetch(`/api/productos/${editandoId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-            } else {
-                res = await fetch('/api/productos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-            }
+            let res = editandoId 
+                ? await fetch(`/api/productos/${editandoId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) })
+                : await fetch('/api/productos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
 
             if (res.ok) { 
                 alert(editandoId ? "✅ Joya actualizada." : "✅ ¡Registrado con éxito!"); 
-                
                 if(!editandoId) {
-                    const hora = new Date().toLocaleTimeString();
-                    historialIngresos.push({ ...payload, hora });
+                    historialIngresos.push({ ...payload, hora: new Date().toLocaleTimeString() });
                     actualizarHistorialUI();
-                    
-                    document.getElementById('nombre').value = "";
-                    document.getElementById('stock').value = "";
-                    document.getElementById('fotos-joya').value = "";
+                    document.getElementById('nombre').value = ""; document.getElementById('stock').value = ""; document.getElementById('fotos-joya').value = "";
                     sugerirCodigo(true); 
-                } else {
-                    showSection('inventory', document.querySelectorAll('.nav-item')[1]);
-                }
+                } else { showSection('inventory', document.querySelectorAll('.nav-item')[1]); }
                 cargar(); 
-            } else {
-                alert("Error al registrar. ¿Código duplicado?");
-            }
+            } else { alert("Error al registrar. ¿Código duplicado?"); }
         } catch (e) { alert("Error de red con el servidor."); } 
         finally { btn.disabled = false; btn.innerText = "💾 GUARDAR EN INVENTARIO Y GENERAR ETIQUETA"; }
     }
@@ -658,7 +684,45 @@
         }
     }
 
-    // --- MÓDULO DE CAMPAÑAS PUBLICITARIAS ---
+    // --- MÓDULO DE PUBLICIDAD MULTIMEDIA Y PREVIEWS ---
+    
+    // Función de subida "Auto" de Cloudinary: Detecta si es video, gif o imagen.
+    async function subirMediaACloudinary(file) {
+        const formData = new FormData();
+        formData.append("file", file); 
+        formData.append("upload_preset", UPLOAD_PRESET);
+        try {
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData });
+            const datos = await res.json();
+            return datos.secure_url || null; 
+        } catch (e) { return null; }
+    }
+
+    function renderMediaPreview(url, containerId) {
+        const container = document.getElementById(containerId);
+        if(!url) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+        if(url.match(/\.(mp4|webm|ogg)$/i)) {
+            container.innerHTML = `<video src="${url}" controls autoplay muted loop style="max-width:100%; max-height:200px; border-radius:8px;"></video>`;
+        } else {
+            container.innerHTML = `<img src="${url}" style="max-width:100%; max-height:200px; border-radius:8px; object-fit:contain;">`;
+        }
+    }
+
+    function setupFilePreview(inputId, previewContainerId) {
+        document.getElementById(inputId).addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const localUrl = URL.createObjectURL(file);
+                renderMediaPreview(localUrl, previewContainerId);
+            }
+        });
+    }
+
+    setupFilePreview('media-cortinilla', 'preview-cortinilla');
+    setupFilePreview('media-pub1', 'preview-pub1');
+    setupFilePreview('media-pub2', 'preview-pub2');
+
     async function cargarCampanas() {
         try {
             const res = await fetch('/api/campanas');
@@ -667,26 +731,52 @@
                 document.getElementById('campanaTexto').value = data.texto || '';
                 document.getElementById('campanaActiva').value = data.activa ? 'true' : 'false';
                 document.getElementById('campanaDescuento').value = data.descuento || 0;
+                
+                document.getElementById('url-cortinilla').value = data.cortinilla || '';
+                renderMediaPreview(data.cortinilla, 'preview-cortinilla');
+
+                document.getElementById('url-pub1').value = data.pub1_media || '';
+                document.getElementById('link-pub1').value = data.pub1_link || '';
+                renderMediaPreview(data.pub1_media, 'preview-pub1');
+
+                document.getElementById('url-pub2').value = data.pub2_media || '';
+                document.getElementById('link-pub2').value = data.pub2_link || '';
+                renderMediaPreview(data.pub2_media, 'preview-pub2');
             }
-        } catch (err) {
-            console.error('Error al obtener la campaña:', err);
-        }
+        } catch (err) { console.error('Error al obtener la publicidad:', err); }
     }
 
     document.getElementById('formCampanas')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = e.target.querySelector('button');
         const originalText = btn.innerText;
-        btn.innerText = "⏳ GUARDANDO...";
+        btn.innerText = "⏳ SUBIENDO ARCHIVOS Y GUARDANDO...";
         btn.disabled = true;
 
-        const payload = {
-            texto: document.getElementById('campanaTexto').value,
-            activa: document.getElementById('campanaActiva').value === 'true',
-            descuento: parseInt(document.getElementById('campanaDescuento').value) || 0
-        };
-
         try {
+            const fileCortinilla = document.getElementById('media-cortinilla').files[0];
+            const filePub1 = document.getElementById('media-pub1').files[0];
+            const filePub2 = document.getElementById('media-pub2').files[0];
+
+            let urlCortinilla = document.getElementById('url-cortinilla').value;
+            let urlPub1 = document.getElementById('url-pub1').value;
+            let urlPub2 = document.getElementById('url-pub2').value;
+
+            if (fileCortinilla) urlCortinilla = await subirMediaACloudinary(fileCortinilla);
+            if (filePub1) urlPub1 = await subirMediaACloudinary(filePub1);
+            if (filePub2) urlPub2 = await subirMediaACloudinary(filePub2);
+
+            const payload = {
+                texto: document.getElementById('campanaTexto').value,
+                activa: document.getElementById('campanaActiva').value === 'true',
+                descuento: parseInt(document.getElementById('campanaDescuento').value) || 0,
+                cortinilla: urlCortinilla,
+                pub1_media: urlPub1,
+                pub1_link: document.getElementById('link-pub1').value,
+                pub2_media: urlPub2,
+                pub2_link: document.getElementById('link-pub2').value
+            };
+
             const res = await fetch('/api/campanas', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -694,20 +784,13 @@
             });
             
             if (res.ok) {
-                alert('✅ ¡Campaña publicitaria actualizada y activa!');
-            } else {
-                alert('Hubo un error al guardar la campaña.');
-            }
-        } catch (err) {
-            console.error('Error al guardar campaña:', err);
-            alert('Error de conexión.');
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+                alert('✅ ¡Publicidad web actualizada con éxito!');
+                cargarCampanas(); 
+            } else { alert('Hubo un error al guardar la campaña.'); }
+        } catch (err) { alert('Error de conexión.'); } 
+        finally { btn.innerText = originalText; btn.disabled = false; }
     });
 
-    // Función placeholder para métricas
     function cargarMetricas() {}
 
     cargar();
