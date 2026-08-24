@@ -148,7 +148,7 @@
         </div>
     </div>
 
-    <!-- NUEVA SECCIÓN: REGISTRO DE VENTAS -->
+    <!-- SECCIÓN: REGISTRO DE VENTAS -->
     <div id="sales-section" class="section">
         <div class="card">
             <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center; flex-wrap:wrap; gap:10px;">
@@ -183,6 +183,7 @@
         </div>
     </div>
 
+    <!-- SECCIÓN: INVENTARIO -->
     <div id="inventory" class="section">
         <div class="card">
             <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center; flex-wrap:wrap; gap:10px;">
@@ -195,6 +196,7 @@
         </div>
     </div>
 
+    <!-- SECCIÓN: RECEPCIÓN Y ETIQUETAS -->
     <div id="reception-section" class="section">
         <div class="card">
             <h3 id="form-title">Ingreso de Mercancía y Emisión de Etiquetas</h3>
@@ -286,8 +288,7 @@
         </div>
     </div>
 
-    <!-- Las demás secciones (Traspasos, APIs, Campañas, Métricas) permanecen iguales en diseño, se omiten para brevedad pero mantienen su código JS funcional abajo -->
-    
+    <!-- SECCIONES EN DESARROLLO -->
     <div id="transfers-section" class="section">
         <div class="card">
             <h3>Traspasos de Inventario</h3>
@@ -296,7 +297,35 @@
         </div>
     </div>
     <div id="api-hub" class="section"><div class="card"><h3>Hub Central de Conectores API</h3><p>Módulo de configuración de pasarelas de pago y envíos.</p></div></div>
-    <div id="campaigns-section" class="section"><div class="card"><h3>Gestor de Campañas</h3><p>Módulo de imágenes promocionales.</p></div></div>
+    
+    <!-- NUEVA SECCIÓN RESTAURADA: CAMPAÑAS PUBLICITARIAS -->
+    <div id="campaigns-section" class="section">
+        <div class="card">
+            <h3>📢 Gestión de Campañas Publicitarias</h3>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">Configura el banner promocional que aparecerá en la página web para tus clientes.</p>
+            <form id="formCampanas">
+                <div style="margin-bottom:15px;">
+                    <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Texto del Banner Promocional:</label>
+                    <input type="text" id="campanaTexto" placeholder="Ej: 20% OFF en toda la tienda este fin de semana" required>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Estado de la Campaña:</label>
+                        <select id="campanaActiva">
+                            <option value="true">Activa (Visible en la tienda)</option>
+                            <option value="false">Inactiva</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;">Descuento General Aplicable (%):</label>
+                        <input type="number" id="campanaDescuento" min="0" max="100" placeholder="Ej: 15">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-gold" style="width:100%; padding:15px; margin-top:15px; font-size:16px;">🚀 GUARDAR CONFIGURACIÓN DE CAMPAÑA</button>
+            </form>
+        </div>
+    </div>
+    
     <div id="metrics-section" class="section"><div class="card"><h3>Métricas de Desempeño</h3><p>Estadísticas visuales.</p></div></div>
 
 </div>
@@ -378,7 +407,6 @@
     // --- REGISTRO DE VENTAS Y GANANCIAS ---
     async function cargarVentas() {
         try {
-            // Asume que tu servidor tiene la ruta GET /api/ventas configurada
             const res = await fetch('/api/ventas');
             if(res.ok) {
                 ventasHistorial = await res.json();
@@ -404,10 +432,8 @@
             const precio = parseFloat(v.precio_venta || 0);
             const cant = parseInt(v.cantidad || 1);
             
-            // Lógica de Ganancias
             const gananciaBruta = (precio - costo) * cant;
             
-            // Simulación de Ganancia Neta: Descuenta 3.5% si pagó con terminal, sino es igual a la bruta (puedes ajustar esta fórmula a tu negocio)
             let tarifaGateway = 0;
             if(v.tipo_pago && (v.tipo_pago.toLowerCase().includes('terminal') || v.tipo_pago.toLowerCase().includes('tarjeta'))) {
                 tarifaGateway = (precio * cant) * 0.035; 
@@ -434,7 +460,6 @@
     function exportarVentasExcel() {
         if(ventasHistorial.length === 0) return alert("No hay datos de ventas para exportar.");
         
-        // El "\uFEFF" es el BOM de UTF-8 que obliga a Excel a reconocer acentos y 'ñ'
         let csvContent = "\uFEFFFecha,Origen,Codigo SKU,Articulo,Talla,Cantidad,Tipo de Pago,Costo Unitario,Precio Venta Unitario,Ganancia Bruta Total,Ganancia Neta Calculada\n";
         
         ventasHistorial.forEach(v => {
@@ -508,7 +533,7 @@
         
         document.getElementById('codigo').value = prod.codigo;
         document.getElementById('nombre').value = prod.nombre;
-        document.getElementById('costo').value = prod.costo || ""; // Carga el costo
+        document.getElementById('costo').value = prod.costo || "";
         document.getElementById('precio').value = prod.precio;
         document.getElementById('stock').value = prod.stock;
         document.getElementById('gramos').value = prod.gramos || "";
@@ -537,7 +562,7 @@
         
         const codigo = document.getElementById('codigo').value.trim().toUpperCase();
         const nombre = document.getElementById('nombre').value.trim();
-        const costo = parseFloat(document.getElementById('costo').value) || 0; // Se envía al backend
+        const costo = parseFloat(document.getElementById('costo').value) || 0; 
         const precio = parseFloat(document.getElementById('precio').value);
         const stock = parseInt(document.getElementById('stock').value);
         const gramos = parseFloat(document.getElementById('gramos').value) || 0;
@@ -633,8 +658,56 @@
         }
     }
 
-    // Funciones placeholders para módulos en desarrollo
-    function cargarCampanas() {} 
+    // --- MÓDULO DE CAMPAÑAS PUBLICITARIAS ---
+    async function cargarCampanas() {
+        try {
+            const res = await fetch('/api/campanas');
+            const data = await res.json();
+            if (data && Object.keys(data).length > 0) {
+                document.getElementById('campanaTexto').value = data.texto || '';
+                document.getElementById('campanaActiva').value = data.activa ? 'true' : 'false';
+                document.getElementById('campanaDescuento').value = data.descuento || 0;
+            }
+        } catch (err) {
+            console.error('Error al obtener la campaña:', err);
+        }
+    }
+
+    document.getElementById('formCampanas')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ GUARDANDO...";
+        btn.disabled = true;
+
+        const payload = {
+            texto: document.getElementById('campanaTexto').value,
+            activa: document.getElementById('campanaActiva').value === 'true',
+            descuento: parseInt(document.getElementById('campanaDescuento').value) || 0
+        };
+
+        try {
+            const res = await fetch('/api/campanas', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (res.ok) {
+                alert('✅ ¡Campaña publicitaria actualizada y activa!');
+            } else {
+                alert('Hubo un error al guardar la campaña.');
+            }
+        } catch (err) {
+            console.error('Error al guardar campaña:', err);
+            alert('Error de conexión.');
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    // Función placeholder para métricas
     function cargarMetricas() {}
 
     cargar();
