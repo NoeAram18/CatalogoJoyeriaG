@@ -4,107 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gedalia POS | Punto de Venta Profesional</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        :root { --gold: #c5a059; --black: #0f1115; --bg: #f4f6f9; --border: #e2e8f0; --green: #10b981; }
-        * { box-sizing: border-box; }
+        :root { --gold: #c5a059; --black: #0f1115; --bg: #f4f6f9; --border: #e2e8f0; --green: #10b981; --red: #ef4444; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden;}
         
-        .sidebar { width: 250px; background: var(--black); color: white; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;}
-        .nav-item { padding: 14px 16px; border-radius: 10px; cursor: pointer; color: #94a3b8; font-weight: 600; margin-bottom: 5px; transition: 0.2s;}
-        .nav-item.active { background: rgba(197, 160, 89, 0.2); color: var(--gold); }
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--black); color: white; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 10;}
+        .brand-title { color: var(--gold); margin-top: 0; font-size: 24px; font-weight: 700; letter-spacing: 1px; }
+        .nav-item { padding: 16px; border-radius: 12px; cursor: pointer; color: #94a3b8; font-weight: 600; margin-bottom: 8px; transition: all 0.2s ease;}
+        .nav-item.active { background: rgba(197, 160, 89, 0.15); color: var(--gold); }
+        .nav-item:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
         
-        .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding:20px;}
-        .section { display: none; } .section.active { display: block; }
+        /* Main Area */
+        .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 24px;}
+        .section { display: none; height: 100%; } .section.active { display: block; }
         
-        .pos-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; height: 100%;}
-        .search-box { display: flex; gap: 10px; margin-bottom: 15px;}
-        input, select { flex: 1; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; text-transform: uppercase; font-family: inherit;}
-        input:focus, select:focus { border-color: var(--gold); outline: none;}
+        .pos-grid { display: grid; grid-template-columns: 1fr 400px; gap: 24px; height: 100%;}
         
-        .btn-scan { background: var(--black); color: white; border: none; border-radius: 8px; padding: 0 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;}
+        /* Inputs & Buttons */
+        .search-box { display: flex; gap: 12px; margin-bottom: 20px;}
+        input, select { flex: 1; padding: 16px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px; font-family: inherit; transition: border 0.2s;}
+        input:focus, select:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.1);}
+        input.uppercase { text-transform: uppercase; }
         
-        /* Panel del Carrito */
-        .cart-panel { background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; height: calc(100vh - 40px); box-shadow: 0 4px 15px rgba(0,0,0,0.03);}
-        .cart-header { padding: 18px; border-bottom: 1px solid var(--border); font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
-        .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
-        .cart-footer { padding: 20px; background: #f8fafc; border-top: 1px solid var(--border); border-radius: 0 0 12px 12px; }
+        .btn-action { background: var(--black); color: white; border: none; border-radius: 12px; padding: 0 20px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
+        .btn-action:active { transform: scale(0.96); }
+        .btn-gold { background: var(--gold); color: var(--black); }
         
-        .btn-checkout { width: 100%; padding: 18px; background: var(--green); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.2s;}
-        .btn-checkout:hover { background: #059669; }
+        /* Cart Panel */
+        .cart-panel { background: white; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; height: calc(100vh - 48px); box-shadow: 0 10px 30px rgba(0,0,0,0.04);}
+        .cart-header { padding: 20px 24px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 18px; display: flex; justify-content: space-between; align-items: center;}
+        .cart-items { flex: 1; overflow-y: auto; padding: 12px 24px; }
+        .cart-footer { padding: 24px; background: #f8fafc; border-top: 1px solid var(--border); border-radius: 0 0 16px 16px; }
+        
+        .btn-checkout { width: 100%; padding: 18px; background: var(--green); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 16px; transition: 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);}
+        .btn-checkout:active { transform: translateY(2px); }
+        .btn-checkout:disabled { background: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none;}
 
-        .item-row { display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px dashed #e2e8f0; padding-bottom:8px; align-items: center;}
-        .item-qty { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { background: #eee; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .item-row { display:flex; justify-content:space-between; align-items: center; margin-bottom:16px; background: #fff; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .item-qty { display: flex; align-items: center; gap: 12px; background: #f1f5f9; padding: 4px; border-radius: 8px;}
+        .qty-btn { background: white; border: 1px solid #e2e8f0; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-weight: bold; color: var(--black); display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
+        .qty-btn:active { background: #e2e8f0; }
 
-        /* Modal Lector de Cámara Nativo */
-        #qr-reader-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center; backdrop-filter: blur(5px);}
-        #qr-reader-box { background:white; width:95%; max-width:450px; border-radius:16px; padding:20px; text-align:center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);}
-        #reader { width: 100%; border: none !important; }
+        /* Custom Toast Notification */
+        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 14px 24px; border-radius: 30px; color: white; font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideUp 0.3s ease forwards;}
+        .toast.success { background: var(--green); }
+        .toast.error { background: var(--red); }
+        .toast.warning { background: #f59e0b; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        @media (max-width: 800px) {
+        /* Camera Modal Native Feel */
+        #qr-reader-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; backdrop-filter: blur(8px);}
+        #qr-reader-box { background:white; width:90%; max-width:400px; border-radius:20px; padding:24px; text-align:center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);}
+        #reader { width: 100%; border: none !important; border-radius: 12px; overflow: hidden;}
+
+        @media (max-width: 900px) {
             body { flex-direction: column; overflow: auto; height: auto;}
-            .sidebar { width: 100%; height: auto; display: flex; flex-direction: row; padding: 10px; align-items: center;}
-            .nav-item { flex: 1; text-align: center; margin: 0; padding: 10px;}
-            .pos-grid { grid-template-columns: 1fr; }
-            .cart-panel { min-height: 500px; margin-top: 10px;}
+            .sidebar { width: 100%; padding: 16px; flex-direction: row; align-items: center; z-index: 10;}
+            .brand-title { font-size: 20px; margin: 0;}
+            .nav-item { padding: 10px 16px; margin: 0; font-size: 14px;}
+            .pos-grid { grid-template-columns: 1fr; gap: 16px;}
+            .cart-panel { min-height: 600px; height: auto; margin-bottom: 20px;}
+            .main-container { padding: 16px; }
         }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2 style="color:var(--gold); margin-top:0;">GEDALIA POS</h2>
-    <div>
+    <h2 class="brand-title">GEDALIA POS</h2>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
         <div class="nav-item active" onclick="showSection('caja', this)">🛒 Punto de Venta</div>
-        <div class="nav-item" onclick="alert('Dirígete al Master ERP para Corte de Caja y Cierre.')">📊 Corte Diario</div>
+        <div class="nav-item" onclick="mostrarToast('Dirígete al panel Admin para el Corte de Caja.', 'warning')">📊 Corte Diario</div>
     </div>
-    <small style="color: #666; text-align: center;">v3.0 Omni-POS</small>
 </div>
 
 <div class="main-container">
     <div id="caja" class="section active">
         <div class="pos-grid">
             
-            <div>
+            <!-- Panel Izquierdo: Escáner e Info -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
                 <div class="search-box">
-                    <input type="text" id="lector-qr" placeholder="Escanear QR o escribir SKU..." autofocus onkeypress="handleKeyScan(event)">
-                    <button class="btn-scan" onclick="buscarManualmente()">🔍 Buscar</button>
-                    <button class="btn-scan" onclick="abrirCamara()" style="background:var(--gold); color:var(--black);">📷 Celular</button>
+                    <input type="text" id="lector-qr" class="uppercase" placeholder="Escanear QR o escribir SKU..." autofocus onkeypress="handleKeyScan(event)">
+                    <button class="btn-action" onclick="buscarManualmente()">🔍 Buscar</button>
+                    <button class="btn-action btn-gold" onclick="abrirCamara()">📷 Escanear</button>
                 </div>
                 
-                <div style="background:white; border-radius:12px; padding:30px 20px; border:1px solid var(--border); text-align:center; color:#666;">
-                    <h3 style="color:var(--black); margin-top:0;">📡 Conectado al ERP Central</h3>
-                    <p style="font-size: 14px; line-height: 1.6;">El lector de código de barras USB/Bluetooth funciona de forma automática si el cursor está parpadeando en la barra de búsqueda superior.</p>
-                    <p style="font-size: 14px; line-height: 1.6;">Si usas un iPad o Celular Inteligente, presiona el botón dorado <b>"📷 Celular"</b> para activar el escáner láser de cámara nativa.</p>
+                <div style="background:white; border-radius:16px; padding:32px 24px; border:1px solid var(--border); text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                    <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                        <span style="font-size: 24px;">📡</span>
+                    </div>
+                    <h3 style="color:var(--black); margin-top:0; margin-bottom: 12px;">Conexión Activa</h3>
+                    <p style="font-size: 15px; color: #64748b; line-height: 1.6; margin-bottom: 12px;">El lector de pistola funciona automáticamente. Mantén el cursor en la barra de búsqueda.</p>
+                    <p style="font-size: 15px; color: #64748b; line-height: 1.6; margin: 0;">Para celulares o tablets, usa el botón dorado para activar la cámara de forma nativa.</p>
                 </div>
             </div>
 
+            <!-- Panel Derecho: Carrito -->
             <div class="cart-panel">
                 <div class="cart-header">
                     <span>Orden Actual</span>
-                    <button onclick="vaciarCarrito()" style="background:none; border:none; color:var(--red); cursor:pointer; font-weight: 600;">Vaciar 🗑️</button>
+                    <button onclick="vaciarCarrito()" style="background:none; border:none; color:var(--red); cursor:pointer; font-weight: 600; font-size: 14px; padding: 8px; border-radius: 8px;">Vaciar 🗑️</button>
                 </div>
                 
                 <div class="cart-items" id="carrito-compras">
-                    <p style="text-align:center; color:#999; font-size:13px; margin-top:50px;">Añade productos a la orden para cobrar.</p>
+                    <div style="text-align:center; color:#94a3b8; margin-top:60px;">
+                        <span style="font-size: 40px; display: block; margin-bottom: 16px;">🛍️</span>
+                        <p style="font-size: 15px;">Añade productos a la orden para cobrar.</p>
+                    </div>
                 </div>
                 
                 <div class="cart-footer">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="font-size: 18px; color: var(--text-muted);">Total MXN:</span>
-                        <h2 style="margin: 0; font-size: 26px; color: var(--black);">$<span id="total-val">0.00</span></h2>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                        <span style="font-size: 16px; color: #64748b; font-weight: 500;">Total a cobrar:</span>
+                        <h2 style="margin: 0; font-size: 32px; color: var(--black); font-weight: 800;">$<span id="total-val">0.00</span></h2>
                     </div>
                     
-                    <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 5px;">Método de Pago</label>
-                    <select id="metodo-pago">
-                        <option value="Efectivo">💵 Efectivo en Caja</option>
-                        <option value="Terminal">💳 Terminal Bancaria / Clip</option>
-                        <option value="Transferencia">📲 Transferencia SPEI / CoDi</option>
-                    </select>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div>
+                            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Email del Cliente (Recibo)</label>
+                            <input type="email" id="email-cliente" placeholder="ejemplo@correo.com" style="width: 100%; text-transform: lowercase;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px;">Método de Pago</label>
+                            <select id="metodo-pago" style="width: 100%;">
+                                <option value="Efectivo">💵 Efectivo</option>
+                                <option value="Terminal">💳 Terminal / Tarjeta</option>
+                                <option value="Transferencia">📲 Transferencia / CoDi</option>
+                            </select>
+                        </div>
+                    </div>
                     
-                    <button class="btn-checkout" onclick="procesarVenta()">⚡ COBRAR Y EMITIR TICKET</button>
+                    <button class="btn-checkout" id="btn-cobrar" onclick="procesarVenta()">⚡ PROCESAR PAGO</button>
                 </div>
             </div>
 
@@ -112,19 +149,41 @@
     </div>
 </div>
 
+<!-- Modal Lector -->
 <div id="qr-reader-modal">
     <div id="qr-reader-box">
-        <h3 style="margin-top:0; color: var(--black);">Escáner de Etiqueta QR</h3>
-        <p style="font-size:13px; color:#666; margin-bottom:15px;">Apunta la cámara de tu dispositivo hacia la etiqueta térmica de la joya.</p>
+        <h3 style="margin-top:0; margin-bottom: 8px; color: var(--black); font-size: 20px;">Escáner de Joyería</h3>
+        <p style="font-size:14px; color:#64748b; margin-bottom:20px;">Apunta a la etiqueta QR.</p>
         <div id="reader"></div>
-        <button onclick="cerrarCamara()" style="margin-top:15px; width:100%; padding:14px; background:#e2e8f0; color: #333; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cancelar Escaneo</button>
+        <button onclick="cerrarCamara()" style="margin-top:20px; width:100%; padding:16px; background:#f1f5f9; color: #334155; border:none; border-radius:12px; font-weight:700; font-size: 15px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
+
+<div id="toast-container"></div>
 
 <script>
     let carrito = [];
     let totalVenta = 0;
     let html5QrcodeScanner = null;
+
+    // --- SISTEMA DE NOTIFICACIONES TOAST ---
+    function mostrarToast(mensaje, tipo = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${tipo}`;
+        
+        let icono = '✅';
+        if(tipo === 'error') icono = '❌';
+        if(tipo === 'warning') icono = '⚠️';
+
+        toast.innerHTML = `<span>${icono}</span> <span>${mensaje}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideUp 0.3s ease reverse forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
 
     function showSection(id, btn) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -133,7 +192,6 @@
         btn.classList.add('active');
     }
 
-    // --- MANEJO DE ESCÁNER USB / TECLADO ---
     function handleKeyScan(e) {
         if (e.key === 'Enter') buscarManualmente();
     }
@@ -144,58 +202,60 @@
         if(query) consultarProductoAPI(query);
     }
 
-    // --- MANEJO DE CÁMARA DE CELULAR (UI NATIVA ROBUSTA) ---
+    // --- CÁMARA OPTIMIZADA PARA CELULARES ---
     function abrirCamara() {
         document.getElementById('qr-reader-modal').style.display = 'flex';
         
-        // Html5QrcodeScanner provee la UI con botones para cambiar cámara y pedir permisos al usuario
         html5QrcodeScanner = new Html5QrcodeScanner(
             "reader", 
-            { fps: 10, qrbox: {width: 250, height: 250}, rememberLastUsedCamera: true }, 
+            { 
+                fps: 15, 
+                qrbox: {width: 250, height: 250},
+                videoConstraints: { facingMode: "environment" } // Obliga a usar cámara trasera en celulares
+            }, 
             false
         );
         
         html5QrcodeScanner.render(
             (decodedText) => {
-                // Al detectar el QR con éxito
                 cerrarCamara();
                 consultarProductoAPI(decodedText.trim().toUpperCase());
             },
-            (error) => { /* Ignorar errores de frame vacío o lectura parcial */ }
+            (error) => {} // Silenciar errores de lectura de frames
         );
     }
 
     function cerrarCamara() {
         document.getElementById('qr-reader-modal').style.display = 'none';
         if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(error => console.error("Error deteniendo cámara", error));
+            html5QrcodeScanner.clear().catch(e => console.error(e));
         }
     }
 
-    // --- LÓGICA DEL CARRITO Y BASE DE DATOS ---
+    // --- LÓGICA DEL CARRITO ---
     async function consultarProductoAPI(sku) {
         try {
-            // El API en server.js debe hacer UPPER(codigo) y verificar stock > 0
             const res = await fetch(`/api/pos/producto/${encodeURIComponent(sku)}`);
             if (!res.ok) throw new Error();
             const prod = await res.json();
             
             const existente = carrito.find(i => i.codigo === prod.codigo);
             if(existente) { 
-                // Verificar que no se añadan más piezas de las que existen en stock físico
                 if(existente.cantidad < prod.stock) {
                     existente.cantidad++; 
+                    mostrarToast(`Se agregó otra pieza de ${prod.nombre}`);
                 } else {
-                    alert(`⚠️ No puedes agregar más. Solo hay ${prod.stock} piezas de [${sku}] en el inventario.`);
+                    mostrarToast(`Solo hay ${prod.stock} piezas en inventario.`, 'warning');
                 }
             } 
             else { 
                 carrito.push({ id: prod.id, codigo: prod.codigo, nombre: prod.nombre, precio: parseFloat(prod.precio), cantidad: 1, stockMaximo: prod.stock }); 
+                mostrarToast(`Agregado: ${prod.nombre}`);
             }
             
             actualizarCarritoUI();
         } catch (err) {
-            alert(`❌ El código [${sku}] no existe o no tiene stock físico disponible en el inventario central.`);
+            mostrarToast(`El código [${sku}] no existe o no tiene stock.`, 'error');
         }
     }
 
@@ -208,7 +268,7 @@
             } else if (nuevaCant <= item.stockMaximo) {
                 item.cantidad = nuevaCant;
             } else {
-                alert(`Límite de stock físico alcanzado (${item.stockMaximo} pz).`);
+                mostrarToast(`Límite físico alcanzado (${item.stockMaximo} pz).`, 'warning');
             }
         }
         actualizarCarritoUI();
@@ -217,7 +277,11 @@
     function actualizarCarritoUI() {
         const container = document.getElementById('carrito-compras');
         if(carrito.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#999; font-size:13px; margin-top:50px;">Añade productos a la orden para cobrar.</p>';
+            container.innerHTML = `
+                <div style="text-align:center; color:#94a3b8; margin-top:60px;">
+                    <span style="font-size: 40px; display: block; margin-bottom: 16px;">🛍️</span>
+                    <p style="font-size: 15px;">Añade productos a la orden para cobrar.</p>
+                </div>`;
             document.getElementById('total-val').innerText = "0.00";
             return;
         }
@@ -229,39 +293,48 @@
             return `
                 <div class="item-row">
                     <div style="flex:1;">
-                        <b style="font-size:14px;">${item.nombre}</b><br>
-                        <small style="color:#666;">${item.codigo}</small>
+                        <div style="font-size:15px; font-weight:600; color:var(--black); margin-bottom:4px;">${item.nombre}</div>
+                        <div style="color:#64748b; font-size: 13px; font-family: monospace;">SKU: ${item.codigo}</div>
                     </div>
                     <div style="text-align:right;">
-                        <b style="color:var(--gold); font-size:15px;">$${subtotalItem.toFixed(2)}</b><br>
-                        <div class="item-qty" style="justify-content: flex-end; margin-top:4px;">
+                        <div style="color:var(--gold); font-size:16px; font-weight: 700; margin-bottom: 8px;">$${subtotalItem.toLocaleString('es-MX', {minimumFractionDigits: 2})}</div>
+                        <div class="item-qty" style="justify-content: flex-end;">
                             <button class="qty-btn" onclick="cambiarCantidad('${item.codigo}', -1)">-</button>
-                            <span style="font-size:13px; font-weight:bold; min-width:15px; text-align:center;">${item.cantidad}</span>
+                            <span style="font-size:14px; font-weight:700; width:20px; text-align:center;">${item.cantidad}</span>
                             <button class="qty-btn" onclick="cambiarCantidad('${item.codigo}', 1)">+</button>
                         </div>
                     </div>
                 </div>
             `;
         }).join('');
-        document.getElementById('total-val').innerText = totalVenta.toFixed(2);
+        document.getElementById('total-val').innerText = totalVenta.toLocaleString('es-MX', {minimumFractionDigits: 2});
     }
 
     function vaciarCarrito() { 
         carrito = []; 
         actualizarCarritoUI(); 
+        document.getElementById('email-cliente').value = '';
     }
 
-    // --- PROCESAR COBRO Y TICKET TÉRMICO ---
+    // --- PROCESAR VENTA AL BACKEND ---
     async function procesarVenta() {
-        if(carrito.length === 0) return alert("⚠️ Agrega al menos un artículo para poder cobrar.");
+        if(carrito.length === 0) return mostrarToast("Agrega al menos un artículo.", 'warning');
         
         const metodo = document.getElementById('metodo-pago').value;
-        const btnCobrar = document.querySelector('.btn-checkout');
+        const emailCliente = document.getElementById('email-cliente').value.trim();
+        const btnCobrar = document.getElementById('btn-cobrar');
+        
         btnCobrar.disabled = true;
-        btnCobrar.innerText = "⏳ PROCESANDO...";
+        btnCobrar.innerHTML = "⏳ PROCESANDO...";
 
         try {
-            const payload = { carrito: carrito, total: totalVenta, metodoPago: metodo };
+            // Se envía toda la información al server.js, incluyendo el correo
+            const payload = { 
+                carrito: carrito, 
+                total: totalVenta, 
+                metodoPago: metodo,
+                clienteEmail: emailCliente 
+            };
             
             const res = await fetch('/api/pos/vender', { 
                 method: 'POST', 
@@ -271,14 +344,14 @@
 
             if(!res.ok) throw new Error("Error en el servidor");
 
-            alert(`✅ Venta por $${totalVenta.toFixed(2)} registrada exitosamente en ERP.`);
+            mostrarToast(`Venta por $${totalVenta.toLocaleString()} registrada exitosamente.`);
             imprimirTicketTermico(carrito, totalVenta, metodo);
             vaciarCarrito();
         } catch(e) { 
-            alert("❌ Error procesando el cobro con la base de datos."); 
+            mostrarToast("Error de conexión con el servidor central.", 'error'); 
         } finally {
             btnCobrar.disabled = false;
-            btnCobrar.innerText = "⚡ COBRAR Y EMITIR TICKET";
+            btnCobrar.innerHTML = "⚡ PROCESAR PAGO";
         }
     }
 
@@ -299,10 +372,10 @@
                 <div class="header">GEDALIA 925</div>
                 <div>Joyería Fina de Plata</div>
                 <div>Sucursal CDMX</div>
-                <div>${new Date().toLocaleString()}</div>
+                <div>${new Date().toLocaleString('es-MX')}</div>
                 <div class="divider"></div>
                 
-                <div style="text-align:left; margin-bottom:5px; font-weight:bold;">DESCRIPCIÓN / IMPORTE</div>
+                <div style="text-align:left; margin-bottom:5px; font-weight:bold;">CANT. DESCRIPCIÓN / IMPORTE</div>
                 ${items.map(i => `
                     <div class="item-row">
                         <span style="text-align:left;">${i.cantidad}x ${i.codigo}</span>
@@ -316,17 +389,17 @@
                     <span>$${total.toFixed(2)} MXN</span>
                 </div>
                 <div class="item-row" style="margin-top: 4px;">
-                    <span>TIPO DE PAGO:</span>
+                    <span>PAGO:</span>
                     <span>${metodo.toUpperCase()}</span>
                 </div>
                 <div class="divider"></div>
-                <p>¡Gracias por tu compra!</p>
+                <p>¡Gracias por tu preferencia!</p>
                 <p>Garantía de Plata Ley .925<br>Visítanos en gedalia.com</p>
                 <br><br><br>
             </body>
             </html>
         `);
-        setTimeout(() => ticketWindow.print(), 200);
+        setTimeout(() => ticketWindow.print(), 300);
     }
 </script>
 </body>
