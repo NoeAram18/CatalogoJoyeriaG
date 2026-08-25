@@ -114,18 +114,32 @@ async function inicializarBD() {
         // Nueva Tabla: Historial de Ventas
         await pool.query(`
             CREATE TABLE IF NOT EXISTS ventas (
-                id SERIAL PRIMARY KEY,
-                origen VARCHAR(50),
-                codigo VARCHAR(50),
-                nombre_articulo VARCHAR(255),
-                talla VARCHAR(50),
-                cantidad INTEGER,
-                tipo_pago VARCHAR(50),
-                costo DECIMAL(10, 2),
-                precio_venta DECIMAL(10, 2),
-                fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                id SERIAL PRIMARY KEY
             );
         `);
+        // *** FIX CRÍTICO ***
+        // La tabla "ventas" ya existía en tu base de Aiven con un esquema
+        // viejo/incompleto. CREATE TABLE IF NOT EXISTS NO modifica una tabla
+        // que ya existe, así que la columna "origen" (y otras) nunca se
+        // creaban -> "column origen of relation ventas does not exist" en
+        // CADA venta, tanto en POS como en la compra web. Igual que ya se
+        // hace con "productos", migramos con ALTER TABLE ADD COLUMN IF NOT
+        // EXISTS, que sí es seguro de re-ejecutar aunque la columna exista.
+        const columnasVentas = [
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS origen VARCHAR(50);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS codigo VARCHAR(50);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS nombre_articulo VARCHAR(255);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS talla VARCHAR(50);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cantidad INTEGER;`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS tipo_pago VARCHAR(50);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS costo DECIMAL(10, 2);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS precio_venta DECIMAL(10, 2);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_email VARCHAR(255);`
+        ];
+        for (const sql of columnasVentas) {
+            try { await pool.query(sql); } catch (e) { console.error('Migración ventas falló para:', sql, e.message); }
+        }
 
         await pool.query(`CREATE TABLE IF NOT EXISTS configuracion (clave VARCHAR(50) PRIMARY KEY, valor TEXT);`);
         console.log('Gedalia ERP Omnicanal - Conectado a Aiven con éxito 💎');
@@ -179,33 +193,56 @@ app.get('/api/ventas', async (req, res) => {
 });
 
 // VENTA WEB (Página E-commerce / WhatsApp)
+// VENTA WEB (Página E-commerce / WhatsApp) - transaccional: si falla el
+// registro en "ventas", se revierte el descuento de stock. Antes, si el
+// INSERT fallaba (como pasaba por el bug de la columna "origen"), el stock
+// ya se había descontado sin que la venta quedara registrada: el producto
+// terminaba marcado como agotado sin haberse vendido realmente.
 app.post('/api/web/vender', async (req, res) => {
     const { id, codigo, nombre, precio, talla } = req.body;
     if (!id) return res.status(400).json({ error: 'Falta el producto.' });
-    try {
-        const updateRes = await conReintento(() =>
-            pool.query('UPDATE productos SET stock = stock - 1, ventas = ventas + 1 WHERE id = $1 AND stock > 0 RETURNING *', [id])
-        );
 
-        if(updateRes.rows.length === 0) {
+    try {
+        const prod = await conReintento(async () => {
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                const updateRes = await client.query(
+                    'UPDATE productos SET stock = stock - 1, ventas = ventas + 1 WHERE id = $1 AND stock > 0 RETURNING *',
+                    [id]
+                );
+                if (updateRes.rows.length === 0) {
+                    await client.query('ROLLBACK');
+                    return null; // sin stock real, no es error de conexión
+                }
+                const p = updateRes.rows[0];
+                await client.query(
+                    `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                    ['Web', p.codigo, p.nombre, p.talla || '', 1, 'WhatsApp / Acordar', p.costo || 0, precio]
+                );
+                await client.query('COMMIT');
+                return p;
+            } catch (err) {
+                try { await client.query('ROLLBACK'); } catch (e2) {}
+                throw err;
+            } finally {
+                client.release();
+            }
+        });
+
+        if (!prod) {
             return res.status(400).json({ error: 'Lo sentimos, este producto se acaba de agotar.' });
         }
 
-        const prod = updateRes.rows[0];
-        const costoReal = prod.costo || 0;
         const nombreFinal = prod.talla ? `${prod.nombre} (Talla: ${prod.talla})` : prod.nombre;
-
-        // Registrar la venta en el historial
-        await pool.query(
-            `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, 
-            ['Web', prod.codigo, prod.nombre, prod.talla || '', 1, 'WhatsApp / Acordar', costoReal, precio]
-        );
-
         const detallesVenta = [{ cantidad: 1, codigo, nombre: nombreFinal, precio }];
-        await enviarCorreoNotificacion('Página Web (WhatsApp)', detallesVenta, precio, 'Pendiente de cobro');
+        enviarCorreoNotificacion('Página Web (WhatsApp)', detallesVenta, precio, 'Pendiente de cobro');
 
         res.json({ message: 'Venta web reservada con éxito' });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+        console.error('Error al procesar venta web:', err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // VENTA POS (Sucursal Física) - PROTEGIDA CON TRANSACCIÓN SQL + REINTENTO
@@ -287,7 +324,8 @@ const CAMPANAS_DEFAULT = {
     splash: { activo: true, texto: 'NUEVA COLECCIÓN', img: '' },
     hero: { titulo: 'NUEVOS DISEÑOS EXCLUSIVOS', sub: 'Descubre nuestra más reciente colección.', img: '' },
     promo1: { badge: '', titulo: '', sub: '', img: '' },
-    promo2: { badge: '', titulo: '', sub: '', img: '' }
+    promo2: { badge: '', titulo: '', sub: '', img: '' },
+    contacto: { whatsapp: '525534612076', direccion: 'Centro Histórico, Ciudad de México (CDMX)' }
 };
 
 app.get('/api/campanas', async (req, res) => {
