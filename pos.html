@@ -164,7 +164,6 @@
 <script>
     let carrito = [];
     let totalVenta = 0;
-    let html5QrcodeScanner = null;
 
     // --- SISTEMA DE NOTIFICACIONES TOAST ---
     function mostrarToast(mensaje, tipo = 'success') {
@@ -202,33 +201,55 @@
         if(query) consultarProductoAPI(query);
     }
 
-    // --- CÁMARA OPTIMIZADA PARA CELULARES ---
-    function abrirCamara() {
+    // --- CÁMARA: SIEMPRE TRASERA Y EN ALTA RESOLUCIÓN ---
+    // Antes se usaba Html5QrcodeScanner, que dibuja su propio selector de
+    // cámara y en varios dispositivos (sobre todo laptops o Android con
+    // varias cámaras traseras) terminaba abriendo la frontal por defecto,
+    // con baja resolución. Ahora se usa Html5Qrcode directamente: primero
+    // intenta forzar la trasera en HD (facingMode exact), y si el
+    // dispositivo no la soporta exactamente, cae a un segundo intento sin
+    // "exact" en vez de fallar o mostrar la frontal.
+    let html5Qrcode = null;
+
+    async function abrirCamara() {
         document.getElementById('qr-reader-modal').style.display = 'flex';
-        
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
-                fps: 15, 
-                qrbox: {width: 250, height: 250},
-                videoConstraints: { facingMode: "environment" } // Obliga a usar cámara trasera en celulares
-            }, 
-            false
-        );
-        
-        html5QrcodeScanner.render(
-            (decodedText) => {
-                cerrarCamara();
-                consultarProductoAPI(decodedText.trim().toUpperCase());
-            },
-            (error) => {} // Silenciar errores de lectura de frames
-        );
+        html5Qrcode = new Html5Qrcode("reader");
+
+        const configEscaneo = { fps: 15, qrbox: { width: 260, height: 260 } };
+        const alCapturar = (decodedText) => {
+            cerrarCamara();
+            consultarProductoAPI(decodedText.trim().toUpperCase());
+        };
+
+        try {
+            // Intento 1: cámara trasera forzada, en la mejor resolución posible
+            await html5Qrcode.start(
+                { facingMode: { exact: "environment" } },
+                { ...configEscaneo, videoConstraints: { facingMode: { exact: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } } },
+                alCapturar,
+                () => {}
+            );
+        } catch (e1) {
+            try {
+                // Intento 2: algunos dispositivos rechazan "exact" -> se pide
+                // trasera como preferencia (sin exigirlo estrictamente)
+                await html5Qrcode.start(
+                    { facingMode: "environment" },
+                    { ...configEscaneo, videoConstraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+                    alCapturar,
+                    () => {}
+                );
+            } catch (e2) {
+                mostrarToast("No se pudo acceder a la cámara trasera de este dispositivo.", 'error');
+                document.getElementById('qr-reader-modal').style.display = 'none';
+            }
+        }
     }
 
     function cerrarCamara() {
         document.getElementById('qr-reader-modal').style.display = 'none';
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(e => console.error(e));
+        if (html5Qrcode) {
+            html5Qrcode.stop().then(() => html5Qrcode.clear()).catch(e => console.error(e));
         }
     }
 
