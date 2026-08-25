@@ -271,6 +271,13 @@
                     <div class="img-input-group">
                         <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">3. Fotografías de la Joya (Puedes elegir hasta 4 a la vez):</label>
                         <input type="file" id="fotos-joya" accept="image/*" multiple>
+                        <div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
+                            <div style="flex:1; height:1px; background:#e5e5e5;"></div>
+                            <span style="font-size:11px; color:#999;">O USA LA CÁMARA WEB</span>
+                            <div style="flex:1; height:1px; background:#e5e5e5;"></div>
+                        </div>
+                        <button type="button" class="btn btn-outline" style="width:100%;" onclick="abrirCamaraAdmin()">📷 Tomar 4 fotos con cámara web (4K) y quitar fondo</button>
+                        <div id="fotos-camara-listas" style="margin-top:10px;"></div>
                     </div>
 
                     <button id="btn-save" class="btn btn-gold" style="width:100%; padding: 15px; font-size:16px;" onclick="guardarProducto()">
@@ -332,6 +339,21 @@
     <div id="qr-code-hidden"></div>
     <p id="niimbot-sku"></p>
     <p id="niimbot-precio"></p>
+</div>
+
+<!-- Modal de captura profesional: cámara web 4K + quitar fondo automático -->
+<div id="camara-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:9999; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+    <div style="background:white; border-radius:16px; padding:24px; width:100%; max-width:540px; text-align:center; box-sizing:border-box;">
+        <h3 style="margin-top:0; color:var(--black);">Captura Profesional de Catálogo</h3>
+        <p style="font-size:13px; color:#666; margin-bottom:16px;">Coloca la pieza sobre un fondo uniforme y toma 4 ángulos. El fondo se reemplazará por blanco automáticamente.</p>
+        <video id="video-camara-admin" autoplay playsinline style="width:100%; border-radius:12px; background:#000; max-height:340px; object-fit:contain;"></video>
+        <div id="miniaturas-captura" style="display:flex; gap:8px; margin-top:14px; justify-content:center; min-height:64px;"></div>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+            <button type="button" class="btn btn-gold" style="flex:1;" onclick="capturarFotoAdmin()" id="btn-capturar-foto">📸 Capturar (0/4)</button>
+            <button type="button" class="btn" style="flex:1; background:#f1f5f9; color:#334155;" onclick="cerrarCamaraAdmin()">Cancelar</button>
+        </div>
+        <button type="button" class="btn btn-green" style="width:100%; margin-top:10px; display:none;" id="btn-usar-fotos" onclick="procesarFotosCapturadas()">✅ Usar estas 4 fotos (quitar fondo y subir)</button>
+    </div>
 </div>
 
 <script>
@@ -523,6 +545,7 @@
 
     function prepareNew(element) {
         editandoId = null; imagenesExistentes = [];
+        fotosListoParaGuardar = []; mostrarFotosCamaraListas();
         document.getElementById('form-title').innerText = "Ingreso de Mercancía y Emisión de Etiquetas";
         document.getElementById('history-container').style.display = "block";
         ['codigo', 'nombre', 'costo', 'precio', 'stock', 'gramos', 'descuento', 'f-talla', 'fotos-joya'].forEach(id => {
@@ -537,6 +560,7 @@
         const prod = productos.find(p => p.id === id);
         if(!prod) return;
         editandoId = id; imagenesExistentes = prod.imagenes || [];
+        fotosListoParaGuardar = []; mostrarFotosCamaraListas();
         document.getElementById('form-title').innerText = `✏️ Editando Joya: ${prod.codigo}`;
         document.getElementById('history-container').style.display = "none";
         
@@ -554,7 +578,7 @@
         showSection('reception-section');
     }
 
-    // Subida nativa de imágenes
+    // Subida nativa de imágenes (acepta tanto File del input como Blob de la cámara)
     async function subirImagenACloudinary(file) {
         const formData = new FormData();
         formData.append("file", file); 
@@ -564,6 +588,121 @@
             const datos = await res.json();
             return datos.secure_url || null; 
         } catch (e) { return null; }
+    }
+
+    // --- CAPTURA PROFESIONAL CON CÁMARA WEB (4 fotos + quitar fondo) ---
+    // Flujo: abre la cámara web instalada en la PC en la mayor resolución
+    // posible (se pide 4K como "ideal"; el navegador entrega lo máximo que
+    // soporte el hardware, sin fallar si no llega a 4K). Cada foto capturada
+    // se manda al backend (/api/imagenes/quitar-fondo, que usa remove.bg) y
+    // el resultado con fondo blanco se sube a Cloudinary igual que las fotos
+    // subidas manualmente. Si remove.bg no está configurado o falla, se sube
+    // la foto original para no bloquear el alta de la pieza.
+    let streamCamaraAdmin = null;
+    let fotosCapturadasAdmin = [];   // dataURLs crudos, antes de procesar
+    let fotosListoParaGuardar = [];  // URLs finales en Cloudinary (ya sin fondo)
+
+    async function abrirCamaraAdmin() {
+        fotosCapturadasAdmin = [];
+        document.getElementById('miniaturas-captura').innerHTML = '';
+        document.getElementById('btn-capturar-foto').innerText = '📸 Capturar (0/4)';
+        document.getElementById('btn-capturar-foto').disabled = false;
+        document.getElementById('btn-usar-fotos').style.display = 'none';
+        document.getElementById('camara-modal').style.display = 'flex';
+        try {
+            streamCamaraAdmin = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 3840 }, height: { ideal: 2160 } },
+                audio: false
+            });
+            document.getElementById('video-camara-admin').srcObject = streamCamaraAdmin;
+        } catch (e) {
+            alert('No se pudo acceder a la cámara web. Revisa que el navegador tenga permiso de cámara.');
+            cerrarCamaraAdmin();
+        }
+    }
+
+    function capturarFotoAdmin() {
+        if (fotosCapturadasAdmin.length >= 4) return;
+        const video = document.getElementById('video-camara-admin');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.92);
+        fotosCapturadasAdmin.push(dataURL);
+
+        const mini = document.getElementById('miniaturas-captura');
+        const img = document.createElement('img');
+        img.src = dataURL;
+        img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid var(--gold);';
+        mini.appendChild(img);
+
+        document.getElementById('btn-capturar-foto').innerText = `📸 Capturar (${fotosCapturadasAdmin.length}/4)`;
+        if (fotosCapturadasAdmin.length >= 4) {
+            document.getElementById('btn-capturar-foto').disabled = true;
+            document.getElementById('btn-usar-fotos').style.display = 'block';
+        }
+    }
+
+    function cerrarCamaraAdmin() {
+        document.getElementById('camara-modal').style.display = 'none';
+        if (streamCamaraAdmin) {
+            streamCamaraAdmin.getTracks().forEach(t => t.stop());
+            streamCamaraAdmin = null;
+        }
+    }
+
+    function dataURLaBlob(dataURL) {
+        const [meta, base64] = dataURL.split(',');
+        const mime = meta.match(/:(.*?);/)[1];
+        const bin = atob(base64);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return new Blob([arr], { type: mime });
+    }
+
+    async function quitarFondoServidor(dataURL) {
+        try {
+            const res = await fetch('/api/imagenes/quitar-fondo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imagen: dataURL })
+            });
+            const data = await res.json();
+            if (res.ok && data.imagen) return data.imagen;
+            console.warn('No se pudo quitar el fondo, se sube la foto original:', data.error);
+            return dataURL;
+        } catch (e) {
+            console.warn('Error de red quitando fondo, se sube la foto original.');
+            return dataURL;
+        }
+    }
+
+    async function procesarFotosCapturadas() {
+        const btn = document.getElementById('btn-usar-fotos');
+        btn.disabled = true;
+        fotosListoParaGuardar = [];
+        for (let i = 0; i < fotosCapturadasAdmin.length; i++) {
+            btn.innerText = `⏳ Quitando fondo (${i + 1}/${fotosCapturadasAdmin.length})...`;
+            const procesada = await quitarFondoServidor(fotosCapturadasAdmin[i]);
+            btn.innerText = `⏳ Subiendo (${i + 1}/${fotosCapturadasAdmin.length})...`;
+            const blob = dataURLaBlob(procesada);
+            const url = await subirImagenACloudinary(blob);
+            if (url) fotosListoParaGuardar.push(url);
+        }
+        btn.disabled = false;
+        btn.innerText = '✅ Usar estas 4 fotos (quitar fondo y subir)';
+        cerrarCamaraAdmin();
+        mostrarFotosCamaraListas();
+    }
+
+    function mostrarFotosCamaraListas() {
+        const box = document.getElementById('fotos-camara-listas');
+        if (!box) return;
+        if (fotosListoParaGuardar.length === 0) { box.innerHTML = ''; return; }
+        box.innerHTML =
+            `<p style="font-size:12px; color:var(--green); font-weight:600; margin:8px 0 6px;">✅ ${fotosListoParaGuardar.length} fotos con fondo blanco listas para guardar.</p>` +
+            `<div style="display:flex; gap:6px;">${fotosListoParaGuardar.map(u => `<img src="${u}" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">`).join('')}</div>`;
     }
 
     async function guardarProducto() {
@@ -586,7 +725,7 @@
         }
 
         const fileInput = document.getElementById('fotos-joya');
-        let urlsNuevas = [];
+        let urlsNuevas = [...fotosListoParaGuardar]; // fotos tomadas con la cámara web, ya sin fondo
         
         if (fileInput.files.length > 0) {
             btn.innerText = "⏳ SUBIENDO IMÁGENES...";
@@ -612,6 +751,7 @@
                     historialIngresos.push({ ...payload, hora: new Date().toLocaleTimeString() });
                     actualizarHistorialUI();
                     document.getElementById('nombre').value = ""; document.getElementById('stock').value = ""; document.getElementById('fotos-joya').value = "";
+                    fotosListoParaGuardar = []; mostrarFotosCamaraListas();
                     sugerirCodigo(true); 
                 } else { showSection('inventory', document.querySelectorAll('.nav-item')[1]); }
                 cargar(); 
