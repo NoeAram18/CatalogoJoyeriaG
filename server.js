@@ -16,41 +16,138 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-async function enviarCorreoNotificacion(origen, detalles, total, metodoPago) {
+// Destinatarios del área de ventas: separado del correo remitente para que
+// puedan llegar a varias personas (gerencia, contabilidad, etc.) sin tocar
+// código. Si no se configura EMAIL_VENTAS, cae de regreso a EMAIL_USER.
+function destinatariosVentas() {
+    const lista = process.env.EMAIL_VENTAS || process.env.EMAIL_USER || '';
+    return lista.split(',').map(e => e.trim()).filter(Boolean).join(',');
+}
+
+// Genera un folio único por transacción (todas las piezas de una misma
+// venta comparten folio) — antes cada línea del carrito se guardaba suelta
+// y no había forma de saber cuántos TICKETS reales se cobraron en el día,
+// solo cuántas líneas de producto. Con el folio, el corte de caja cuenta
+// tickets de verdad, y el correo/ticket impreso quedan con un número de
+// referencia rastreable.
+function generarFolio(prefijo) {
+    return `${prefijo}-${Date.now().toString(36).toUpperCase()}`;
+}
+
+// --- CORREO INTERNO AL ÁREA DE VENTAS (automático en cada venta) ---
+// Incluye todo lo que el área de ventas necesita para reconciliar sin abrir
+// el ERP: folio, piezas totales, costo/precio/ganancia por artículo, stock
+// restante de cada pieza vendida, y el total cobrado.
+async function enviarCorreoVentas(origen, folio, detalles, total, metodoPago) {
     if (!process.env.EMAIL_USER) return console.warn("No hay credenciales de correo configuradas.");
-    
+
+    const totalPiezas = detalles.reduce((acc, i) => acc + parseInt(i.cantidad || 1), 0);
+    const gananciaBrutaTotal = detalles.reduce((acc, i) => {
+        const costo = parseFloat(i.costo || 0);
+        const precio = parseFloat(i.precio || 0);
+        return acc + (precio - costo) * parseInt(i.cantidad || 1);
+    }, 0);
+
     const mailOptions = {
         from: `"Gedalia ERP" <${process.env.EMAIL_USER}>`,
-        to: process.env.EMAIL_USER, // Puedes separarlo con comas si quieres enviar a varios socios
-        subject: `💰 Nueva Venta Confirmada (${origen}) - Gedalia 925`,
+        to: destinatariosVentas(),
+        subject: `💰 Venta ${origen} — Folio ${folio} — $${parseFloat(total).toFixed(2)} MXN`,
         html: `
-            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #c5a059; text-align: center;">Nueva Venta Confirmada</h2>
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 640px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #c5a059; text-align: center; margin-top:0;">Nueva Venta Confirmada</h2>
+                <p><strong>Folio:</strong> ${folio}</p>
                 <p><strong>Origen:</strong> ${origen}</p>
                 <p><strong>Fecha y Hora:</strong> ${new Date().toLocaleString('es-MX', {timeZone: 'America/Mexico_City'})}</p>
                 <p><strong>Método de Pago:</strong> ${metodoPago}</p>
+                <p><strong>Piezas vendidas en este ticket:</strong> ${totalPiezas}</p>
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                <h3 style="margin-top: 0;">Detalles de la compra:</h3>
-                <ul style="list-style: none; padding: 0;">
-                    ${detalles.map(i => `
-                        <li style="margin-bottom: 10px; background: #f9f9f9; padding: 10px; border-radius: 5px;">
-                            <strong>${i.cantidad}x ${i.codigo}</strong> - ${i.nombre} <br>
-                            <span style="color: #888;">Precio unitario pagado: $${parseFloat(i.precio).toFixed(2)}</span>
-                        </li>
-                    `).join('')}
-                </ul>
+                <h3 style="margin-top: 0;">Detalle por artículo:</h3>
+                <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background:#fafafa; text-align:left;">
+                            <th style="padding:8px; border-bottom:1px solid #eee;">SKU</th>
+                            <th style="padding:8px; border-bottom:1px solid #eee;">Artículo</th>
+                            <th style="padding:8px; border-bottom:1px solid #eee;">Talla</th>
+                            <th style="padding:8px; border-bottom:1px solid #eee;">Cant.</th>
+                            <th style="padding:8px; border-bottom:1px solid #eee;">Costo Unit.</th>
+                            <th style="padding:8px; border-bottom:1px solid #eee;">Venta Unit.</th>
+                            <th style="padding:8px; border-bottom:1px solid #eee;">Ganancia</th>
+                            <th style="padding:8px; border-bottom:1px solid #eee;">Stock Restante</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${detalles.map(i => {
+                            const costo = parseFloat(i.costo || 0);
+                            const precio = parseFloat(i.precio || 0);
+                            const cant = parseInt(i.cantidad || 1);
+                            const ganancia = (precio - costo) * cant;
+                            return `
+                            <tr>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4;"><b>${i.codigo}</b></td>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4;">${i.nombre}</td>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4;">${i.talla || '—'}</td>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4;">${cant}</td>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4; color:#d9534f;">$${costo.toFixed(2)}</td>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4;">$${precio.toFixed(2)}</td>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4; color:#28a745; font-weight:bold;">$${ganancia.toFixed(2)}</td>
+                                <td style="padding:8px; border-bottom:1px solid #f4f4f4;">${i.stockRestante !== undefined ? i.stockRestante : '—'}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                <h2 style="text-align: right; color: #0a0a0a;">Total: $${parseFloat(total).toFixed(2)} MXN</h2>
+                <p style="text-align:right; margin: 4px 0; color:#28a745;"><strong>Ganancia bruta del ticket:</strong> $${gananciaBrutaTotal.toFixed(2)} MXN</p>
+                <h2 style="text-align: right; color: #0a0a0a; margin: 4px 0;">Total cobrado: $${parseFloat(total).toFixed(2)} MXN</h2>
             </div>
         `
     };
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`✉️ Correo de venta enviado con éxito (${origen}).`);
+        console.log(`✉️ Correo interno de venta enviado (${origen} — ${folio}).`);
     } catch (error) {
-        // Solo logueamos el error, no interrumpimos la venta al cliente por un fallo del correo
-        console.error("⚠️ Error al enviar el correo de venta:", error);
+        console.error("⚠️ Error al enviar el correo interno de venta:", error);
+    }
+}
+
+// --- RECIBO AL CLIENTE (opcional, si dejó su correo) ---
+// No expone costos ni ganancia — solo lo que le corresponde ver a un
+// cliente: qué compró, cuánto pagó, y su folio de referencia.
+async function enviarReciboCliente(correoCliente, origen, folio, detalles, total, metodoPago) {
+    if (!process.env.EMAIL_USER || !correoCliente) return;
+
+    const mailOptions = {
+        from: `"Gedalia 925" <${process.env.EMAIL_USER}>`,
+        to: correoCliente,
+        subject: `💎 Tu recibo de compra Gedalia — Folio ${folio}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 25px; border-radius: 10px;">
+                <h2 style="color: #c5a059; text-align: center; margin-top:0;">¡Gracias por tu compra!</h2>
+                <p style="text-align:center; color:#666;">Gedalia — Joyería Fina de Plata Ley 925</p>
+                <p><strong>Folio:</strong> ${folio}</p>
+                <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-MX', {timeZone: 'America/Mexico_City'})}</p>
+                <p><strong>Método de pago:</strong> ${metodoPago}</p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <ul style="list-style: none; padding: 0;">
+                    ${detalles.map(i => `
+                        <li style="margin-bottom: 10px; background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                            <strong>${i.cantidad}x ${i.nombre}</strong> ${i.talla ? `(Talla: ${i.talla})` : ''}<br>
+                            <span style="color: #888;">$${parseFloat(i.precio).toFixed(2)} c/u</span>
+                        </li>
+                    `).join('')}
+                </ul>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <h2 style="text-align: right; color: #0a0a0a;">Total: $${parseFloat(total).toFixed(2)} MXN</h2>
+                <p style="font-size:12px; color:#999; text-align:center; margin-top:30px;">Garantía de Plata Ley .925 · Conserva este correo como tu comprobante.</p>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✉️ Recibo enviado al cliente (${correoCliente}).`);
+    } catch (error) {
+        console.error("⚠️ Error al enviar recibo al cliente:", error);
     }
 }
 
@@ -135,7 +232,8 @@ async function inicializarBD() {
             `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS costo DECIMAL(10, 2);`,
             `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS precio_venta DECIMAL(10, 2);`,
             `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`,
-            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_email VARCHAR(255);`
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_email VARCHAR(255);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS folio VARCHAR(60);`
         ];
         for (const sql of columnasVentas) {
             try { await pool.query(sql); } catch (e) { console.error('Migración ventas falló para:', sql, e.message); }
@@ -199,8 +297,10 @@ app.get('/api/ventas', async (req, res) => {
 // ya se había descontado sin que la venta quedara registrada: el producto
 // terminaba marcado como agotado sin haberse vendido realmente.
 app.post('/api/web/vender', async (req, res) => {
-    const { id, codigo, nombre, precio, talla } = req.body;
+    const { id, codigo, nombre, precio, talla, clienteEmail } = req.body;
     if (!id) return res.status(400).json({ error: 'Falta el producto.' });
+
+    const folio = generarFolio('WEB');
 
     try {
         const prod = await conReintento(async () => {
@@ -217,8 +317,8 @@ app.post('/api/web/vender', async (req, res) => {
                 }
                 const p = updateRes.rows[0];
                 await client.query(
-                    `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                    ['Web', p.codigo, p.nombre, p.talla || '', 1, 'WhatsApp / Acordar', p.costo || 0, precio]
+                    `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta, cliente_email, folio) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                    ['Web', p.codigo, p.nombre, p.talla || '', 1, 'WhatsApp / Acordar', p.costo || 0, precio, clienteEmail || null, folio]
                 );
                 await client.query('COMMIT');
                 return p;
@@ -235,10 +335,15 @@ app.post('/api/web/vender', async (req, res) => {
         }
 
         const nombreFinal = prod.talla ? `${prod.nombre} (Talla: ${prod.talla})` : prod.nombre;
-        const detallesVenta = [{ cantidad: 1, codigo, nombre: nombreFinal, precio }];
-        enviarCorreoNotificacion('Página Web (WhatsApp)', detallesVenta, precio, 'Pendiente de cobro');
+        const detallesVenta = [{
+            codigo, nombre: nombreFinal, talla: prod.talla || '',
+            cantidad: 1, costo: prod.costo || 0, precio, stockRestante: prod.stock
+        }];
 
-        res.json({ message: 'Venta web reservada con éxito' });
+        enviarCorreoVentas('Página Web (WhatsApp)', folio, detallesVenta, precio, 'Pendiente de cobro');
+        if (clienteEmail) enviarReciboCliente(clienteEmail, 'Página Web', folio, detallesVenta, precio, 'Pendiente de cobro');
+
+        res.json({ message: 'Venta web reservada con éxito', folio });
     } catch (err) {
         console.error('Error al procesar venta web:', err.message);
         res.status(500).json({ error: err.message });
@@ -247,7 +352,7 @@ app.post('/api/web/vender', async (req, res) => {
 
 // VENTA POS (Sucursal Física) - PROTEGIDA CON TRANSACCIÓN SQL + REINTENTO
 app.post('/api/pos/vender', async (req, res) => {
-    const { carrito, total, metodoPago } = req.body;
+    const { carrito, total, metodoPago, clienteEmail } = req.body;
 
     if (!Array.isArray(carrito) || carrito.length === 0) {
         return res.status(400).json({ error: 'El carrito está vacío.' });
@@ -256,11 +361,15 @@ app.post('/api/pos/vender', async (req, res) => {
         return res.status(400).json({ error: 'Falta el método de pago.' });
     }
 
+    const folio = generarFolio('POS');
+    const detallesParaCorreo = []; // se llena con datos reales de BD (costo, stock restante)
+
     try {
         const resultado = await conReintento(async () => {
             const client = await pool.connect();
             try {
                 await client.query('BEGIN'); // Inicia transacción
+                detallesParaCorreo.length = 0; // limpiar si este es un reintento
 
                 for (let item of carrito) {
                     const upRes = await client.query(
@@ -276,9 +385,15 @@ app.post('/api/pos/vender', async (req, res) => {
                     const costoReal = prod.costo || 0;
 
                     await client.query(
-                        `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                        ['POS', prod.codigo, prod.nombre, prod.talla || '', item.cantidad, metodoPago, costoReal, item.precio]
+                        `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta, cliente_email, folio) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                        ['POS', prod.codigo, prod.nombre, prod.talla || '', item.cantidad, metodoPago, costoReal, item.precio, clienteEmail || null, folio]
                     );
+
+                    detallesParaCorreo.push({
+                        codigo: prod.codigo, nombre: prod.nombre, talla: prod.talla || '',
+                        cantidad: item.cantidad, costo: costoReal, precio: item.precio,
+                        stockRestante: prod.stock
+                    });
                 }
 
                 await client.query('COMMIT');
@@ -293,8 +408,9 @@ app.post('/api/pos/vender', async (req, res) => {
 
         if (resultado) {
             // El correo nunca debe tumbar la venta; ya está protegido internamente.
-            enviarCorreoNotificacion('Sucursal POS', carrito, total, metodoPago);
-            res.json({ message: 'Venta registrada con éxito' });
+            enviarCorreoVentas('Sucursal POS', folio, detallesParaCorreo, total, metodoPago);
+            if (clienteEmail) enviarReciboCliente(clienteEmail, 'Sucursal POS', folio, detallesParaCorreo, total, metodoPago);
+            res.json({ message: 'Venta registrada con éxito', folio });
         }
     } catch (err) {
         console.error('Error al procesar venta POS:', err.message);
