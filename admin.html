@@ -116,6 +116,7 @@
         <div class="nav-item" onclick="showSection('inventory', this)">💎 Inventario Central y Stock</div>
         <div class="nav-item" onclick="prepareNew(this)">📥 Recepción y Alta de Joyas</div>
         <div class="nav-item" onclick="cargarVentas(); showSection('sales-section', this)">💸 Registro de Ventas</div>
+        <div class="nav-item" onclick="cargarCorteDiario(); showSection('corte-section', this)">🧾 Corte de Caja Diario</div>
         <div class="nav-item" onclick="showSection('transfers-section', this)">🚚 Traspasos entre Sucursales</div>
         <div class="nav-item" onclick="showSection('api-hub', this)">🔌 Hub de APIs (Envíos/SAT)</div>
         <!-- Enlace actualizado para abrir la nueva ventana de publicidad en otra pestaña -->
@@ -178,6 +179,29 @@
                     <tbody id="tbody-ventas">
                         <tr><td colspan="10" style="text-align:center;">Cargando historial de ventas...</td></tr>
                     </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: CORTE DE CAJA DIARIO -->
+    <div id="corte-section" class="section">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h3>Corte de Caja — Sucursal Física (Hoy)</h3>
+                    <p style="font-size:13px; color:#666; margin:0;">Total vendido en POS desde las 00:00 hrs, desglosado por método de pago.</p>
+                </div>
+                <button class="btn btn-gold" onclick="cargarCorteDiario()">🔄 Actualizar</button>
+            </div>
+            <div id="corte-total-box" style="background:#fdf6e3; border:1px solid var(--gold); border-radius:12px; padding:20px; margin-bottom:20px; text-align:center;">
+                <small style="color:#888; text-transform:uppercase; letter-spacing:1px;">Total del día</small>
+                <div style="font-size:36px; font-weight:800; color:var(--black);" id="corte-total-general">$0.00 MXN</div>
+            </div>
+            <div class="table-responsive">
+                <table id="tabla-corte">
+                    <thead><tr><th>Método de Pago</th><th>Transacciones</th><th>Piezas</th><th>Total</th></tr></thead>
+                    <tbody id="tbody-corte"><tr><td colspan="4" style="text-align:center;">Cargando corte de caja...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -349,6 +373,7 @@
             <tbody>${lista.map(p => {
                 let tags = p.publicado ? '<span class="badge badge-web">Web+POS</span>' : '<span class="badge badge-pos">Solo POS</span>';
                 if(p.descuento > 0) tags += `<span class="badge badge-desc">-${p.descuento}%</span>`;
+                if(p.stock > 0 && p.stock <= 2) tags += `<span class="badge" style="background:#fff3cd; color:#856404;">⚠️ Stock bajo</span>`;
                 let costoF = parseFloat(p.costo || 0).toFixed(2);
                 let precioF = parseFloat(p.precio || 0).toFixed(2);
                 
@@ -451,16 +476,34 @@
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
-    // --- MÓDULO DE RECEPCIÓN (AUTO-SKU Y ETIQUETAS) ---
+    // --- MÓDULO DE RECEPCIÓN (AUTO-SKU BASADO EN DATOS REALES) ---
+    // Antes el sufijo era un número aleatorio de 4 dígitos, lo que a veces
+    // generaba códigos duplicados (el error "¿Código duplicado?" del guardado).
+    // Ahora el consecutivo se calcula contando cuántas piezas ya existen con
+    // el mismo prefijo (tipo + piedra + talla) en el inventario real cargado
+    // desde la BD, así el código queda secuencial y predecible: AN-SP-001,
+    // AN-SP-002... y ligado a los propios datos que el usuario ya capturó.
     function sugerirCodigo(forzarRandom = false) {
         if (editandoId && !forzarRandom) return;
         const tipo = document.getElementById('f-tipo').value;
         const piedras = document.getElementById('f-piedras').value;
         const talla = document.getElementById('f-talla').value.trim();
-        let codigoFinal = `${tipo}-${piedras}`;
-        if(talla !== "") codigoFinal += `-${talla}`;
-        if(forzarRandom || document.getElementById('codigo').value === "") {
-            codigoFinal += `-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        let prefijo = `${tipo}-${piedras}`;
+        if (talla !== "") prefijo += `-${talla.toUpperCase().replace(/\s+/g, '')}`;
+
+        if (forzarRandom || document.getElementById('codigo').value === "") {
+            const existentes = productos.filter(p => (p.codigo || '').toUpperCase().startsWith(prefijo.toUpperCase()));
+            let consecutivo = existentes.length + 1;
+
+            // Evita choques si hubo piezas borradas y el número ya se usó
+            let codigoFinal = `${prefijo}-${String(consecutivo).padStart(3, '0')}`;
+            const codigosExistentes = new Set(productos.map(p => (p.codigo || '').toUpperCase()));
+            while (codigosExistentes.has(codigoFinal.toUpperCase())) {
+                consecutivo++;
+                codigoFinal = `${prefijo}-${String(consecutivo).padStart(3, '0')}`;
+            }
+
             document.getElementById('codigo').value = codigoFinal.toUpperCase();
         }
         actualizarPreviewQRVivo();
@@ -610,6 +653,35 @@
         if (confirm("⚠️ ¿Estás seguro de eliminar esta pieza de manera permanente?")) {
             await fetch(`/api/productos/${id}`, { method: 'DELETE' });
             cargar();
+        }
+    }
+
+    // --- CORTE DE CAJA DIARIO (usa el endpoint /api/pos/corte-diario) ---
+    async function cargarCorteDiario() {
+        const tbody = document.getElementById('tbody-corte');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Cargando corte de caja...</td></tr>';
+        try {
+            const res = await fetch('/api/pos/corte-diario');
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+
+            document.getElementById('corte-total-general').innerText = `$${parseFloat(data.totalGeneral || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN`;
+
+            if (!data.desglose || data.desglose.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Sin ventas registradas hoy en sucursal.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.desglose.map(row => `
+                <tr>
+                    <td><span class="badge" style="background:#eee; color:#333;">${row.tipo_pago || 'N/A'}</span></td>
+                    <td>${row.transacciones}</td>
+                    <td>${row.piezas}</td>
+                    <td style="color:var(--green); font-weight:bold;">$${parseFloat(row.total).toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--red-sale);">Error obteniendo el corte de caja.</td></tr>';
         }
     }
 
