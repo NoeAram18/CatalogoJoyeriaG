@@ -327,32 +327,57 @@
         btnCobrar.disabled = true;
         btnCobrar.innerHTML = "⏳ PROCESANDO...";
 
-        try {
-            // Se envía toda la información al server.js, incluyendo el correo
-            const payload = { 
-                carrito: carrito, 
-                total: totalVenta, 
-                metodoPago: metodo,
-                clienteEmail: emailCliente 
-            };
-            
-            const res = await fetch('/api/pos/vender', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(payload) 
-            });
+        const payload = {
+            carrito: carrito,
+            total: totalVenta,
+            metodoPago: metodo,
+            clienteEmail: emailCliente
+        };
 
-            if(!res.ok) throw new Error("Error en el servidor");
+        // Intenta la venta hasta 2 veces: si el server acaba de reiniciarse
+        // (por ejemplo tras despertar de estar dormido en Render) la primera
+        // llamada puede fallar por milisegundos; un segundo intento casi
+        // siempre pasa. Nunca se reintenta si el server respondió con un
+        // error de negocio real (ej. sin stock) para no duplicar la venta.
+        let intentos = 0;
+        let exito = false;
+        let ultimoError = "No se pudo conectar con el servidor.";
 
+        while (intentos < 2 && !exito) {
+            intentos++;
+            try {
+                const res = await fetch('/api/pos/vender', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    exito = true;
+                    break;
+                }
+
+                // El server respondió (no es problema de red) — es un error
+                // real de negocio (ej. stock insuficiente): no reintentar.
+                const data = await res.json().catch(() => ({}));
+                ultimoError = data.error || "Error al procesar la venta.";
+                break;
+            } catch (e) {
+                ultimoError = "Error de conexión con el servidor central.";
+                if (intentos < 2) await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+        if (exito) {
             mostrarToast(`Venta por $${totalVenta.toLocaleString()} registrada exitosamente.`);
             imprimirTicketTermico(carrito, totalVenta, metodo);
             vaciarCarrito();
-        } catch(e) { 
-            mostrarToast("Error de conexión con el servidor central.", 'error'); 
-        } finally {
-            btnCobrar.disabled = false;
-            btnCobrar.innerHTML = "⚡ PROCESAR PAGO";
+        } else {
+            mostrarToast(ultimoError, 'error');
         }
+
+        btnCobrar.disabled = false;
+        btnCobrar.innerHTML = "⚡ PROCESAR PAGO";
     }
 
     function imprimirTicketTermico(items, total, metodo) {
