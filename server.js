@@ -58,6 +58,7 @@ async function enviarCorreoNotificacion(origen, detalles, total, metodoPago) {
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/pos', (req, res) => res.sendFile(path.join(__dirname, 'pos.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/publicidad', (req, res) => res.sendFile(path.join(__dirname, 'publicidad.html')));
 
 // --- BASE DE DATOS ---
 const pool = new Pool({
