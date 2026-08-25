@@ -308,6 +308,8 @@
         let listaProductos = [];
         let tallaSeleccionadaModal = "";
         let productoModalActual = null;
+        let cintaActiva = false;
+        let cintaTextoActual = '';
 
         function quitarCortinilla() {
             const splash = document.getElementById('splash-screen');
@@ -330,7 +332,7 @@
                     const todosLosProductos = await resProductos.json();
                     listaProductos = todosLosProductos.filter(p => (p.publicado === true || String(p.publicado).toLowerCase() === 'true') && parseInt(p.stock) > 0);
                     renderizarProductos(listaProductos);
-                    renderizarTickerOfertas(listaProductos);
+                    renderizarTicker();
                 } else throw new Error();
             } catch(err) {
                 document.getElementById('contenedor-tienda').innerHTML = "<p style='color:#d9534f; text-align:center; grid-column: 1/-1; letter-spacing: 1px;'>Catálogo en mantenimiento. Regresa en unos minutos.</p>";
@@ -374,20 +376,31 @@
             }).join('');
         }
 
-        function renderizarTickerOfertas(productos) {
+        // Unifica dos fuentes que antes competían por el mismo ticker:
+        // el texto de campaña (cinta) configurado en /publicidad, y las
+        // ofertas automáticas por descuento. Antes la cinta de publicidad
+        // no tenía ningún código que la leyera; ahora se muestra primero
+        // si está activa, seguida de las ofertas si las hay.
+        function renderizarTicker() {
             const contenedorTicker = document.getElementById('contenedor-ticker');
             const tickerItems = document.getElementById('ticker-items');
-            const ofertas = productos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
-            
-            if (ofertas.length === 0) return contenedorTicker.style.display = 'none';
+            const ofertas = listaProductos.filter(p => p.descuento && parseFloat(p.descuento) > 0);
 
-            contenedorTicker.style.display = 'block';
-            tickerItems.innerHTML = ofertas.map(prod => {
+            let piezas = [];
+            if (cintaActiva && cintaTextoActual) {
+                piezas.push(`<div class="ticker-item">📢 ${cintaTextoActual}</div>`);
+            }
+            piezas = piezas.concat(ofertas.map(prod => {
                 const imgPrincipal = (prod.imagenes && prod.imagenes.length > 0) ? prod.imagenes[0] : 'https://via.placeholder.com/50';
                 const precioFinal = prod.precio - (prod.precio * (parseFloat(prod.descuento) / 100));
                 return `<div class="ticker-item" onclick="abrirModal(${prod.id})"><img src="${imgPrincipal}">🔥 ¡OFERTA! ${prod.nombre} - ${prod.descuento}% OFF <span class="ticker-price">$${precioFinal.toFixed(2)} MXN</span></div>`;
-            }).join('');
-            tickerItems.innerHTML += tickerItems.innerHTML; 
+            }));
+
+            if (piezas.length === 0) { contenedorTicker.style.display = 'none'; return; }
+
+            contenedorTicker.style.display = 'block';
+            tickerItems.innerHTML = piezas.join('');
+            tickerItems.innerHTML += tickerItems.innerHTML;
         }
 
         function toggleSidebarFiltros() { document.getElementById('filter-sidebar').classList.toggle('active'); document.getElementById('filter-overlay').classList.toggle('active'); }
@@ -410,32 +423,50 @@
             document.getElementById('seccion-promos').style.display = hayFiltros ? "none" : "block";
         }
 
-        // --- COMPLETAMENTE INTEGRADO A LA NUEVA API DE PUBLICIDAD ---
+        // --- INTEGRADO CON EL ESQUEMA ANIDADO REAL QUE GUARDA publicidad.html ---
+        // (antes se leían campos planos como data.heroImg, pero publicidad.html
+        // siempre guardó objetos anidados como data.hero.img -> por eso nunca
+        // se reflejaban los cambios en esta página)
+        let campanaActual = null;
         function aplicarCampanas(data) {
+            campanaActual = data;
+
             // Configuración del Splash Screen
-            if (data.splashActivo) {
-                if(document.getElementById('splash-img') && data.splashImg) document.getElementById('splash-img').src = data.splashImg;
-                if(document.getElementById('splash-txt') && data.splashTexto) document.getElementById('splash-txt').innerText = data.splashTexto;
-            } else { 
-                quitarCortinilla(); 
+            const splash = data.splash || {};
+            if (splash.activo) {
+                if(document.getElementById('splash-img') && splash.img) document.getElementById('splash-img').src = splash.img;
+                if(document.getElementById('splash-txt') && splash.texto) document.getElementById('splash-txt').innerText = splash.texto;
+            } else {
+                quitarCortinilla();
             }
 
-            // Integración Total con el Hero Banner Principal
+            // Cinta / ticker promocional de texto (antes configurable en el admin
+            // pero sin ningún efecto real en la tienda: ahora sí se conecta).
+            const cinta = data.cinta || {};
+            cintaActiva = !!(cinta.activo && cinta.texto);
+            cintaTextoActual = cinta.texto || '';
+
+            // Integración con el Hero Banner Principal
+            const hero = data.hero || {};
             const heroBanner = document.getElementById('banner-nuevos');
-            if(heroBanner && data.heroImg) heroBanner.style.backgroundImage = `linear-gradient(rgba(10,10,10,0.7), rgba(10,10,10,0.7)), url('${data.heroImg}')`;
-            if(document.getElementById('hero-title') && data.heroTitulo) document.getElementById('hero-title').innerText = data.heroTitulo;
-            if(document.getElementById('hero-sub') && data.heroSub) document.getElementById('hero-sub').innerText = data.heroSub;
+            if(heroBanner && hero.img) heroBanner.style.backgroundImage = `linear-gradient(rgba(10,10,10,0.7), rgba(10,10,10,0.7)), url('${hero.img}')`;
+            if(document.getElementById('hero-title') && hero.titulo) document.getElementById('hero-title').innerText = hero.titulo;
+            if(document.getElementById('hero-sub') && hero.sub) document.getElementById('hero-sub').innerText = hero.sub;
 
             // Integración de Promociones Inferiores
-            if(document.getElementById('p1-bg') && data.promo1Img) document.getElementById('p1-bg').src = data.promo1Img;
-            if(document.getElementById('p1-badge')) { document.getElementById('p1-badge').innerText = data.promo1Badge || ""; document.getElementById('p1-badge').style.display = data.promo1Badge ? "inline-block" : "none"; }
-            if(document.getElementById('p1-title') && data.promo1Titulo) document.getElementById('p1-title').innerText = data.promo1Titulo;
-            if(document.getElementById('p1-sub') && data.promo1Sub) document.getElementById('p1-sub').innerText = data.promo1Sub;
-            
-            if(document.getElementById('p2-bg') && data.promo2Img) document.getElementById('p2-bg').src = data.promo2Img;
-            if(document.getElementById('p2-badge')) { document.getElementById('p2-badge').innerText = data.promo2Badge || ""; document.getElementById('p2-badge').style.display = data.promo2Badge ? "inline-block" : "none"; }
-            if(document.getElementById('p2-title') && data.promo2Titulo) document.getElementById('p2-title').innerText = data.promo2Titulo;
-            if(document.getElementById('p2-sub') && data.promo2Sub) document.getElementById('p2-sub').innerText = data.promo2Sub;
+            const promo1 = data.promo1 || {};
+            if(document.getElementById('p1-bg') && promo1.img) document.getElementById('p1-bg').src = promo1.img;
+            if(document.getElementById('p1-badge')) { document.getElementById('p1-badge').innerText = promo1.badge || ""; document.getElementById('p1-badge').style.display = promo1.badge ? "inline-block" : "none"; }
+            if(document.getElementById('p1-title') && promo1.titulo) document.getElementById('p1-title').innerText = promo1.titulo;
+            if(document.getElementById('p1-sub') && promo1.sub) document.getElementById('p1-sub').innerText = promo1.sub;
+
+            const promo2 = data.promo2 || {};
+            if(document.getElementById('p2-bg') && promo2.img) document.getElementById('p2-bg').src = promo2.img;
+            if(document.getElementById('p2-badge')) { document.getElementById('p2-badge').innerText = promo2.badge || ""; document.getElementById('p2-badge').style.display = promo2.badge ? "inline-block" : "none"; }
+            if(document.getElementById('p2-title') && promo2.titulo) document.getElementById('p2-title').innerText = promo2.titulo;
+            if(document.getElementById('p2-sub') && promo2.sub) document.getElementById('p2-sub').innerText = promo2.sub;
+
+            renderizarTicker();
         }
 
         window.abrirModal = function(id) {
