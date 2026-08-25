@@ -267,7 +267,7 @@
                 <p>✉️ contacto@gedalia.com | 📞 Tel / WhatsApp: +52 55 XXXX XXXX</p>
             </div>
             <div class="footer-links">
-                <a href="https://wa.me/5255XXXXXXXXX" target="_blank">Atención por WhatsApp</a>
+                <a href="#" id="footer-whatsapp-link" target="_blank">Atención por WhatsApp</a>
                 <a href="#buscador">Volver Arriba</a>
             </div>
             <div class="footer-credits">
@@ -310,6 +310,7 @@
         let productoModalActual = null;
         let cintaActiva = false;
         let cintaTextoActual = '';
+        let whatsappConfigurado = '525534612076'; // se sobreescribe con /api/campanas
 
         function quitarCortinilla() {
             const splash = document.getElementById('splash-screen');
@@ -446,6 +447,17 @@
             cintaActiva = !!(cinta.activo && cinta.texto);
             cintaTextoActual = cinta.texto || '';
 
+            // Número de WhatsApp centralizado: antes el footer tenía un
+            // placeholder distinto ("5255XXXXXXXXX") al que realmente se
+            // usaba para procesar la compra ("525534612076") -> se
+            // configura una sola vez aquí y se usa en todo el sitio.
+            const contacto = data.contacto || {};
+            if (contacto.whatsapp) {
+                whatsappConfigurado = contacto.whatsapp;
+                const linkFooter = document.getElementById('footer-whatsapp-link');
+                if (linkFooter) linkFooter.href = `https://wa.me/${contacto.whatsapp}`;
+            }
+
             // Integración con el Hero Banner Principal
             const hero = data.hero || {};
             const heroBanner = document.getElementById('banner-nuevos');
@@ -559,7 +571,7 @@
 
                 if(!res.ok) throw new Error("Sin stock");
 
-                const numeroWhatsApp = "525534612076"; 
+                const numeroWhatsApp = whatsappConfigurado;
                 let mensaje = `¡Hola Gedalia! Me interesa comprar la siguiente joya que aparté en su página web:%0A%0A`;
                 mensaje += `💎 *Pieza:* ${prod.nombre}%0A`;
                 mensaje += `🔖 *Código (SKU):* ${prod.codigo}%0A`;
