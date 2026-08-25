@@ -4,7 +4,11 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 
 const app = express();
-app.use(express.json());
+// Render está detrás de un proxy inverso: sin esto, req.ip siempre marca la
+// IP interna del proxy y el anti-fuerza-bruta del login de cajeras (más
+// abajo) terminaría bloqueando a todo mundo junto, o a nadie.
+app.set('trust proxy', true);
+app.use(express.json({ limit: '15mb' })); // 15mb: las fotos de la cámara viajan en base64 en el body
 app.use(express.static(__dirname));
 
 // --- CONFIGURACIÓN DE CORREO ELECTRÓNICO ---
@@ -37,6 +41,73 @@ function destinatariosVentas() {
 // referencia rastreable.
 function generarFolio(prefijo) {
     return `${prefijo}-${Date.now().toString(36).toUpperCase()}`;
+}
+
+// --- WHATSAPP AUTOMÁTICO A LA SUPERVISORA (Meta WhatsApp Cloud API) ---
+// Se usa la API oficial de Meta (no un tercero) porque no requiere librería
+// adicional: basta con hacer un POST a graph.facebook.com con fetch, que ya
+// viene incluido en Node 18+. Variables de entorno necesarias en Render:
+//   WHATSAPP_TOKEN      -> token de acceso de tu app de WhatsApp Business
+//                          (developers.facebook.com > tu app > WhatsApp > API Setup)
+//   WHATSAPP_PHONE_ID   -> "Phone number ID" del número emisor (el de Gedalia)
+//   WHATSAPP_SUPERVISOR -> número de la supervisora en formato E.164 sin "+"
+//                          (ej. 5215534612076)
+// NOTA IMPORTANTE sobre la "ventana de 24 horas": Meta solo permite mensajes
+// de texto libres si la supervisora le escribió al número del negocio en las
+// últimas 24h. Para que esto funcione siempre, pídele a la supervisora que
+// le mande un "Hola" una vez al número de WhatsApp Business de Gedalia (deja
+// la ventana abierta indefinidamente mientras seguido conteste), o crea una
+// plantilla aprobada en Meta y cámbiala aquí por type:"template" si prefieres
+// no depender de eso.
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
+const WHATSAPP_SUPERVISOR = process.env.WHATSAPP_SUPERVISOR;
+
+async function enviarWhatsAppVenta(origen, folio, detalles, total, metodoPago, vendedor) {
+    if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID || !WHATSAPP_SUPERVISOR) {
+        console.warn('📲 WhatsApp no configurado (faltan WHATSAPP_TOKEN / WHATSAPP_PHONE_ID / WHATSAPP_SUPERVISOR). Se omite notificación.');
+        return;
+    }
+
+    const totalPiezas = detalles.reduce((acc, i) => acc + parseInt(i.cantidad || 1), 0);
+    const listaArticulos = detalles
+        .map(i => `• ${i.cantidad}x ${i.nombre} (${i.codigo})${i.talla ? ` — Talla ${i.talla}` : ''} — $${parseFloat(i.precio).toFixed(2)}`)
+        .join('\n');
+
+    const texto =
+        `💎 *Nueva venta — Gedalia*\n\n` +
+        `📍 Origen: ${origen}\n` +
+        `🧾 Folio: ${folio}\n` +
+        `👤 Vendedora: ${vendedor || 'No especificada'}\n` +
+        `💳 Pago: ${metodoPago}\n` +
+        `📦 Piezas: ${totalPiezas}\n\n` +
+        `${listaArticulos}\n\n` +
+        `*Total: $${parseFloat(total).toFixed(2)} MXN*\n` +
+        `🕒 ${new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })}`;
+
+    try {
+        const resp = await fetch(`https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_ID}/messages`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: WHATSAPP_SUPERVISOR,
+                type: 'text',
+                text: { body: texto, preview_url: false }
+            })
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+            console.error('⚠️ WhatsApp rechazó el mensaje (revisa ventana de 24h o el token):', JSON.stringify(data));
+        } else {
+            console.log(`📲 WhatsApp de venta enviado a la supervisora (${origen} — ${folio}).`);
+        }
+    } catch (error) {
+        console.error('⚠️ Error de red enviando WhatsApp:', error.message);
+    }
 }
 
 // --- CORREO INTERNO AL ÁREA DE VENTAS (automático en cada venta) ---
@@ -238,7 +309,8 @@ async function inicializarBD() {
             `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS precio_venta DECIMAL(10, 2);`,
             `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`,
             `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_email VARCHAR(255);`,
-            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS folio VARCHAR(60);`
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS folio VARCHAR(60);`,
+            `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS vendedor VARCHAR(120);`
         ];
         for (const sql of columnasVentas) {
             try { await pool.query(sql); } catch (e) { console.error('Migración ventas falló para:', sql, e.message); }
@@ -249,6 +321,107 @@ async function inicializarBD() {
     } catch (error) { console.error('Error BD:', error); }
 }
 inicializarBD();
+
+// --- AUTENTICACIÓN DE CAJERAS EN EL POS (PIN) ---
+// Antes cualquier persona con la URL del POS podía cobrar sin identificarse
+// y las ventas no quedaban ligadas a nadie. Ahora cada cajera tiene su
+// propio PIN, configurado en la variable de entorno POS_CAJEROS de Render
+// como JSON, por ejemplo:  {"1234":"Ana","5678":"Luisa"}
+// El nombre validado viaja con cada venta (columna "vendedor") y aparece en
+// el correo interno y en el WhatsApp de la supervisora, dando trazabilidad
+// real de quién cobró cada ticket.
+let CAJEROS = null;
+try {
+    CAJEROS = process.env.POS_CAJEROS ? JSON.parse(process.env.POS_CAJEROS) : null;
+} catch (e) {
+    console.error('⚠️ POS_CAJEROS mal formado, debe ser JSON válido. Ej: {"1234":"Ana"}. Usando modo demo.');
+}
+if (!CAJEROS) {
+    CAJEROS = { '0000': 'Vendedora Demo' };
+    console.warn('⚠️ POS_CAJEROS no configurado: usando PIN demo "0000". Configura PINs reales en Render antes de operar en producción.');
+}
+
+// Bloqueo simple anti fuerza-bruta: 5 intentos fallidos por IP -> 2 minutos
+// de bloqueo. No sustituye una autenticación robusta, pero evita que alguien
+// pruebe PINs al azar desde el mismo dispositivo indefinidamente.
+const intentosLogin = new Map();
+function ipBloqueada(ip) {
+    const registro = intentosLogin.get(ip);
+    return !!(registro && registro.bloqueadoHasta && Date.now() < registro.bloqueadoHasta);
+}
+function registrarFallo(ip) {
+    const registro = intentosLogin.get(ip) || { fallos: 0 };
+    registro.fallos++;
+    if (registro.fallos >= 5) {
+        registro.bloqueadoHasta = Date.now() + 2 * 60 * 1000;
+        registro.fallos = 0;
+    }
+    intentosLogin.set(ip, registro);
+}
+function registrarExito(ip) { intentosLogin.delete(ip); }
+
+app.post('/api/pos/login', (req, res) => {
+    const ip = req.ip;
+    if (ipBloqueada(ip)) {
+        return res.status(429).json({ error: 'Demasiados intentos fallidos. Espera 2 minutos e intenta de nuevo.' });
+    }
+    const pin = String((req.body && req.body.pin) || '').trim();
+    const nombre = CAJEROS[pin];
+    if (!nombre) {
+        registrarFallo(ip);
+        return res.status(401).json({ error: 'PIN incorrecto.' });
+    }
+    registrarExito(ip);
+    res.json({ vendedor: nombre });
+});
+
+// --- QUITAR FONDO DE FOTOGRAFÍAS (remove.bg) ---
+// Usado por admin.html cuando se capturan fotos con la cámara web 4K: cada
+// imagen se manda aquí en base64, remove.bg quita el fondo y lo compone
+// sobre un blanco sólido (bg_color=ffffff), listo para catálogo, y
+// regresamos el PNG resultante también en base64. La API key nunca se
+// expone al navegador. Requiere la variable de entorno REMOVEBG_API_KEY
+// (cuenta gratuita disponible en remove.bg/api, con límite mensual de
+// imágenes gratis; si se agota, la app permite seguir subiendo la foto
+// original sin fondo quitado).
+const REMOVEBG_API_KEY = process.env.REMOVEBG_API_KEY;
+
+app.post('/api/imagenes/quitar-fondo', async (req, res) => {
+    if (!REMOVEBG_API_KEY) {
+        return res.status(503).json({ error: 'Servicio de quitar fondo no configurado (falta REMOVEBG_API_KEY en el servidor).' });
+    }
+    const imagen = req.body && req.body.imagen;
+    if (!imagen || typeof imagen !== 'string' || !imagen.startsWith('data:image')) {
+        return res.status(400).json({ error: 'Falta una imagen válida (data URL).' });
+    }
+
+    try {
+        const base64 = imagen.split(',')[1];
+        const formData = new FormData();
+        formData.append('image_file_b64', base64);
+        formData.append('size', 'auto');
+        formData.append('bg_color', 'ffffff'); // fondo blanco sólido, listo para el catálogo
+
+        const resp = await fetch('https://api.remove.bg/v1.0/removebg', {
+            method: 'POST',
+            headers: { 'X-Api-Key': REMOVEBG_API_KEY },
+            body: formData
+        });
+
+        if (!resp.ok) {
+            const errText = await resp.text().catch(() => '');
+            console.error('remove.bg rechazó la imagen:', errText);
+            return res.status(502).json({ error: 'No se pudo quitar el fondo de la imagen. Se puede subir la foto original.' });
+        }
+
+        const buffer = Buffer.from(await resp.arrayBuffer());
+        const resultado = `data:image/png;base64,${buffer.toString('base64')}`;
+        res.json({ imagen: resultado });
+    } catch (error) {
+        console.error('⚠️ Error quitando fondo:', error.message);
+        res.status(500).json({ error: 'Error interno al procesar la imagen.' });
+    }
+});
 
 // --- RUTAS API CATALOGO ---
 app.get('/api/productos', async (req, res) => {
@@ -357,13 +530,16 @@ app.post('/api/web/vender', async (req, res) => {
 
 // VENTA POS (Sucursal Física) - PROTEGIDA CON TRANSACCIÓN SQL + REINTENTO
 app.post('/api/pos/vender', async (req, res) => {
-    const { carrito, total, metodoPago, clienteEmail } = req.body;
+    const { carrito, total, metodoPago, clienteEmail, vendedor } = req.body;
 
     if (!Array.isArray(carrito) || carrito.length === 0) {
         return res.status(400).json({ error: 'El carrito está vacío.' });
     }
     if (!metodoPago) {
         return res.status(400).json({ error: 'Falta el método de pago.' });
+    }
+    if (!vendedor) {
+        return res.status(400).json({ error: 'Sesión de cajera no identificada. Vuelve a iniciar sesión en el POS.' });
     }
 
     const folio = generarFolio('POS');
@@ -390,8 +566,8 @@ app.post('/api/pos/vender', async (req, res) => {
                     const costoReal = prod.costo || 0;
 
                     await client.query(
-                        `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta, cliente_email, folio) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-                        ['POS', prod.codigo, prod.nombre, prod.talla || '', item.cantidad, metodoPago, costoReal, item.precio, clienteEmail || null, folio]
+                        `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta, cliente_email, folio, vendedor) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                        ['POS', prod.codigo, prod.nombre, prod.talla || '', item.cantidad, metodoPago, costoReal, item.precio, clienteEmail || null, folio, vendedor]
                     );
 
                     detallesParaCorreo.push({
@@ -412,8 +588,11 @@ app.post('/api/pos/vender', async (req, res) => {
         });
 
         if (resultado) {
-            // El correo nunca debe tumbar la venta; ya está protegido internamente.
+            // El correo y el WhatsApp nunca deben tumbar la venta; ambos están
+            // protegidos internamente y corren en paralelo, sin bloquear la
+            // respuesta al POS (la cajera no espera a que salgan las notificaciones).
             enviarCorreoVentas('Sucursal POS', folio, detallesParaCorreo, total, metodoPago);
+            enviarWhatsAppVenta('Sucursal POS', folio, detallesParaCorreo, total, metodoPago, vendedor);
             if (clienteEmail) enviarReciboCliente(clienteEmail, 'Sucursal POS', folio, detallesParaCorreo, total, metodoPago);
             res.json({ message: 'Venta registrada con éxito', folio });
         }
