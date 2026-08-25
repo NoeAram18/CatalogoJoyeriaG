@@ -9,10 +9,15 @@ app.use(express.static(__dirname));
 
 // --- CONFIGURACIÓN DE CORREO ELECTRÓNICO ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail', 
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Fuerza el uso de SSL/TLS desde el inicio de la conexión
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS 
+    },
+    tls: {
+        rejectUnauthorized: false // Evita bloqueos de Render por certificados
     }
 });
 
