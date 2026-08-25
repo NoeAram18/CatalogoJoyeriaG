@@ -3,356 +3,619 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gedalia ERP - Panel de Administración</title>
+    <title>Gedalia Master ERP | Cerebro de Operaciones</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { 
             --gold: #c5a059; 
+            --gold-dark: #a37f3e;
             --black: #0a0a0a; 
-            --bg: #f4f7f6;
-            --sidebar-w: 260px;
+            --bg: #f4f7f6; 
+            --red-sale: #d9534f; 
+            --green: #28a745; 
+            --blue: #4a90e2;
+            --purple: #8e44ad;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            background: var(--bg); 
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; background: var(--bg); color: #333; }
         
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--black);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding-top: 20px;
-        }
-
-        .sidebar h2 {
-            text-align: center;
-            color: var(--gold);
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-            font-size: 20px;
-        }
-
-        .nav-item {
-            padding: 15px 25px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 15px;
-            font-weight: 400;
-            border-left: 4px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: #1a1a1a;
-            border-left: 4px solid var(--gold);
-        }
-
-        .nav-item.active {
-            background: #1a1a1a;
-            border-left: 4px solid var(--gold);
-            font-weight: 600;
-        }
-
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            flex: 1;
-            padding: 40px;
-            overflow-y: auto;
-        }
-
-        .section {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- COMPONENTES BÁSICOS --- */
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        h1 { margin-top: 0; font-size: 24px; color: #333; }
+        /* Sidebar */
+        .sidebar { width: 280px; background: var(--black); height: 100vh; color: white; padding: 30px 20px; position: fixed; box-sizing: border-box; overflow-y: auto; z-index: 100;}
+        .sidebar h2 { color: var(--gold); letter-spacing: 2px; font-size: 20px; margin-bottom: 5px; }
+        .sidebar small { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-group { margin-top: 30px; }
+        .nav-item { cursor: pointer; padding: 12px 15px; border-radius: 8px; margin-bottom: 5px; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-size: 14px; color: #ccc; }
+        .nav-item:hover, .nav-item.active-nav { background: rgba(197, 160, 89, 0.15); color: var(--gold); font-weight: 600; }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+        /* Main Layout */
+        .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; min-height: 100vh; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 30px; }
+        .card h3 { margin-top: 0; color: var(--black); font-size: 18px; border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; }
         
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
-
-        th {
-            background: #f9f9f9;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .btn {
-            background: var(--black);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .btn:hover { background: var(--gold); }
+        /* Form Components */
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box; font-family: inherit; font-size: 14px; }
+        input:focus, select:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 0 3px rgba(197,160,89,0.2); }
+        .btn { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-gold { background: var(--gold); color: white; }
+        .btn-gold:hover { background: var(--gold-dark); }
+        .btn-gold:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-green:hover { background: #218838; }
+        .btn-edit { background: var(--blue); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; border:none; cursor:pointer;}
+        .btn-danger { background: var(--red-sale); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; border:none; cursor:pointer;}
+        .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+        .btn-print { background: #f0fdf4; border: 1px solid var(--green); color: var(--green); padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; transition: 0.2s;}
+        .btn-print:hover { background: var(--green); color: white; }
         
-        .btn-danger { background: #e74c3c; }
-        .btn-danger:hover { background: #c0392b; }
+        /* Tables */
+        .table-responsive { overflow-x: auto; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 800px;}
+        th, td { padding: 14px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: middle; }
+        th { background: #fafafa; font-weight: 700; color: #555; text-transform: uppercase; font-size: 11px; }
+        .thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        
+        /* Badges & Status */
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .dot-online { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
+        .dot-offline { background-color: #ccc; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; display: inline-block; margin-left: 5px;}
+        .badge-web { background: #e6f4ea; color: var(--green); }
+        .badge-pos { background: #e8f0fe; color: var(--blue); }
+        .badge-desc { background: #fce8e6; color: var(--red-sale); }
+        .badge-profit { background: #fdf6e3; color: var(--gold-dark); border: 1px solid var(--gold); }
 
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px; color: #555; }
-        input[type="text"], input[type="number"], select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-family: inherit;
+        /* Sections */
+        .section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Multi-branch Operations Grid */
+        .branch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .branch-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #eaeaea; position: relative; }
+        .branch-card.active-branch { border-left: 4px solid var(--green); }
+        .branch-card h4 { margin: 0 0 8px 0; font-size: 15px; color: var(--black); }
+        .branch-stat { font-size: 22px; font-weight: 700; color: var(--gold); margin: 5px 0; }
+
+        /* Formularios y QR */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: start;}
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; align-items: start;}
+        .code-generator-box { background: #fff8eb; padding: 20px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px;}
+        
+        .qr-preview-box { border: 2px dashed #ccc; padding: 15px; border-radius: 10px; text-align: center; background: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 250px;}
+        .sticker-print { background: white; border: 1px solid #000; padding: 10px; width: 40mm; height: 20mm; text-align: center; font-size: 10px; font-family: monospace; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;}
+        .sticker-print img { max-width: 12mm; height: 12mm; margin: 2px auto; }
+        
+        .history-box { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        
+        /* Grid de Integraciones API */
+        .api-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .api-box { background: #fafafa; border: 1px solid #eee; padding: 20px; border-radius: 12px; margin-bottom:15px; }
+        
+        .img-input-group { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; }
+        
+        /* Ocultar elementos al imprimir etiqueta térmica */
+        @media print {
+            body * { visibility: hidden; }
+            #etiqueta-imprimible, #etiqueta-imprimible * { visibility: visible; }
+            #etiqueta-imprimible { display: flex; position: absolute; left: 0; top: 0; margin: 0; padding: 2mm; width: 40mm; height: 20mm; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: monospace; background: white;}
+            #etiqueta-imprimible h5 { margin: 0; font-size: 8px; font-weight: bold; }
+            #etiqueta-imprimible p { margin: 0; font-size: 7px; font-weight: bold;}
+            #qr-code-hidden img { width: 12mm; height: 12mm; margin: 1px auto; }
         }
     </style>
 </head>
 <body>
 
-    <!-- MENÚ LATERAL -->
-    <div class="sidebar">
-        <h2>GEDALIA ERP</h2>
-        <div class="nav-item active" onclick="mostrarSeccion('dashboard')">📊 Dashboard</div>
-        <div class="nav-item" onclick="mostrarSeccion('productos')">📦 Gestión de Productos</div>
-        <div class="nav-item" onclick="mostrarSeccion('pedidos')">🛒 Pedidos Recibidos</div>
-        <div class="nav-item" onclick="mostrarSeccion('inventario')">📋 Inventario y POS</div>
-        
-        <!-- ENLACE EXTERNO AL NUEVO GESTOR DE PUBLICIDAD -->
-        <div class="nav-item" onclick="window.open('/publicidad', '_blank')" style="margin-top: 20px; color: var(--gold);">
-            📢 Gestión de Publicidad ↗
-        </div>
-        
-        <div class="nav-item" onclick="window.open('/', '_blank')" style="margin-top: auto; margin-bottom: 20px;">
-            🌐 Ver Tienda en Vivo
+<div class="sidebar">
+    <h2>GEDALIA ERP</h2>
+    <small>Cerebro Maestro Omnicanal</small>
+    
+    <div class="nav-group">
+        <div class="nav-item active-nav" onclick="showSection('live-monitor', this)">📡 Monitor de Sucursales</div>
+        <div class="nav-item" onclick="showSection('inventory', this)">💎 Inventario Central y Stock</div>
+        <div class="nav-item" onclick="prepareNew(this)">📥 Recepción y Alta de Joyas</div>
+        <div class="nav-item" onclick="cargarVentas(); showSection('sales-section', this)">💸 Registro de Ventas</div>
+        <div class="nav-item" onclick="showSection('transfers-section', this)">🚚 Traspasos entre Sucursales</div>
+        <div class="nav-item" onclick="showSection('api-hub', this)">🔌 Hub de APIs (Envíos/SAT)</div>
+        <!-- Enlace actualizado para abrir la nueva ventana de publicidad en otra pestaña -->
+        <div class="nav-item" onclick="window.open('/publicidad', '_blank')">📢 Gestión de Publicidad ↗</div>
+        <div class="nav-item" onclick="cargarMetricas(); showSection('metrics-section', this)">📊 Métricas Omnicanal</div>
+    </div>
+</div>
+
+<div class="main">
+
+    <div id="live-monitor" class="section active">
+        <div class="card">
+            <h3>Operación en Tiempo Real (Multisucursal)</h3>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">Estado de puntos de venta Gedali POS y Tienda Web en vivo.</p>
+
+            <div class="branch-grid">
+                <div class="branch-card active-branch">
+                    <span class="status-dot dot-online"></span> <small style="color:#666;">EN LÍNEA</small>
+                    <h4>🌐 Tienda Principal (Web)</h4>
+                    <div class="branch-stat" id="stat-web-sales">$0.00 MXN</div>
+                    <small style="color:#888;">Pedidos hoy: <b id="stat-web-orders" style="color:#333;">0</b></small>
+                </div>
+                <div class="branch-card active-branch">
+                    <span class="status-dot dot-online"></span> <small style="color:#666;">POS CONECTADO</small>
+                    <h4>🏪 Sucursal 1 (Matriz CDMX)</h4>
+                    <div class="branch-stat" id="stat-s1-sales">$0.00 MXN</div>
+                    <small style="color:#888;">Tickets emitidos: <b id="stat-s1-tickets" style="color:#333;">0</b></small>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ÁREA PRINCIPAL -->
-    <div class="main-content">
-        
-        <!-- SECCIÓN 1: DASHBOARD -->
-        <div id="dashboard-section" class="section active">
-            <h1>Panel de Control</h1>
-            <div class="card">
-                <p>Bienvenido al Cerebro de Operaciones de Gedalia. Selecciona un módulo en el menú lateral para comenzar a administrar tu tienda.</p>
-                <div style="display: flex; gap: 20px; margin-top: 30px;">
-                    <div style="flex: 1; background: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center;">
-                        <h3 style="margin: 0; color: #555;">Total de Productos</h3>
-                        <p style="font-size: 24px; font-weight: bold; color: var(--gold);" id="dash-prod-count">0</p>
-                    </div>
-                    <div style="flex: 1; background: #f9f9f9; padding: 20px; border-radius: 8px; text-align: center;">
-                        <h3 style="margin: 0; color: #555;">Pedidos Pendientes</h3>
-                        <p style="font-size: 24px; font-weight: bold; color: var(--gold);" id="dash-order-count">0</p>
-                    </div>
+    <!-- SECCIÓN: REGISTRO DE VENTAS -->
+    <div id="sales-section" class="section">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h3>Historial General de Ventas</h3>
+                    <p style="font-size:13px; color:#666; margin:0;">Registro de todas las transacciones POS (Sucursal) y E-commerce (Página Web).</p>
                 </div>
+                <button class="btn btn-green" onclick="exportarVentasExcel()">⬇️ Exportar a Excel (.CSV)</button>
             </div>
-        </div>
-
-        <!-- SECCIÓN 2: PRODUCTOS -->
-        <div id="productos-section" class="section">
-            <h1>Gestión de Productos</h1>
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0;">Inventario Actual</h3>
-                    <button class="btn" onclick="abrirModalProducto()">+ Nuevo Producto</button>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Imagen</th>
-                            <th>Nombre</th>
-                            <th>Precio</th>
-                            <th>Stock</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-productos">
-                        <!-- Llenado dinámico por JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- SECCIÓN 3: PEDIDOS -->
-        <div id="pedidos-section" class="section">
-            <h1>Pedidos Recibidos</h1>
-            <div class="card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID Pedido</th>
-                            <th>Cliente</th>
-                            <th>Total</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-pedidos">
-                        <!-- Llenado dinámico por JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- SECCIÓN 4: INVENTARIO / POS (Placeholder) -->
-        <div id="inventario-section" class="section">
-            <h1>Módulo de Punto de Venta (POS)</h1>
-            <div class="card">
-                <p>Para acceder a la pantalla completa de Punto de Venta para mostrador, haz clic en el siguiente enlace:</p>
-                <button class="btn" onclick="window.open('/pos', '_blank')">Abrir POS ↗</button>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- MODAL PRODUCTO (Ejemplo de estructura) -->
-    <div id="modal-producto" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-        <div style="background: white; padding: 30px; border-radius: 10px; width: 500px; max-width: 90%;">
-            <h2 id="modal-titulo" style="margin-top: 0;">Agregar Producto</h2>
-            <form id="form-producto">
-                <div class="form-group">
-                    <label>Nombre del Producto</label>
-                    <input type="text" id="prod-nombre" required>
-                </div>
-                <div class="form-group" style="display: flex; gap: 15px;">
-                    <div style="flex: 1;">
-                        <label>Precio (MXN)</label>
-                        <input type="number" id="prod-precio" step="0.01" required>
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Stock</label>
-                        <input type="number" id="prod-stock" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Descuento (%)</label>
-                    <input type="number" id="prod-desc" value="0">
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-danger" onclick="cerrarModalProducto()">Cancelar</button>
-                    <button type="submit" class="btn">Guardar Producto</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- SCRIPTS CORE DEL ERP -->
-    <script>
-        // --- 1. NAVEGACIÓN DEL MENÚ ---
-        function mostrarSeccion(idSeccion) {
-            // Ocultar todas las secciones
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-            // Quitar clase active de todos los nav-items
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             
-            // Mostrar la sección seleccionada
-            document.getElementById(idSeccion + '-section').classList.add('active');
-            // Añadir clase active al elemento clicado
-            event.currentTarget.classList.add('active');
-
-            // Refrescar datos según la sección
-            if(idSeccion === 'productos') cargarProductos();
-            if(idSeccion === 'pedidos') cargarPedidos();
-        }
-
-        // --- 2. GESTIÓN DE PRODUCTOS ---
-        async function cargarProductos() {
-            try {
-                const res = await fetch('/api/productos');
-                const productos = await res.json();
-                
-                const tbody = document.getElementById('tabla-productos');
-                tbody.innerHTML = '';
-                
-                document.getElementById('dash-prod-count').innerText = productos.length;
-
-                productos.forEach(p => {
-                    const img = (p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://via.placeholder.com/50';
-                    tbody.innerHTML += `
+            <div class="table-responsive">
+                <table id="lista-ventas">
+                    <thead>
                         <tr>
-                            <td><img src="${img}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
-                            <td>${p.nombre}</td>
-                            <td>$${p.precio.toFixed(2)}</td>
-                            <td>${p.stock}</td>
-                            <td>
-                                <button class="btn" style="padding: 5px 10px; font-size: 12px;">Editar</button>
-                                <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="eliminarProducto(${p.id})">Borrar</button>
-                            </td>
+                            <th>Fecha y Hora</th>
+                            <th>Origen</th>
+                            <th>Código / Artículo</th>
+                            <th>Talla</th>
+                            <th>Cant.</th>
+                            <th>Tipo de Pago</th>
+                            <th>Costo (MXN)</th>
+                            <th>Venta (MXN)</th>
+                            <th>Ganancia Bruta</th>
+                            <th>Ganancia Neta</th>
                         </tr>
-                    `;
-                });
-            } catch(e) {
-                console.error("Error cargando productos:", e);
+                    </thead>
+                    <tbody id="tbody-ventas">
+                        <tr><td colspan="10" style="text-align:center;">Cargando historial de ventas...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: INVENTARIO -->
+    <div id="inventory" class="section">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items: center; flex-wrap:wrap; gap:10px;">
+                <h3>Inventario Maestro Omnicanal</h3>
+                <input type="text" id="admin-search" placeholder="Buscar por código o nombre..." oninput="filtrarAdmin()" style="width:300px; margin:0; border-radius:20px; padding:10px 20px;">
+            </div>
+            <div class="table-responsive">
+                <table id="lista-prods"></table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: RECEPCIÓN Y ETIQUETAS -->
+    <div id="reception-section" class="section">
+        <div class="card">
+            <h3 id="form-title">Ingreso de Mercancía y Emisión de Etiquetas</h3>
+            <p style="font-size:13px; color:#666; margin-bottom:20px;">Registra joyas. El sistema autogenerará el SKU, creará la etiqueta QR para POS y registrará la entrada.</p>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
+                
+                <div>
+                    <div class="code-generator-box">
+                        <p style="margin:0 0 10px 0; font-weight:600; font-size:13px; color:var(--gold-dark);">1. Clasificación y Generación de SKU</p>
+                        <div class="form-row-3">
+                            <select id="f-tipo" onchange="sugerirCodigo()">
+                                <option value="AN">Anillo</option><option value="C">Collar / Cadena</option>
+                                <option value="AR">Arete</option><option value="ARRA">Arracada</option>
+                                <option value="P">Pulsera</option><option value="D">Dije</option><option value="O">Otros</option>
+                            </select>
+                            <select id="f-piedras" onchange="sugerirCodigo()">
+                                <option value="SP">Sin Piedra</option><option value="P">Con Piedras</option>
+                            </select>
+                            <input type="text" id="f-talla" placeholder="Talla (Opcional)" oninput="sugerirCodigo()">
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+                            <input type="text" id="codigo" placeholder="SKU Autogenerado" style="background:#fff; font-weight:bold; margin:0; text-transform:uppercase; border-color:var(--gold);">
+                            <button class="btn btn-gold" style="width:auto; padding:12px 15px; white-space:nowrap;" onclick="sugerirCodigo(true)">Forzar Random</button>
+                        </div>
+                    </div>
+
+                    <p style="margin:0 0 10px 0; font-weight:600; font-size:13px;">2. Detalles Comerciales y Costos</p>
+                    <div class="form-row">
+                        <input type="text" id="nombre" placeholder="Categoría Comercial (Ej. Anillo Solitario Plata)">
+                        <select id="publicado">
+                            <option value="true">🌐 Visibilidad: Web + Tienda POS</option>
+                            <option value="false">🏪 Visibilidad: Exclusivo Tienda POS</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row-3">
+                        <input type="number" id="costo" placeholder="Costo de Compra (MXN)" step="0.01">
+                        <input type="number" id="precio" placeholder="Precio Venta (MXN)" step="0.01">
+                        <input type="number" id="stock" placeholder="Stock Físico / Piezas">
+                    </div>
+
+                    <div class="form-row-3">
+                        <input type="number" id="gramos" placeholder="Peso Unitario (Gramos)" step="0.1">
+                        <input type="number" id="descuento" placeholder="Descuento Promocional %" min="0" max="100">
+                    </div>
+
+                    <div class="img-input-group">
+                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:8px;">3. Fotografías de la Joya (Puedes elegir hasta 4 a la vez):</label>
+                        <input type="file" id="fotos-joya" accept="image/*" multiple>
+                    </div>
+
+                    <button id="btn-save" class="btn btn-gold" style="width:100%; padding: 15px; font-size:16px;" onclick="guardarProducto()">
+                        💾 GUARDAR EN INVENTARIO Y GENERAR ETIQUETA
+                    </button>
+                </div>
+
+                <div>
+                    <h4 style="margin-top:0; color:var(--black);">Vista Previa Etiqueta QR POS</h4>
+                    <div class="qr-preview-box">
+                        <div id="sticker-container" class="sticker-print">
+                            <b style="font-size:8px; display:block; margin-bottom:2px;">GEDALIA 925</b>
+                            <div id="qrcode-box-visual"></div>
+                            <span id="qr-code-text" style="font-weight:bold; display:block; margin-top:2px; font-size:7px;">PLT-PREVIEW</span>
+                            <span id="qr-price-text" style="font-size:7px;">$0.00 MXN</span>
+                        </div>
+                        <p style="font-size:11px; color:#888; margin-top:15px;">Formato Niimbot B1 (40x20mm)</p>
+                        <button class="btn btn-outline" style="width:100%;" onclick="imprimirEtiquetaActual()">🖨️ Imprimir Etiqueta Actual</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="history-box" id="history-container">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h4 style="margin:0; color:var(--gold-dark);">Registro de Ingresos (Sesión Actual)</h4>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr><th>Hora</th><th>SKU</th><th>Descripción</th><th>Cant.</th><th>Costo</th><th>Precio</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="tabla-historial-lotes">
+                            <tr><td colspan="7" style="text-align:center; color:#999;">No hay ingresos registrados en esta sesión.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIONES EN DESARROLLO -->
+    <div id="transfers-section" class="section">
+        <div class="card">
+            <h3>Traspasos de Inventario</h3>
+            <p style="font-size:13px; color:#666;">Mueve piezas entre almacenes.</p>
+            <button class="btn btn-gold" onclick="alert('Módulo de traspaso programado para Fase 2.')">🚚 GENERAR ORDEN</button>
+        </div>
+    </div>
+    <div id="api-hub" class="section"><div class="card"><h3>Hub Central de Conectores API</h3><p>Módulo de configuración de pasarelas de pago y envíos.</p></div></div>
+    
+    <div id="metrics-section" class="section"><div class="card"><h3>Métricas de Desempeño</h3><p>Estadísticas visuales.</p></div></div>
+
+</div>
+
+<!-- Elemento oculto para impresión nativa de QR -->
+<div id="etiqueta-imprimible">
+    <h5>GEDALIA 925</h5>
+    <div id="qr-code-hidden"></div>
+    <p id="niimbot-sku"></p>
+    <p id="niimbot-precio"></p>
+</div>
+
+<script>
+    // Configuración Cloudinary
+    const CLOUD_NAME = "oudq7dcf"; 
+    const UPLOAD_PRESET = "gedalia_preset"; 
+
+    // Estado Global
+    let productos = [];
+    let ventasHistorial = [];
+    let editandoId = null; 
+    let imagenesExistentes = []; 
+    let historialIngresos = []; 
+
+    // --- NAVEGACIÓN Y VISTAS ---
+    function showSection(id, element) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
+        document.getElementById(id).classList.add('active');
+        if(element) element.classList.add('active-nav');
+    }
+
+    // --- CARGA DE INVENTARIO CENTRAL ---
+    async function cargar() {
+        try {
+            const res = await fetch('/api/productos');
+            productos = await res.json();
+            renderInventory(productos);
+        } catch (error) { console.error("Error cargando productos:", error); }
+    }
+
+    function renderInventory(lista) {
+        document.getElementById('lista-prods').innerHTML = `
+            <thead>
+                <tr>
+                    <th>Foto</th><th>Código (SKU)</th><th>Joya / Descripción</th><th>Costo</th><th>Precio Público</th><th>Stock</th><th>Acciones</th><th>Etiqueta POS</th>
+                </tr>
+            </thead>
+            <tbody>${lista.map(p => {
+                let tags = p.publicado ? '<span class="badge badge-web">Web+POS</span>' : '<span class="badge badge-pos">Solo POS</span>';
+                if(p.descuento > 0) tags += `<span class="badge badge-desc">-${p.descuento}%</span>`;
+                let costoF = parseFloat(p.costo || 0).toFixed(2);
+                let precioF = parseFloat(p.precio || 0).toFixed(2);
+                
+                return `
+                <tr>
+                    <td><img src="${(p.imagenes && p.imagenes.length > 0) ? p.imagenes[0] : 'https://via.placeholder.com/50'}" class="thumb" onerror="this.src='https://via.placeholder.com/50'"></td>
+                    <td><b>${p.codigo}</b><br><small style="color:#888;">Talla: ${p.talla || 'N/A'}</small></td>
+                    <td>${p.nombre} ${tags}</td>
+                    <td><span style="color:var(--red-sale);">$${costoF}</span></td>
+                    <td><span style="color:var(--green); font-weight:bold;">$${precioF}</span></td>
+                    <td><b style="color: ${p.stock > 0 ? 'var(--black)' : 'var(--red-sale)'};">${p.stock}</b></td>
+                    <td>
+                        <button class="btn-edit" onclick="iniciarEdicion(${p.id})">✏️ Editar</button>
+                        <button class="btn-danger" onclick="eliminarProducto(${p.id})">🗑️ Borrar</button>
+                    </td>
+                    <td>
+                        <button class="btn-print" onclick="imprimirEtiquetaDesdeInventario(${p.id})">🖨️ Imprimir</button>
+                    </td>
+                </tr>`}).join('')}</tbody>
+        `;
+    }
+
+    function filtrarAdmin() {
+        const q = document.getElementById('admin-search').value.toLowerCase();
+        renderInventory(productos.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
+    }
+
+    // --- REGISTRO DE VENTAS Y GANANCIAS ---
+    async function cargarVentas() {
+        try {
+            const res = await fetch('/api/ventas');
+            if(res.ok) {
+                ventasHistorial = await res.json();
+                renderVentas(ventasHistorial);
+            } else {
+                document.getElementById('tbody-ventas').innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">Aún no hay ventas registradas.</td></tr>';
             }
+        } catch (error) {
+            document.getElementById('tbody-ventas').innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--red-sale);">Error conectando con base de datos.</td></tr>';
+        }
+    }
+
+    function renderVentas(ventas) {
+        if(ventas.length === 0) {
+            document.getElementById('tbody-ventas').innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999;">No hay ventas registradas.</td></tr>';
+            return;
         }
 
-        function abrirModalProducto() {
-            document.getElementById('modal-producto').style.display = 'flex';
-        }
+        document.getElementById('tbody-ventas').innerHTML = ventas.map(v => {
+            const fechaF = new Date(v.fecha_hora).toLocaleString('es-MX');
+            const origenBadge = v.origen === 'Web' ? '<span class="badge badge-web">🌐 WEB</span>' : '<span class="badge badge-pos">🏪 POS</span>';
+            const costo = parseFloat(v.costo || 0);
+            const precio = parseFloat(v.precio_venta || 0);
+            const cant = parseInt(v.cantidad || 1);
+            
+            const gananciaBruta = (precio - costo) * cant;
+            
+            let tarifaGateway = 0;
+            if(v.tipo_pago && (v.tipo_pago.toLowerCase().includes('terminal') || v.tipo_pago.toLowerCase().includes('tarjeta'))) {
+                tarifaGateway = (precio * cant) * 0.035; 
+            }
+            const gananciaNeta = gananciaBruta - tarifaGateway;
 
-        function cerrarModalProducto() {
-            document.getElementById('modal-producto').style.display = 'none';
-            document.getElementById('form-producto').reset();
-        }
+            return `
+            <tr>
+                <td style="font-size:12px; color:#555;">${fechaF}</td>
+                <td>${origenBadge}</td>
+                <td><b>${v.codigo}</b><br><small style="color:#666;">${v.nombre_articulo}</small></td>
+                <td>${v.talla || 'N/A'}</td>
+                <td><b>${cant}</b></td>
+                <td><span class="badge" style="background:#eee; color:#333;">${v.tipo_pago || 'N/A'}</span></td>
+                <td style="color:#d9534f;">$${costo.toFixed(2)}</td>
+                <td style="color:var(--green); font-weight:bold;">$${precio.toFixed(2)}</td>
+                <td><span class="badge badge-profit">$${gananciaBruta.toFixed(2)}</span></td>
+                <td><b><span style="color:${gananciaNeta > 0 ? 'var(--green)' : 'var(--red-sale)'};">$${gananciaNeta.toFixed(2)}</span></b></td>
+            </tr>
+            `;
+        }).join('');
+    }
 
-        document.getElementById('form-producto').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            alert("Lógica de guardado a API aquí...");
-            cerrarModalProducto();
+    function exportarVentasExcel() {
+        if(ventasHistorial.length === 0) return alert("No hay datos de ventas para exportar.");
+        let csvContent = "\uFEFFFecha,Origen,Codigo SKU,Articulo,Talla,Cantidad,Tipo de Pago,Costo Unitario,Precio Venta Unitario,Ganancia Bruta Total,Ganancia Neta Calculada\n";
+        ventasHistorial.forEach(v => {
+            const fechaF = new Date(v.fecha_hora).toLocaleString('es-MX').replace(/,/g, '');
+            const costo = parseFloat(v.costo || 0);
+            const precio = parseFloat(v.precio_venta || 0);
+            const cant = parseInt(v.cantidad || 1);
+            const bruta = (precio - costo) * cant;
+            let tarifa = (v.tipo_pago && v.tipo_pago.toLowerCase().includes('terminal')) ? ((precio * cant) * 0.035) : 0;
+            const neta = bruta - tarifa;
+            const row = `"${fechaF}","${v.origen}","${v.codigo}","${v.nombre_articulo}","${v.talla || ''}",${cant},"${v.tipo_pago}",${costo.toFixed(2)},${precio.toFixed(2)},${bruta.toFixed(2)},${neta.toFixed(2)}`;
+            csvContent += row + "\n";
         });
 
-        async function eliminarProducto(id) {
-            if(confirm("¿Seguro que deseas eliminar este producto?")) {
-                alert("Lógica de eliminación a API aquí...");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Reporte_Ventas_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    // --- MÓDULO DE RECEPCIÓN (AUTO-SKU Y ETIQUETAS) ---
+    function sugerirCodigo(forzarRandom = false) {
+        if (editandoId && !forzarRandom) return;
+        const tipo = document.getElementById('f-tipo').value;
+        const piedras = document.getElementById('f-piedras').value;
+        const talla = document.getElementById('f-talla').value.trim();
+        let codigoFinal = `${tipo}-${piedras}`;
+        if(talla !== "") codigoFinal += `-${talla}`;
+        if(forzarRandom || document.getElementById('codigo').value === "") {
+            codigoFinal += `-${Math.floor(1000 + Math.random() * 9000)}`;
+            document.getElementById('codigo').value = codigoFinal.toUpperCase();
+        }
+        actualizarPreviewQRVivo();
+    }
+
+    document.getElementById('codigo').addEventListener('input', actualizarPreviewQRVivo);
+    document.getElementById('precio').addEventListener('input', actualizarPreviewQRVivo);
+
+    function actualizarPreviewQRVivo() {
+        const cod = document.getElementById('codigo').value || "PLT-PREVIEW";
+        const prec = parseFloat(document.getElementById('precio').value) || 0;
+        document.getElementById('qrcode-box-visual').innerHTML = "";
+        new QRCode(document.getElementById('qrcode-box-visual'), { text: cod, width: 60, height: 60 });
+        document.getElementById('qr-code-text').innerText = cod;
+        document.getElementById('qr-price-text').innerText = `$${prec.toFixed(2)} MXN`;
+    }
+
+    function prepareNew(element) {
+        editandoId = null; imagenesExistentes = [];
+        document.getElementById('form-title').innerText = "Ingreso de Mercancía y Emisión de Etiquetas";
+        document.getElementById('history-container').style.display = "block";
+        ['codigo', 'nombre', 'costo', 'precio', 'stock', 'gramos', 'descuento', 'f-talla', 'fotos-joya'].forEach(id => {
+            const el = document.getElementById(id); if(el) el.value = "";
+        });
+        document.getElementById('publicado').value = "true";
+        showSection('reception-section', element);
+        sugerirCodigo(true);
+    }
+
+    function iniciarEdicion(id) {
+        const prod = productos.find(p => p.id === id);
+        if(!prod) return;
+        editandoId = id; imagenesExistentes = prod.imagenes || [];
+        document.getElementById('form-title').innerText = `✏️ Editando Joya: ${prod.codigo}`;
+        document.getElementById('history-container').style.display = "none";
+        
+        document.getElementById('codigo').value = prod.codigo;
+        document.getElementById('nombre').value = prod.nombre;
+        document.getElementById('costo').value = prod.costo || "";
+        document.getElementById('precio').value = prod.precio;
+        document.getElementById('stock').value = prod.stock;
+        document.getElementById('gramos').value = prod.gramos || "";
+        document.getElementById('descuento').value = prod.descuento || "";
+        document.getElementById('f-talla').value = prod.talla || "";
+        document.getElementById('publicado').value = prod.publicado ? "true" : "false";
+        
+        actualizarPreviewQRVivo();
+        showSection('reception-section');
+    }
+
+    // Subida nativa de imágenes
+    async function subirImagenACloudinary(file) {
+        const formData = new FormData();
+        formData.append("file", file); 
+        formData.append("upload_preset", UPLOAD_PRESET);
+        try {
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
+            const datos = await res.json();
+            return datos.secure_url || null; 
+        } catch (e) { return null; }
+    }
+
+    async function guardarProducto() {
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true; 
+        
+        const codigo = document.getElementById('codigo').value.trim().toUpperCase();
+        const nombre = document.getElementById('nombre').value.trim();
+        const costo = parseFloat(document.getElementById('costo').value) || 0; 
+        const precio = parseFloat(document.getElementById('precio').value);
+        const stock = parseInt(document.getElementById('stock').value);
+        const gramos = parseFloat(document.getElementById('gramos').value) || 0;
+        const descuento = parseFloat(document.getElementById('descuento').value) || 0; 
+        const talla = document.getElementById('f-talla').value.trim(); 
+        const publicado = document.getElementById('publicado').value === "true";
+
+        if(!codigo || !nombre || isNaN(precio) || isNaN(stock) || costo === 0) {
+            alert("⚠️ Faltan datos (Código, Nombre, Costo, Precio o Stock)."); 
+            btn.disabled = false; return;
+        }
+
+        const fileInput = document.getElementById('fotos-joya');
+        let urlsNuevas = [];
+        
+        if (fileInput.files.length > 0) {
+            btn.innerText = "⏳ SUBIENDO IMÁGENES...";
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const url = await subirImagenACloudinary(fileInput.files[i]); 
+                if (url) urlsNuevas.push(url);
             }
         }
 
-        // --- 3. GESTIÓN DE PEDIDOS ---
-        async function cargarPedidos() {
-            // Placeholder: Sustituir por la llamada a tu API de pedidos real (/api/pedidos)
-            const tbody = document.getElementById('tabla-pedidos');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align:center; color: #888;">No hay pedidos pendientes en este momento.</td>
-                </tr>
-            `;
-            document.getElementById('dash-order-count').innerText = "0";
-        }
+        let imagenesFinales = (urlsNuevas.length > 0) ? urlsNuevas : imagenesExistentes;
+        btn.innerText = "💾 GUARDANDO...";
 
-        // Cargar datos iniciales al arrancar
-        cargarProductos();
-    </script>
+        const payload = { codigo, nombre, costo, precio, stock, gramos, descuento, talla, publicado, imagenes: imagenesFinales };
+
+        try {
+            let res = editandoId 
+                ? await fetch(`/api/productos/${editandoId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) })
+                : await fetch('/api/productos', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+
+            if (res.ok) { 
+                alert(editandoId ? "✅ Joya actualizada." : "✅ ¡Registrado con éxito!"); 
+                if(!editandoId) {
+                    historialIngresos.push({ ...payload, hora: new Date().toLocaleTimeString() });
+                    actualizarHistorialUI();
+                    document.getElementById('nombre').value = ""; document.getElementById('stock').value = ""; document.getElementById('fotos-joya').value = "";
+                    sugerirCodigo(true); 
+                } else { showSection('inventory', document.querySelectorAll('.nav-item')[1]); }
+                cargar(); 
+            } else { alert("Error al registrar. ¿Código duplicado?"); }
+        } catch (e) { alert("Error de red con el servidor."); } 
+        finally { btn.disabled = false; btn.innerText = "💾 GUARDAR EN INVENTARIO Y GENERAR ETIQUETA"; }
+    }
+
+    function prepararEtiquetaFisica(codigo, precio) {
+        document.getElementById('qr-code-hidden').innerHTML = "";
+        new QRCode(document.getElementById('qr-code-hidden'), { text: codigo, width: 45, height: 45 });
+        document.getElementById('niimbot-sku').innerText = codigo;
+        document.getElementById('niimbot-precio').innerText = `$${parseFloat(precio).toFixed(2)}`;
+    }
+
+    function imprimirEtiquetaActual() {
+        prepararEtiquetaFisica(document.getElementById('codigo').value, document.getElementById('precio').value);
+        setTimeout(() => window.print(), 100);
+    }
+
+    function imprimirEtiquetaDesdeInventario(id) {
+        const prod = productos.find(p => p.id === id);
+        if(prod) { prepararEtiquetaFisica(prod.codigo, prod.precio); setTimeout(() => window.print(), 100); }
+    }
+    
+    function actualizarHistorialUI() {
+        const tbody = document.getElementById('tabla-historial-lotes');
+        if(historialIngresos.length === 0) return;
+        tbody.innerHTML = historialIngresos.map((item) => `
+            <tr>
+                <td>${item.hora}</td><td><b>${item.codigo}</b></td><td>${item.nombre}</td>
+                <td>${item.stock}</td><td>$${item.costo.toFixed(2)}</td><td>$${item.precio.toFixed(2)}</td>
+                <td><button class="btn-print" onclick="prepararEtiquetaFisica('${item.codigo}', ${item.precio}); setTimeout(()=>window.print(),100)">🖨️</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function eliminarProducto(id) {
+        if (confirm("⚠️ ¿Estás seguro de eliminar esta pieza de manera permanente?")) {
+            await fetch(`/api/productos/${id}`, { method: 'DELETE' });
+            cargar();
+        }
+    }
+
+    function cargarMetricas() {}
+
+    cargar();
+</script>
 </body>
 </html>
