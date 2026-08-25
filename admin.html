@@ -719,8 +719,21 @@
         const talla = document.getElementById('f-talla').value.trim(); 
         const publicado = document.getElementById('publicado').value === "true";
 
-        if(!codigo || !nombre || isNaN(precio) || isNaN(stock) || costo === 0) {
-            alert("⚠️ Faltan datos (Código, Nombre, Costo, Precio o Stock)."); 
+        // Antes un solo alert genérico ("Faltan datos") bloqueaba el alta sin
+        // decir cuál campo era, y exigía costo != 0 aunque hubiera piezas
+        // legítimas de costo $0 (regalo, consignación, muestra). Ahora se
+        // valida cada campo por separado y el costo en $0 solo pide confirmar.
+        const camposFaltantes = [];
+        if (!codigo) camposFaltantes.push('Código (SKU)');
+        if (!nombre) camposFaltantes.push('Categoría / Nombre');
+        if (isNaN(precio)) camposFaltantes.push('Precio de Venta');
+        if (isNaN(stock)) camposFaltantes.push('Stock');
+
+        if (camposFaltantes.length > 0) {
+            alert(`⚠️ Falta llenar: ${camposFaltantes.join(', ')}.`);
+            btn.disabled = false; return;
+        }
+        if (costo === 0 && !confirm('El Costo de Compra está en $0.00, así que la ganancia se calculará igual al precio de venta.\n\n¿Seguro que quieres continuar así?')) {
             btn.disabled = false; return;
         }
 
@@ -755,8 +768,11 @@
                     sugerirCodigo(true); 
                 } else { showSection('inventory', document.querySelectorAll('.nav-item')[1]); }
                 cargar(); 
-            } else { alert("Error al registrar. ¿Código duplicado?"); }
-        } catch (e) { alert("Error de red con el servidor."); } 
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert(`❌ No se pudo registrar la pieza.\n\nMotivo del servidor: ${data.error || ('Error HTTP ' + res.status)}\n\n¿Código duplicado? Revisa también /api/salud si el problema persiste.`);
+            }
+        } catch (e) { alert(`❌ Error de red con el servidor: ${e.message}`); } 
         finally { btn.disabled = false; btn.innerText = "💾 GUARDAR EN INVENTARIO Y GENERAR ETIQUETA"; }
     }
 
