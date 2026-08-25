@@ -152,6 +152,17 @@
                 </div>
             </div>
 
+            <!-- 5. CONTACTO / VENTA POR WHATSAPP -->
+            <div class="card">
+                <span class="section-tag">Contacto</span>
+                <h2>🟢 Número de WhatsApp para Ventas</h2>
+                <p style="font-size:13px; color:#666; margin-top:-10px;">Se usa tanto en el botón "Comprar por WhatsApp" del catálogo como en el enlace de contacto del pie de página. Un solo lugar para actualizarlo en todo el sitio.</p>
+                <div class="form-group">
+                    <label>Número (con código de país, sin espacios ni signos)</label>
+                    <input type="text" id="contactoWhatsapp" placeholder="Ej: 5215512345678">
+                </div>
+            </div>
+
             <button type="submit" id="btnSubmit" class="btn-submit">🚀 ACTUALIZAR TIENDA EN VIVO</button>
         </form>
     </div>
@@ -242,6 +253,10 @@
                     }
                 }
 
+                if(data.contacto) {
+                    document.getElementById('contactoWhatsapp').value = data.contacto.whatsapp || '';
+                }
+
             } catch(e) { console.warn("No hay campaña previa o error de carga."); }
         }
 
@@ -286,6 +301,9 @@
                         titulo: document.getElementById('p2Titulo').value,
                         sub: document.getElementById('p2Sub').value,
                         img: await procesarArchivo('p2File', 'p2ImgUrl')
+                    },
+                    contacto: {
+                        whatsapp: document.getElementById('contactoWhatsapp').value.trim()
                     }
                 };
 
