@@ -2,7 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f1115">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Gedalia POS | Punto de Venta Profesional</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -71,15 +75,69 @@
             .cart-panel { min-height: 600px; height: auto; margin-bottom: 20px;}
             .main-container { padding: 16px; }
         }
+
+        /* Respeta el notch / la barra inferior en iPhone y tablets modernas */
+        .sidebar { padding-top: calc(24px + env(safe-area-inset-top)); }
+        @media (max-width: 900px) {
+            .sidebar { padding-top: calc(16px + env(safe-area-inset-top)); padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); }
+            .main-container { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+            .cajera-pill { margin-top: 0; padding: 8px 10px; }
+            .cajera-pill span { font-size: 12px; white-space: nowrap; }
+        }
+
+        /* --- PANTALLA DE INICIO DE SESIÓN (identifica a la cajera) --- */
+        #login-screen { position: fixed; inset: 0; background: var(--black); display: flex; align-items: center; justify-content: center; z-index: 20000; padding: 24px; }
+        .login-box { background: #171a21; border-radius: 20px; padding: 36px 28px; width: 100%; max-width: 340px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .login-box h1 { color: var(--gold); font-size: 22px; margin: 0 0 4px; letter-spacing: 1px; }
+        .login-box p { color: #94a3b8; font-size: 13px; margin: 0 0 24px; }
+        #pin-input { text-align: center; font-size: 28px; letter-spacing: 10px; padding: 16px; background: #0f1115; border: 1.5px solid #2a2f3a; color: white; }
+        #pin-input:focus { border-color: var(--gold); }
+        .btn-login { width: 100%; padding: 16px; background: var(--gold); color: var(--black); border: none; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }
+        .btn-login:active { transform: scale(0.98); }
+        #login-error { color: #f87171; font-size: 13px; min-height: 18px; margin-top: 10px; }
+        .cajera-pill { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 12px; margin-top: 8px; }
+        .cajera-pill span { flex: 1; color: white; font-weight: 600; font-size: 13px; }
+        .cajera-pill button { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 12px; text-decoration: underline; }
+
+        /* --- BANNER DE CONECTIVIDAD (evita cobrar sin poder llegar al servidor) --- */
+        #offline-banner { display: none; position: fixed; top: 0; left: 0; right: 0; background: var(--red); color: white; text-align: center; padding: 10px; font-weight: 600; font-size: 14px; z-index: 15000; padding-top: calc(10px + env(safe-area-inset-top)); }
+        body.offline #offline-banner { display: block; }
+
+        /* --- Modo de escaneo continuo (varias piezas seguidas sin reabrir cámara) --- */
+        .scan-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-top: 4px; }
+        .switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 26px; cursor: pointer; transition: 0.2s; }
+        .slider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+        .switch input:checked + .slider { background: var(--gold); }
+        .switch input:checked + .slider::before { transform: translateX(20px); }
+        #ultimo-escaneo { font-size: 13px; color: #64748b; margin-top: 10px; min-height: 18px; }
     </style>
 </head>
 <body>
+
+<div id="offline-banner">⚠️ Sin conexión — el cobro está pausado hasta reconectar</div>
+
+<!-- Pantalla de inicio de sesión: identifica a la cajera antes de cobrar -->
+<div id="login-screen">
+    <div class="login-box">
+        <h1>GEDALIA POS</h1>
+        <p>Ingresa tu PIN de cajera para empezar a cobrar</p>
+        <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autofocus onkeypress="if(event.key==='Enter') iniciarSesion()">
+        <button class="btn-login" onclick="iniciarSesion()">Entrar</button>
+        <div id="login-error"></div>
+    </div>
+</div>
 
 <div class="sidebar">
     <h2 class="brand-title">GEDALIA POS</h2>
     <div style="display: flex; flex-direction: column; gap: 8px;">
         <div class="nav-item active" onclick="showSection('caja', this)">🛒 Punto de Venta</div>
         <div class="nav-item" onclick="mostrarToast('Dirígete al panel Admin para el Corte de Caja.', 'warning')">📊 Corte Diario</div>
+    </div>
+    <div class="cajera-pill">
+        <span>👤 <span id="nombre-cajera-activa">—</span></span>
+        <button onclick="cerrarSesion()">Salir</button>
     </div>
 </div>
 
@@ -94,7 +152,15 @@
                     <button class="btn-action" onclick="buscarManualmente()">🔍 Buscar</button>
                     <button class="btn-action btn-gold" onclick="abrirCamara()">📷 Escanear</button>
                 </div>
-                
+
+                <div class="scan-toggle">
+                    <div>
+                        <div style="font-weight:600; font-size:14px; color:var(--black);">Escaneo continuo</div>
+                        <div style="font-size:12px; color:#64748b;">Agrega varias piezas seguidas sin volver a abrir la cámara</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="modo-continuo-check"><span class="slider"></span></label>
+                </div>
+
                 <div style="background:white; border-radius:16px; padding:32px 24px; border:1px solid var(--border); text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
                     <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
                         <span style="font-size: 24px;">📡</span>
@@ -153,9 +219,10 @@
 <div id="qr-reader-modal">
     <div id="qr-reader-box">
         <h3 style="margin-top:0; margin-bottom: 8px; color: var(--black); font-size: 20px;">Escáner de Joyería</h3>
-        <p style="font-size:14px; color:#64748b; margin-bottom:20px;">Apunta a la etiqueta QR.</p>
+        <p style="font-size:14px; color:#64748b; margin-bottom:12px;">Apunta a la etiqueta QR.</p>
         <div id="reader"></div>
-        <button onclick="cerrarCamara()" style="margin-top:20px; width:100%; padding:16px; background:#f1f5f9; color: #334155; border:none; border-radius:12px; font-weight:700; font-size: 15px; cursor:pointer;">Cancelar</button>
+        <div id="ultimo-escaneo"></div>
+        <button onclick="cerrarCamara()" style="margin-top:12px; width:100%; padding:16px; background:#f1f5f9; color: #334155; border:none; border-radius:12px; font-weight:700; font-size: 15px; cursor:pointer;" id="btn-cerrar-camara">Cancelar</button>
     </div>
 </div>
 
@@ -164,6 +231,79 @@
 <script>
     let carrito = [];
     let totalVenta = 0;
+    let vendedorActivo = sessionStorage.getItem('gedalia_vendedor') || null;
+
+    // --- SESIÓN DE CAJERA ---
+    function mostrarPantallaPOS() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('nombre-cajera-activa').innerText = vendedorActivo;
+        document.getElementById('lector-qr').focus();
+    }
+
+    async function iniciarSesion() {
+        const pinInput = document.getElementById('pin-input');
+        const errorBox = document.getElementById('login-error');
+        const pin = pinInput.value.trim();
+        errorBox.innerText = '';
+        if (!pin) { errorBox.innerText = 'Ingresa tu PIN.'; return; }
+
+        try {
+            const res = await fetch('/api/pos/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                errorBox.innerText = data.error || 'No se pudo iniciar sesión.';
+                pinInput.value = '';
+                pinInput.focus();
+                return;
+            }
+            vendedorActivo = data.vendedor;
+            sessionStorage.setItem('gedalia_vendedor', vendedorActivo);
+            mostrarPantallaPOS();
+        } catch (e) {
+            errorBox.innerText = 'Error de conexión con el servidor.';
+        }
+    }
+
+    function cerrarSesion() {
+        sessionStorage.removeItem('gedalia_vendedor');
+        vendedorActivo = null;
+        vaciarCarrito();
+        document.getElementById('pin-input').value = '';
+        document.getElementById('login-screen').style.display = 'flex';
+    }
+
+    if (vendedorActivo) mostrarPantallaPOS();
+
+    // --- CONECTIVIDAD: bloquea el cobro si no hay red, en vez de fallar a medias ---
+    function actualizarEstadoConexion() {
+        document.body.classList.toggle('offline', !navigator.onLine);
+        const btn = document.getElementById('btn-cobrar');
+        if (btn) btn.disabled = !navigator.onLine;
+    }
+    window.addEventListener('online', () => { actualizarEstadoConexion(); mostrarToast('Conexión restablecida.'); });
+    window.addEventListener('offline', () => { actualizarEstadoConexion(); mostrarToast('Se perdió la conexión a internet.', 'error'); });
+    actualizarEstadoConexion();
+
+    // --- RETROALIMENTACIÓN DE ESCANEO (sonido + vibración, sensación nativa) ---
+    let audioCtx = null;
+    function reproducirBeep(exito = true) {
+        try {
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = exito ? 1046 : 220;
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + (exito ? 0.12 : 0.25));
+        } catch (e) { /* algunos navegadores requieren interacción previa; se ignora */ }
+        if (navigator.vibrate) navigator.vibrate(exito ? 40 : [40, 60, 40]);
+    }
 
     // --- SISTEMA DE NOTIFICACIONES TOAST ---
     function mostrarToast(mensaje, tipo = 'success') {
@@ -216,9 +356,30 @@
         html5Qrcode = new Html5Qrcode("reader");
 
         const configEscaneo = { fps: 15, qrbox: { width: 260, height: 260 } };
+        document.getElementById('btn-cerrar-camara').innerText = 'Cancelar';
+        document.getElementById('ultimo-escaneo').innerText = '';
+
+        // Evita procesar el mismo QR varias veces en fracciones de segundo
+        // mientras la cámara sigue enfocando la misma etiqueta.
+        let ultimoCodigo = null, ultimoTiempo = 0;
+
         const alCapturar = (decodedText) => {
-            cerrarCamara();
-            consultarProductoAPI(decodedText.trim().toUpperCase());
+            const codigo = decodedText.trim().toUpperCase();
+            const ahora = Date.now();
+            if (codigo === ultimoCodigo && (ahora - ultimoTiempo) < 2000) return; // rebote
+            ultimoCodigo = codigo; ultimoTiempo = ahora;
+
+            const continuo = document.getElementById('modo-continuo-check').checked;
+            consultarProductoAPI(codigo);
+
+            if (continuo) {
+                // No cerramos la cámara: la vendedora sigue escaneando pieza
+                // tras pieza sin volver a tocar la pantalla.
+                document.getElementById('btn-cerrar-camara').innerText = 'Terminar y ver carrito';
+                document.getElementById('ultimo-escaneo').innerText = `Último: ${codigo}`;
+            } else {
+                cerrarCamara();
+            }
         };
 
         try {
@@ -248,6 +409,8 @@
 
     function cerrarCamara() {
         document.getElementById('qr-reader-modal').style.display = 'none';
+        document.getElementById('btn-cerrar-camara').innerText = 'Cancelar';
+        document.getElementById('ultimo-escaneo').innerText = '';
         if (html5Qrcode) {
             html5Qrcode.stop().then(() => html5Qrcode.clear()).catch(e => console.error(e));
         }
@@ -265,18 +428,22 @@
                 if(existente.cantidad < prod.stock) {
                     existente.cantidad++; 
                     mostrarToast(`Se agregó otra pieza de ${prod.nombre}`);
+                    reproducirBeep(true);
                 } else {
                     mostrarToast(`Solo hay ${prod.stock} piezas en inventario.`, 'warning');
+                    reproducirBeep(false);
                 }
             } 
             else { 
                 carrito.push({ id: prod.id, codigo: prod.codigo, nombre: prod.nombre, precio: parseFloat(prod.precio), cantidad: 1, stockMaximo: prod.stock }); 
                 mostrarToast(`Agregado: ${prod.nombre}`);
+                reproducirBeep(true);
             }
             
             actualizarCarritoUI();
         } catch (err) {
             mostrarToast(`El código [${sku}] no existe o no tiene stock.`, 'error');
+            reproducirBeep(false);
         }
     }
 
@@ -340,6 +507,8 @@
     // --- PROCESAR VENTA AL BACKEND ---
     async function procesarVenta() {
         if(carrito.length === 0) return mostrarToast("Agrega al menos un artículo.", 'warning');
+        if(!navigator.onLine) return mostrarToast("Sin conexión: espera a reconectar para cobrar.", 'error');
+        if(!vendedorActivo) return mostrarToast("Tu sesión expiró, vuelve a iniciar sesión.", 'error');
         
         const metodo = document.getElementById('metodo-pago').value;
         const emailCliente = document.getElementById('email-cliente').value.trim();
@@ -352,7 +521,8 @@
             carrito: carrito,
             total: totalVenta,
             metodoPago: metodo,
-            clienteEmail: emailCliente
+            clienteEmail: emailCliente,
+            vendedor: vendedorActivo
         };
 
         // Intenta la venta hasta 2 veces: si el server acaba de reiniciarse
@@ -390,14 +560,14 @@
         }
 
         if (exito) {
-            mostrarToast(`Venta por $${totalVenta.toLocaleString()} registrada exitosamente.`);
+            mostrarToast(`Venta por $${totalVenta.toLocaleString()} registrada. Notificando a la supervisora por WhatsApp...`);
             imprimirTicketTermico(carrito, totalVenta, metodo);
             vaciarCarrito();
         } else {
             mostrarToast(ultimoError, 'error');
         }
 
-        btnCobrar.disabled = false;
+        btnCobrar.disabled = !navigator.onLine;
         btnCobrar.innerHTML = "⚡ PROCESAR PAGO";
     }
 
@@ -419,6 +589,7 @@
                 <div>Joyería Fina de Plata</div>
                 <div>Sucursal CDMX</div>
                 <div>${new Date().toLocaleString('es-MX')}</div>
+                <div>Atendió: ${vendedorActivo || '—'}</div>
                 <div class="divider"></div>
                 
                 <div style="text-align:left; margin-bottom:5px; font-weight:bold;">CANT. DESCRIPCIÓN / IMPORTE</div>
