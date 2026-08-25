@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gedalia Marketing Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #c5a059; 
+            --gold-dark: #a37f3e;
+            --black: #0a0a0a; 
+            --bg: #f4f7f6;
+            --blue: #4a90e2;
+        }
+
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: #333; }
+        
+        .header { background: var(--black); color: var(--gold); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+        
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 30px; border-top: 4px solid var(--gold); }
+        .card h2 { margin-top: 0; color: var(--black); font-size: 18px; border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; margin-bottom: 20px;}
+        
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; }
+        input[type="text"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        input:focus, select:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 0 3px rgba(197,160,89,0.2); }
+        
+        .img-upload-box { background: #fafafa; border: 2px dashed #ccc; padding: 20px; border-radius: 8px; text-align: center; }
+        .preview-img { max-width: 100%; max-height: 150px; margin-top: 15px; border-radius: 8px; object-fit: contain; display: none; }
+        
+        .btn-submit { background: var(--gold); color: white; border: none; padding: 15px; width: 100%; font-size: 16px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-bottom: 50px;}
+        .btn-submit:hover { background: var(--gold-dark); }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+        .section-tag { display: inline-block; background: #e8f0fe; color: var(--blue); font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>GEDALIA MARKETING HUB</h1>
+        <a href="/admin" style="color: white; text-decoration: none; font-size: 14px;">⬅ Volver al ERP</a>
+    </div>
+
+    <div class="container">
+        <p style="color: #666; margin-bottom: 30px;">Gestiona las ventanas, banners y anuncios que se visualizan en la tienda e-commerce.</p>
+
+        <form id="adsForm">
+            
+            <!-- 1. CINTA TICKER -->
+            <div class="card">
+                <span class="section-tag">Barra Superior (Ticker)</span>
+                <h2>📢 Cinta Promocional Deslizante</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estado de la Cinta</label>
+                        <select id="cintaActivo">
+                            <option value="true">Activa (Visible en la web)</option>
+                            <option value="false">Inactiva (Oculta)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Texto Promocional</label>
+                        <input type="text" id="cintaTexto" placeholder="Ej: 🔥 ENVÍO GRATIS EN COMPRAS MAYORES A $2000 MXN">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. CORTINILLA (SPLASH) -->
+            <div class="card">
+                <span class="section-tag">Ventana de Carga</span>
+                <h2>🎬 Cortinilla de Entrada (Splash Screen)</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estado de la Cortinilla</label>
+                        <select id="splashActivo">
+                            <option value="true">Activada</option>
+                            <option value="false">Desactivada</option>
+                        </select>
+                        <label style="margin-top: 15px;">Texto Principal</label>
+                        <input type="text" id="splashTexto" placeholder="Ej: NUEVA COLECCIÓN">
+                    </div>
+                    <div class="form-group img-upload-box">
+                        <label>Imagen Central (JPG/PNG)</label>
+                        <input type="file" id="splashFile" accept="image/*">
+                        <input type="hidden" id="splashImgUrl">
+                        <img id="splashPreview" class="preview-img">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. HERO BANNER -->
+            <div class="card">
+                <span class="section-tag">Sección Principal</span>
+                <h2>🖼️ Hero Banner (Fondo principal E-commerce)</h2>
+                <div class="form-group">
+                    <div class="form-row">
+                        <div>
+                            <label>Título del Banner</label>
+                            <input type="text" id="heroTitulo" placeholder="Ej: NUEVOS DISEÑOS EXCLUSIVOS">
+                            <label style="margin-top: 15px;">Subtítulo o Descripción</label>
+                            <input type="text" id="heroSub" placeholder="Ej: Descubre nuestra más reciente colección...">
+                        </div>
+                        <div class="img-upload-box">
+                            <label>Imagen de Fondo Alta Resolución (Horizontal)</label>
+                            <input type="file" id="heroFile" accept="image/*">
+                            <input type="hidden" id="heroImgUrl">
+                            <img id="heroPreview" class="preview-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. CAJAS DE PROMOCIÓN -->
+            <div class="card">
+                <span class="section-tag">Bloques Medios</span>
+                <h2>🎯 Banners de Colección y Ofertas</h2>
+                
+                <div class="form-row">
+                    <!-- Promoción 1 -->
+                    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top:0; font-size:15px;">Bloque Izquierdo</h3>
+                        <div class="form-group"><label>Etiqueta (Badge)</label><input type="text" id="p1Badge" placeholder="Ej: HOT SALE 🔥"></div>
+                        <div class="form-group"><label>Título</label><input type="text" id="p1Titulo" placeholder="Ej: Anillos de Compromiso"></div>
+                        <div class="form-group"><label>Subtítulo</label><input type="text" id="p1Sub" placeholder="Ej: Hasta 30% de descuento"></div>
+                        <div class="img-upload-box">
+                            <label>Imagen de Fondo</label>
+                            <input type="file" id="p1File" accept="image/*">
+                            <input type="hidden" id="p1ImgUrl">
+                            <img id="p1Preview" class="preview-img">
+                        </div>
+                    </div>
+
+                    <!-- Promoción 2 -->
+                    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top:0; font-size:15px;">Bloque Derecho</h3>
+                        <div class="form-group"><label>Etiqueta (Badge)</label><input type="text" id="p2Badge" placeholder="Ej: NUEVA LLEGADA ✨"></div>
+                        <div class="form-group"><label>Título</label><input type="text" id="p2Titulo" placeholder="Ej: Colección Zafiro Noche"></div>
+                        <div class="form-group"><label>Subtítulo</label><input type="text" id="p2Sub" placeholder="Ej: Elegancia pura para tus eventos."></div>
+                        <div class="img-upload-box">
+                            <label>Imagen de Fondo</label>
+                            <input type="file" id="p2File" accept="image/*">
+                            <input type="hidden" id="p2ImgUrl">
+                            <img id="p2Preview" class="preview-img">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSubmit" class="btn-submit">🚀 ACTUALIZAR TIENDA EN VIVO</button>
+        </form>
+    </div>
+
+    <script>
+        const CLOUD_NAME = "oudq7dcf"; 
+        const UPLOAD_PRESET = "gedalia_preset";
+
+        // Función nativa para previsualizar imágenes en los recuadros
+        function setupPreview(inputId, previewId) {
+            document.getElementById(inputId).addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const localUrl = URL.createObjectURL(file);
+                    const img = document.getElementById(previewId);
+                    img.src = localUrl;
+                    img.style.display = 'inline-block';
+                }
+            });
+        }
+        setupPreview('splashFile', 'splashPreview');
+        setupPreview('heroFile', 'heroPreview');
+        setupPreview('p1File', 'p1Preview');
+        setupPreview('p2File', 'p2Preview');
+
+        // Subida a Cloudinary
+        async function subirACloudinary(file) {
+            const formData = new FormData();
+            formData.append("file", file); 
+            formData.append("upload_preset", UPLOAD_PRESET);
+            try {
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
+                const datos = await res.json();
+                return datos.secure_url || null; 
+            } catch (e) { return null; }
+        }
+
+        // Cargar datos actuales de la Base de Datos
+        async function cargarDatosActivos() {
+            try {
+                const res = await fetch('/api/campanas');
+                const data = await res.json();
+                
+                if(data.cinta) {
+                    document.getElementById('cintaActivo').value = data.cinta.activo ? "true" : "false";
+                    document.getElementById('cintaTexto').value = data.cinta.texto || '';
+                }
+                
+                if(data.splash) {
+                    document.getElementById('splashActivo').value = data.splash.activo ? "true" : "false";
+                    document.getElementById('splashTexto').value = data.splash.texto || '';
+                    if(data.splash.img) {
+                        document.getElementById('splashImgUrl').value = data.splash.img;
+                        document.getElementById('splashPreview').src = data.splash.img;
+                        document.getElementById('splashPreview').style.display = 'inline-block';
+                    }
+                }
+
+                if(data.hero) {
+                    document.getElementById('heroTitulo').value = data.hero.titulo || '';
+                    document.getElementById('heroSub').value = data.hero.sub || '';
+                    if(data.hero.img) {
+                        document.getElementById('heroImgUrl').value = data.hero.img;
+                        document.getElementById('heroPreview').src = data.hero.img;
+                        document.getElementById('heroPreview').style.display = 'inline-block';
+                    }
+                }
+
+                if(data.promo1) {
+                    document.getElementById('p1Badge').value = data.promo1.badge || '';
+                    document.getElementById('p1Titulo').value = data.promo1.titulo || '';
+                    document.getElementById('p1Sub').value = data.promo1.sub || '';
+                    if(data.promo1.img) {
+                        document.getElementById('p1ImgUrl').value = data.promo1.img;
+                        document.getElementById('p1Preview').src = data.promo1.img;
+                        document.getElementById('p1Preview').style.display = 'inline-block';
+                    }
+                }
+
+                if(data.promo2) {
+                    document.getElementById('p2Badge').value = data.promo2.badge || '';
+                    document.getElementById('p2Titulo').value = data.promo2.titulo || '';
+                    document.getElementById('p2Sub').value = data.promo2.sub || '';
+                    if(data.promo2.img) {
+                        document.getElementById('p2ImgUrl').value = data.promo2.img;
+                        document.getElementById('p2Preview').src = data.promo2.img;
+                        document.getElementById('p2Preview').style.display = 'inline-block';
+                    }
+                }
+
+            } catch(e) { console.warn("No hay campaña previa o error de carga."); }
+        }
+
+        // Manejar el Guardado
+        document.getElementById('adsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.innerText = "⏳ PROCESANDO IMÁGENES Y GUARDANDO...";
+            btn.disabled = true;
+
+            try {
+                // Función auxiliar para checar y subir archivos
+                const procesarArchivo = async (fileInputId, hiddenInputId) => {
+                    const file = document.getElementById(fileInputId).files[0];
+                    if (file) return await subirACloudinary(file);
+                    return document.getElementById(hiddenInputId).value; // Retorna la URL anterior si no hay archivo nuevo
+                };
+
+                const payload = {
+                    cinta: {
+                        activo: document.getElementById('cintaActivo').value === "true",
+                        texto: document.getElementById('cintaTexto').value
+                    },
+                    splash: {
+                        activo: document.getElementById('splashActivo').value === "true",
+                        texto: document.getElementById('splashTexto').value,
+                        img: await procesarArchivo('splashFile', 'splashImgUrl')
+                    },
+                    hero: {
+                        titulo: document.getElementById('heroTitulo').value,
+                        sub: document.getElementById('heroSub').value,
+                        img: await procesarArchivo('heroFile', 'heroImgUrl')
+                    },
+                    promo1: {
+                        badge: document.getElementById('p1Badge').value,
+                        titulo: document.getElementById('p1Titulo').value,
+                        sub: document.getElementById('p1Sub').value,
+                        img: await procesarArchivo('p1File', 'p1ImgUrl')
+                    },
+                    promo2: {
+                        badge: document.getElementById('p2Badge').value,
+                        titulo: document.getElementById('p2Titulo').value,
+                        sub: document.getElementById('p2Sub').value,
+                        img: await procesarArchivo('p2File', 'p2ImgUrl')
+                    }
+                };
+
+                const res = await fetch('/api/campanas', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert('✅ ¡Publicidad web actualizada con éxito!');
+                    cargarDatosActivos(); // Refrescar URLs e inputs
+                } else {
+                    alert('Hubo un error de conexión con la base de datos.');
+                }
+            } catch (err) {
+                alert('Error en la subida de archivos.');
+            } finally {
+                btn.innerText = "🚀 ACTUALIZAR TIENDA EN VIVO";
+                btn.disabled = false;
+            }
+        });
+
+        // Cargar datos al iniciar
+        cargarDatosActivos();
+    </script>
+</body>
+</html>
