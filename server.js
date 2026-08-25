@@ -63,8 +63,40 @@ app.get('/publicidad', (req, res) => res.sendFile(path.join(__dirname, 'publicid
 // --- BASE DE DATOS ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    max: 10,                        // límite razonable para el tier gratuito de Aiven
+    idleTimeoutMillis: 30000,       // cierra clientes ociosos antes que lo haga Aiven
+    connectionTimeoutMillis: 8000,  // no se queda colgado esperando una conexión
+    keepAlive: true
 });
+
+// *** FIX CRÍTICO ***
+// Sin este listener, cuando Aiven cierra una conexión inactiva del pool,
+// pg emite un evento 'error' en un cliente ocioso. Si nadie lo escucha,
+// Node lo trata como excepción no capturada y TUMBA todo el proceso.
+// En Render eso reinicia el servicio a medio proceso -> cualquier venta
+// en curso falla con "error de conexión". Esta es la causa raíz del bug
+// reportado en el POS.
+pool.on('error', (err) => {
+    console.error('⚠️ Error inesperado en cliente inactivo del pool de PG (recuperado, el servidor NO se cae):', err.message);
+});
+
+// Reintenta una vez una función que golpea la BD, útil para conexiones
+// que Aiven cerró justo antes de usarse.
+async function conReintento(fn, intentos = 2) {
+    let ultimoError;
+    for (let i = 0; i < intentos; i++) {
+        try { return await fn(); }
+        catch (err) {
+            ultimoError = err;
+            const transitorio = /Connection terminated|ECONNRESET|timeout|read ECONNRESET/i.test(err.message || '');
+            if (!transitorio || i === intentos - 1) throw err;
+            console.warn(`Reintentando operación de BD (intento ${i + 2}/${intentos})...`);
+            await new Promise(r => setTimeout(r, 300));
+        }
+    }
+    throw ultimoError;
+}
 
 async function inicializarBD() {
     try {
@@ -149,9 +181,12 @@ app.get('/api/ventas', async (req, res) => {
 // VENTA WEB (Página E-commerce / WhatsApp)
 app.post('/api/web/vender', async (req, res) => {
     const { id, codigo, nombre, precio, talla } = req.body;
+    if (!id) return res.status(400).json({ error: 'Falta el producto.' });
     try {
-        const updateRes = await pool.query('UPDATE productos SET stock = stock - 1, ventas = ventas + 1 WHERE id = $1 AND stock > 0 RETURNING *', [id]);
-        
+        const updateRes = await conReintento(() =>
+            pool.query('UPDATE productos SET stock = stock - 1, ventas = ventas + 1 WHERE id = $1 AND stock > 0 RETURNING *', [id])
+        );
+
         if(updateRes.rows.length === 0) {
             return res.status(400).json({ error: 'Lo sentimos, este producto se acaba de agotar.' });
         }
@@ -173,45 +208,60 @@ app.post('/api/web/vender', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// VENTA POS (Sucursal Física) - PROTEGIDA CON TRANSACCIÓN SQL
+// VENTA POS (Sucursal Física) - PROTEGIDA CON TRANSACCIÓN SQL + REINTENTO
 app.post('/api/pos/vender', async (req, res) => {
     const { carrito, total, metodoPago } = req.body;
-    
-    // Usamos client.query para una transacción controlada (BEGIN/COMMIT)
-    const client = await pool.connect();
-    
+
+    if (!Array.isArray(carrito) || carrito.length === 0) {
+        return res.status(400).json({ error: 'El carrito está vacío.' });
+    }
+    if (!metodoPago) {
+        return res.status(400).json({ error: 'Falta el método de pago.' });
+    }
+
     try {
-        await client.query('BEGIN'); // Inicia transacción
-        
-        for (let item of carrito) {
-            // Descontamos stock y regresamos el registro actualizado
-            const upRes = await client.query('UPDATE productos SET stock = stock - $1, ventas = ventas + $1 WHERE codigo = $2 AND stock >= $1 RETURNING *', [item.cantidad, item.codigo]);
-            
-            if(upRes.rows.length === 0) {
-                throw new Error(`Stock insuficiente para el artículo: ${item.codigo}. Venta abortada.`);
+        const resultado = await conReintento(async () => {
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN'); // Inicia transacción
+
+                for (let item of carrito) {
+                    const upRes = await client.query(
+                        'UPDATE productos SET stock = stock - $1, ventas = ventas + $1 WHERE codigo = $2 AND stock >= $1 RETURNING *',
+                        [item.cantidad, item.codigo]
+                    );
+
+                    if (upRes.rows.length === 0) {
+                        throw new Error(`Stock insuficiente para el artículo: ${item.codigo}. Venta abortada.`);
+                    }
+
+                    const prod = upRes.rows[0];
+                    const costoReal = prod.costo || 0;
+
+                    await client.query(
+                        `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                        ['POS', prod.codigo, prod.nombre, prod.talla || '', item.cantidad, metodoPago, costoReal, item.precio]
+                    );
+                }
+
+                await client.query('COMMIT');
+                return true;
+            } catch (err) {
+                try { await client.query('ROLLBACK'); } catch (e2) { /* la conexión ya pudo haberse caído */ }
+                throw err;
+            } finally {
+                client.release();
             }
+        });
 
-            const prod = upRes.rows[0];
-            const costoReal = prod.costo || 0;
-
-            // Registramos este artículo en el historial de ventas
-            await client.query(
-                `INSERT INTO ventas (origen, codigo, nombre_articulo, talla, cantidad, tipo_pago, costo, precio_venta) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, 
-                ['POS', prod.codigo, prod.nombre, prod.talla || '', item.cantidad, metodoPago, costoReal, item.precio]
-            );
+        if (resultado) {
+            // El correo nunca debe tumbar la venta; ya está protegido internamente.
+            enviarCorreoNotificacion('Sucursal POS', carrito, total, metodoPago);
+            res.json({ message: 'Venta registrada con éxito' });
         }
-        
-        await client.query('COMMIT'); // Si todo salió bien, guardamos cambios en BD
-        
-        // Se ejecuta solo si el commit fue exitoso
-        await enviarCorreoNotificacion('Sucursal POS', carrito, total, metodoPago);
-        res.json({ message: 'Venta registrada con éxito' });
-
-    } catch (err) { 
-        await client.query('ROLLBACK'); // Si algo falla, revertimos TODO (nada se descuenta)
-        res.status(400).json({ error: err.message }); 
-    } finally {
-        client.release(); // Liberamos la conexión
+    } catch (err) {
+        console.error('Error al procesar venta POS:', err.message);
+        res.status(400).json({ error: err.message });
     }
 });
 
@@ -228,11 +278,50 @@ app.put('/api/productos/:id/vista', async (req, res) => {
 });
 
 // --- RUTAS DE CAMPAÑAS Y METRICAS ---
+// Esquema único y anidado, compartido por publicidad.html (quien escribe)
+// e index.html (quien lee). Antes index.html esperaba campos planos
+// (data.heroImg) mientras publicidad.html guardaba anidado (data.hero.img):
+// por eso la publicidad "no se reflejaba". Ahora ambos usan esta forma.
+const CAMPANAS_DEFAULT = {
+    cinta: { activo: false, texto: '' },
+    splash: { activo: true, texto: 'NUEVA COLECCIÓN', img: '' },
+    hero: { titulo: 'NUEVOS DISEÑOS EXCLUSIVOS', sub: 'Descubre nuestra más reciente colección.', img: '' },
+    promo1: { badge: '', titulo: '', sub: '', img: '' },
+    promo2: { badge: '', titulo: '', sub: '', img: '' }
+};
+
 app.get('/api/campanas', async (req, res) => {
-    try { const r = await pool.query("SELECT valor FROM configuracion WHERE clave='campanas'"); res.json(r.rows.length ? JSON.parse(r.rows[0].valor) : {}); } catch (e) { res.status(500).json({error:e.message}); }
+    try {
+        const r = await conReintento(() => pool.query("SELECT valor FROM configuracion WHERE clave='campanas'"));
+        const guardado = r.rows.length ? JSON.parse(r.rows[0].valor) : {};
+        // Merge con defaults para que index.html nunca reciba undefined
+        res.json({ ...CAMPANAS_DEFAULT, ...guardado });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 app.put('/api/campanas', async (req, res) => {
-    try { const r = await pool.query("INSERT INTO configuracion (clave, valor) VALUES ('campanas', $1) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor RETURNING valor", [JSON.stringify(req.body)]); res.json(JSON.parse(r.rows[0].valor)); } catch (e) { res.status(500).json({error:e.message}); }
+    try {
+        const payload = { ...CAMPANAS_DEFAULT, ...req.body };
+        const r = await conReintento(() => pool.query(
+            "INSERT INTO configuracion (clave, valor) VALUES ('campanas', $1) ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor RETURNING valor",
+            [JSON.stringify(payload)]
+        ));
+        res.json(JSON.parse(r.rows[0].valor));
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- CORTE DE CAJA DIARIO (mejora: el nav decía "próximamente") ---
+app.get('/api/pos/corte-diario', async (req, res) => {
+    try {
+        const r = await conReintento(() => pool.query(`
+            SELECT tipo_pago, COUNT(*) AS transacciones, SUM(cantidad) AS piezas, SUM(precio_venta * cantidad) AS total
+            FROM ventas
+            WHERE origen = 'POS' AND fecha_hora >= CURRENT_DATE
+            GROUP BY tipo_pago
+            ORDER BY total DESC
+        `));
+        const totalGeneral = r.rows.reduce((acc, row) => acc + parseFloat(row.total || 0), 0);
+        res.json({ desglose: r.rows, totalGeneral, fecha: new Date().toISOString() });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 app.get('/api/metricas', async (req, res) => {
     try {
