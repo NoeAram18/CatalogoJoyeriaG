@@ -1,7 +1,7 @@
 {
   "name": "gedalia-erp",
-  "version": "1.2.0",
-  "description": "Ecosistema Gedalia: catálogo web, punto de venta físico, marketing hub y ERP, con notificación de ventas por correo.",
+  "version": "1.3.0",
+  "description": "Ecosistema Gedalia: catálogo web, punto de venta físico (con escaneo QR, login de cajeras y notificación por WhatsApp), marketing hub, ERP con captura profesional de fotos (cámara 4K + fondo blanco automático), y notificación de ventas por correo.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
